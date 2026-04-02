@@ -1,0 +1,13 @@
+{
+  "name": "canvas-code",
+  "private": true,
+  "scripts": {
+    "dev:server": "pnpm --filter @canvas-code/server dev",
+    "dev:ext": "pnpm --filter @canvas-code/extension dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react"
 import { ConnectionStatus } from "./components/ConnectionStatus"
 import { ChatLog } from "./components/ChatLog"
 import type { Message } from "./components/ChatMessage"
+import { SessionControls } from "./components/SessionControls"
 
 function SidePanel() {
   const [connectionState, setConnectionState] = useState("disconnected")
@@ -79,6 +80,8 @@ function SidePanel() {
           Claude is working...
         </div>
       )}
+
+      <SessionControls onClearChat={() => setMessages([])} />
     </div>
   )
 }

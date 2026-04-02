@@ -62,6 +62,23 @@ function SidePanel() {
       width: "100%", height: "100vh", display: "flex", flexDirection: "column",
       background: "#0a0f1a", color: "#fff", fontFamily: "system-ui, -apple-system, sans-serif",
     }}>
+      <style>{`
+        @keyframes cc-pulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 1; }
+        }
+        .cc-working-dot {
+          display: inline-block;
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: #c9a84c;
+          margin: 0 2px;
+        }
+        .cc-working-dot:nth-child(1) { animation: cc-pulse 1.2s ease infinite 0s; }
+        .cc-working-dot:nth-child(2) { animation: cc-pulse 1.2s ease infinite 0.2s; }
+        .cc-working-dot:nth-child(3) { animation: cc-pulse 1.2s ease infinite 0.4s; }
+      `}</style>
       <div style={{
         padding: "12px 16px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
         display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -77,7 +94,10 @@ function SidePanel() {
           padding: "8px 16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)",
           fontSize: 12, color: "#c9a84c",
         }}>
-          Claude is working...
+          <span style={{ marginRight: 8 }}>Claude is working</span>
+          <span className="cc-working-dot" />
+          <span className="cc-working-dot" />
+          <span className="cc-working-dot" />
         </div>
       )}
 

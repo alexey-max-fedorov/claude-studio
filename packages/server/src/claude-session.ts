@@ -52,8 +52,16 @@ export class ClaudeSessionManager {
       options.resume = existingSession
     }
 
+    const TIMEOUT_MS = 300_000 // 5 minutes
+    let timedOut = false
+    const timer = setTimeout(() => { timedOut = true }, TIMEOUT_MS)
+
     try {
       for await (const msg of query({ prompt, options })) {
+        if (timedOut) {
+          callbacks.onError("Session timed out after 5 minutes")
+          break
+        }
         if (msg.type === "assistant") {
           for (const block of (msg as any).message?.content || []) {
             if (block.type === "text") {
@@ -77,6 +85,8 @@ export class ClaudeSessionManager {
       }
     } catch (err) {
       callbacks.onError(err instanceof Error ? err.message : String(err))
+    } finally {
+      clearTimeout(timer)
     }
   }
 }

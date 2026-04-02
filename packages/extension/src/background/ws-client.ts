@@ -11,6 +11,8 @@ export class WsClient {
   private messageListeners: MessageListener[] = []
   private keepaliveTimer: ReturnType<typeof setInterval> | null = null
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  private pendingMessages: object[] = []
+  private maxPendingMessages = 50
   state: ConnectionState = "disconnected"
 
   constructor(url: string) {
@@ -25,6 +27,7 @@ export class WsClient {
     this.ws.onopen = () => {
       this.reconnectAttempt = 0
       this.setState("connected")
+      this.flushPendingMessages()
       this.startKeepalive()
     }
     this.ws.onmessage = (event) => {
@@ -52,6 +55,11 @@ export class WsClient {
   send(msg: object): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(msg))
+    } else {
+      if (this.pendingMessages.length >= this.maxPendingMessages) {
+        this.pendingMessages.shift()
+      }
+      this.pendingMessages.push(msg)
     }
   }
 
@@ -86,5 +94,12 @@ export class WsClient {
   private stopKeepalive(): void {
     if (this.keepaliveTimer) clearInterval(this.keepaliveTimer)
     this.keepaliveTimer = null
+  }
+
+  private flushPendingMessages(): void {
+    const queued = this.pendingMessages.splice(0)
+    for (const msg of queued) {
+      this.send(msg)
+    }
   }
 }

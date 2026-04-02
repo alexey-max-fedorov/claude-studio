@@ -24,7 +24,8 @@
     "tailwindcss": "^3.0.0",
     "postcss": "^8.0.0",
     "autoprefixer": "^10.0.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "jsdom": "^25.0.0"
   },
   "manifest": {
     "permissions": ["activeTab", "storage", "sidePanel", "tabs"],

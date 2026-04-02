@@ -2,38 +2,20 @@ import express from "express"
 import { createServer } from "node:http"
 import { WebSocketServer } from "ws"
 import { config } from "./config.js"
+import { ConnectionManager } from "./connection-manager.js"
+import { handleConnection } from "./ws-handler.js"
 
 const app = express()
 const server = createServer(app)
 const wss = new WebSocketServer({ server })
-
-let connectionCount = 0
+const connections = new ConnectionManager()
 
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok", connections: connectionCount })
+  res.json({ status: "ok", connections: connections.count })
 })
 
 wss.on("connection", (ws) => {
-  connectionCount++
-  console.log(`Client connected (${connectionCount} total)`)
-
-  ws.on("close", () => {
-    connectionCount--
-    console.log(`Client disconnected (${connectionCount} total)`)
-  })
-
-  ws.on("message", (data) => {
-    const raw = data.toString()
-    console.log("Received:", raw)
-    try {
-      const msg = JSON.parse(raw)
-      if (msg.type === "ping") {
-        ws.send(JSON.stringify({ type: "pong" }))
-      }
-    } catch {
-      ws.send(JSON.stringify({ type: "ai_error", error: "Invalid message" }))
-    }
-  })
+  handleConnection(ws, connections)
 })
 
 server.listen(config.port, () => {

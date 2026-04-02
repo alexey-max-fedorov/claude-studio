@@ -1,0 +1,45 @@
+{
+  "name": "@canvas-code/extension",
+  "displayName": "Canvas Code",
+  "version": "0.1.0",
+  "description": "Visual AI coding assistant — select elements, describe changes, Claude Code executes",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@canvas-code/shared": "workspace:*",
+    "plasmo": "^0.90.0",
+    "@plasmohq/messaging": "^0.7.0",
+    "@plasmohq/storage": "^1.15.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "latest",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.0.0",
+    "tailwindcss": "^3.0.0",
+    "postcss": "^8.0.0",
+    "autoprefixer": "^10.0.0",
+    "vitest": "^3.0.0"
+  },
+  "manifest": {
+    "permissions": ["activeTab", "storage", "sidePanel", "tabs"],
+    "host_permissions": [
+      "http://localhost:*/*",
+      "http://127.0.0.1:*/*"
+    ],
+    "commands": {
+      "toggle-picker": {
+        "suggested_key": { "default": "Ctrl+Shift+E", "mac": "Command+Shift+E" },
+        "description": "Toggle element picker"
+      }
+    },
+    "side_panel": {
+      "default_path": "sidepanel.html"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "name": "canvas-code",
+  "name": "claude-studio",
   "version": "0.1.0",
-  "description": "Optimizes Claude Code for visual element editing workflows from Canvas Code browser extension"
+  "description": "Optimizes Claude Code for visual element editing workflows from Claude Studio browser extension"
 }

@@ -1,6 +1,6 @@
 ---
 name: Visual Element Editing
-description: Use when processing visual editing requests from the Canvas Code browser extension — prompts will include CSS selectors, HTML snippets, and computed styles from a live Next.js page
+description: Use when processing visual editing requests from the Claude Studio browser extension — prompts will include CSS selectors, HTML snippets, and computed styles from a live Next.js page
 ---
 
 # Visual Element Editing

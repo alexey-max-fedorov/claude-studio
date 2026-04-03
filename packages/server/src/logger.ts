@@ -17,7 +17,7 @@ function format(color: string, prefix: string, message: string): string {
 export const log = {
   info: (prefix: string, message: string) => console.log(format(CYAN, prefix, message)),
   event: (prefix: string, message: string) => console.log(format(YELLOW, prefix, message)),
-  error: (prefix: string, message: string) => console.log(format(RED, prefix, message)),
+  error: (prefix: string, message: string) => console.error(format(RED, prefix, message)),
   success: (prefix: string, message: string) => console.log(format(GREEN, prefix, message)),
   dim: (prefix: string, message: string) => console.log(format(GRAY, prefix, message)),
 }

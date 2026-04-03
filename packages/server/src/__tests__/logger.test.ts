@@ -14,9 +14,11 @@ describe("logger", () => {
     expect(output).toContain("Client connected")
   })
 
-  it("log.error outputs with red styling", () => {
+  it("log.error outputs to stderr with prefix and message", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {})
     log.error("AI", "Something failed")
-    const output = (console.log as any).mock.calls[0][0]
+    expect(console.error).toHaveBeenCalledOnce()
+    const output = (console.error as any).mock.calls[0][0]
     expect(output).toContain("[AI]")
     expect(output).toContain("Something failed")
   })

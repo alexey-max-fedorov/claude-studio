@@ -28,7 +28,11 @@ Browser Extension  ──WebSocket──►  Bridge Server  ──Claude Agent S
 Run this inside your Next.js project directory:
 
 ```bash
+# npm
 npx claude-canvas-nextjs setup
+
+# pnpm
+pnpm dlx claude-canvas-nextjs setup
 ```
 
 This will:
@@ -79,7 +83,8 @@ Start both servers in separate terminals:
 
 ```bash
 # Terminal 1 — Canvas Code bridge server (in your Next.js project directory)
-npx claude-canvas-nextjs serve
+npx claude-canvas-nextjs serve        # npm
+pnpm dlx claude-canvas-nextjs serve   # pnpm
 
 # Terminal 2 — your Next.js dev server
 pnpm dev

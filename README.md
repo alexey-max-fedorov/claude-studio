@@ -19,32 +19,38 @@ Browser Extension  ──WebSocket──►  Bridge Server  ──Claude Agent S
 ## Prerequisites
 
 - Node.js 18+
-- pnpm
 - Chrome (or Chromium)
-- Claude Code CLI installed and authenticated
-- A Next.js project running in dev mode
+- Claude Code CLI installed and authenticated (`npm install -g @anthropic-ai/claude-code`)
+- A Next.js project
 
-## Setup
+## Installation
 
-### 1. Install dependencies
-
-```bash
-pnpm install
-```
-
-### 2. Configure the server
-
-Copy the example env file and point it at your project:
+Run this inside your Next.js project directory:
 
 ```bash
-cp packages/server/.env.example packages/server/.env
+npx claude-canvas-nextjs setup
 ```
 
-Edit `packages/server/.env`:
+This will:
+1. Copy the Claude Code plugin into `.canvas-code-plugin/` in your project
+2. Create a `.env.canvas-code` config file pre-filled with your project path
+3. Print instructions for installing the browser extension
+
+### 1. Install the Claude Code plugin
+
+After setup runs, install the plugin:
+
+```bash
+claude plugin install --source .canvas-code-plugin
+```
+
+### 2. Configure the bridge server
+
+The setup command creates `.env.canvas-code` in your project root. Edit it if needed:
 
 ```env
+PROJECT_DIR=/path/to/your/nextjs/project   # auto-filled by setup
 PORT=7281
-PROJECT_DIR=/path/to/your/nextjs/project
 MODEL=sonnet
 MAX_BUDGET_USD=2.0
 MAX_TURNS=15
@@ -58,51 +64,28 @@ MAX_TURNS=15
 | `MAX_BUDGET_USD` | `2.0` | Maximum spend per session in USD |
 | `MAX_TURNS` | `15` | Maximum agentic turns per prompt |
 
-### 3. Install the Claude Code plugin (optional but recommended)
+### 3. Load the browser extension
 
-The plugin adds a `visual-edit` skill and an auto-format hook that runs Prettier after each file edit.
+Download the pre-built extension ZIP from the setup output URL, then load it in Chrome:
 
-```bash
-# In your Next.js project directory, add the plugin path to your Claude Code settings
-# or copy packages/plugin into your project's .claude-plugin directory
-```
-
-### 4. Load the browser extension
-
-Build the extension:
-
-```bash
-pnpm --filter @canvas-code/extension build
-```
-
-Then load it in Chrome:
-
-1. Navigate to `chrome://extensions`
-2. Enable **Developer mode** (top right)
-3. Click **Load unpacked**
-4. Select `packages/extension/build/chrome-mv3-prod`
-
-For development with hot reload:
-
-```bash
-pnpm dev:ext
-# Load packages/extension/.plasmo/chrome-mv3-dev instead
-```
+1. Unzip the downloaded file
+2. Navigate to `chrome://extensions`
+3. Enable **Developer mode** (top right)
+4. Click **Load unpacked** and select the unzipped folder
 
 ## Running
 
-Start the bridge server and your Next.js dev server in separate terminals:
+Start both servers in separate terminals:
 
 ```bash
-# Terminal 1 — bridge server
-pnpm dev:server
+# Terminal 1 — Canvas Code bridge server (in your Next.js project directory)
+npx claude-canvas-nextjs serve
 
-# Terminal 2 — your Next.js project
-cd /path/to/your/nextjs/project
+# Terminal 2 — your Next.js dev server
 pnpm dev
 ```
 
-The server listens on `ws://localhost:7281` by default.
+The bridge server listens on `ws://localhost:7281` by default.
 
 ## Using the Extension
 
@@ -158,7 +141,15 @@ packages/
 └── plugin/     — Claude Code plugin (visual-edit skill, auto-format hook)
 ```
 
-## Development
+## Development (from source)
+
+Clone the repo and install dependencies:
+
+```bash
+git clone https://github.com/alexey-max-fedorov/claude-canvas-nextjs
+cd claude-canvas-nextjs
+pnpm install
+```
 
 ```bash
 # Run all tests

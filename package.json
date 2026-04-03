@@ -1,9 +1,9 @@
 {
-  "name": "canvas-code-monorepo",
+  "name": "claude-studio",
   "private": true,
   "scripts": {
-    "dev:server": "pnpm --filter @canvas-code/server dev",
-    "dev:ext": "pnpm --filter @canvas-code/extension dev",
+    "dev:server": "pnpm --filter @claude-studio/server dev",
+    "dev:ext": "pnpm --filter @claude-studio/extension dev",
     "build": "pnpm -r build",
     "build:extension-zip": "bash scripts/build-extension-zip.sh",
     "test": "pnpm -r test"

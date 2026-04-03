@@ -1,6 +1,6 @@
 {
-  "name": "@canvas-code/extension",
-  "displayName": "Canvas Code",
+  "name": "@claude-studio/extension",
+  "displayName": "Claude Studio",
   "version": "0.1.0",
   "description": "Visual AI coding assistant — select elements, describe changes, Claude Code executes",
   "scripts": {
@@ -9,7 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@canvas-code/shared": "workspace:*",
+    "@claude-studio/shared": "workspace:*",
     "plasmo": "^0.90.0",
     "@plasmohq/messaging": "^0.7.0",
     "@plasmohq/storage": "^1.15.0",

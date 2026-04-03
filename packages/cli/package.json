@@ -1,10 +1,10 @@
 {
-  "name": "claude-canvas-nextjs",
+  "name": "claude-studio",
   "version": "0.1.1",
   "description": "Visual AI coding assistant for Next.js — installer and bridge server",
   "type": "module",
   "bin": {
-    "canvas-code": "dist/index.js"
+    "claude-studio": "dist/index.js"
   },
   "files": [
     "dist",
@@ -15,8 +15,8 @@
     "dev": "tsx src/index.ts"
   },
   "dependencies": {
-    "@canvas-code/server": "workspace:*",
-    "@canvas-code/shared": "workspace:*"
+    "@claude-studio/server": "workspace:*",
+    "@claude-studio/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

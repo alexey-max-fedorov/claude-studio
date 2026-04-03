@@ -1,5 +1,5 @@
 {
-  "name": "@canvas-code/shared",
+  "name": "@claude-studio/shared",
   "version": "0.1.0",
   "type": "module",
   "publishConfig": {

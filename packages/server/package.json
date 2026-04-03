@@ -1,5 +1,5 @@
 {
-  "name": "@canvas-code/server",
+  "name": "@claude-studio/server",
   "version": "0.1.1",
   "type": "module",
   "publishConfig": {
@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.90",
-    "@canvas-code/shared": "workspace:*",
+    "@claude-studio/shared": "workspace:*",
     "dotenv": "^16.0.0",
     "express": "^4.0.0",
     "ws": "^8.0.0"

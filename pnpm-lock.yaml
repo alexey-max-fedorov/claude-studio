@@ -10,10 +10,10 @@ importers:
 
   packages/cli:
     dependencies:
-      '@canvas-code/server':
+      '@claude-studio/server':
         specifier: workspace:*
         version: link:../server
-      '@canvas-code/shared':
+      '@claude-studio/shared':
         specifier: workspace:*
         version: link:../shared
     devDependencies:
@@ -29,7 +29,7 @@ importers:
 
   packages/extension:
     dependencies:
-      '@canvas-code/shared':
+      '@claude-studio/shared':
         specifier: workspace:*
         version: link:../shared
       '@plasmohq/messaging':
@@ -81,7 +81,7 @@ importers:
       '@anthropic-ai/claude-agent-sdk':
         specifier: ^0.2.90
         version: 0.2.90(zod@4.3.6)
-      '@canvas-code/shared':
+      '@claude-studio/shared':
         specifier: workspace:*
         version: link:../shared
       dotenv:

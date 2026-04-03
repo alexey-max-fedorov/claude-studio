@@ -22,8 +22,15 @@ const connectedPorts: chrome.runtime.Port[] = []
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name === "stream") {
     connectedPorts.push(port)
-    // Send current state immediately
     port.postMessage({ type: "connection_state", state: wsClient.state })
+
+    // Listen for prompts from side panel
+    port.onMessage.addListener((msg) => {
+      if (msg.type === "raw_prompt" && msg.prompt) {
+        wsClient.send({ type: "raw_prompt", prompt: msg.prompt })
+      }
+    })
+
     port.onDisconnect.addListener(() => {
       const idx = connectedPorts.indexOf(port)
       if (idx >= 0) connectedPorts.splice(idx, 1)

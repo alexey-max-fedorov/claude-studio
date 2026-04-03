@@ -1,18 +1,21 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { ConnectionStatus } from "./components/ConnectionStatus"
 import { ChatLog } from "./components/ChatLog"
 import type { Message } from "./components/ChatMessage"
 import { SessionControls } from "./components/SessionControls"
+import { PromptInput } from "./components/PromptInput"
 
 function SidePanel() {
   const [connectionState, setConnectionState] = useState("disconnected")
   const [messages, setMessages] = useState<Message[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
+  const portRef = useRef<chrome.runtime.Port | null>(null)
 
   useEffect(() => {
     const port = chrome.runtime.connect({ name: "stream" })
+    portRef.current = port
 
-    port.onMessage.addListener((msg: any) => {
+    const onMessage = (msg: any) => {
       switch (msg.type) {
         case "connection_state":
           setConnectionState(msg.state)
@@ -52,10 +55,20 @@ function SidePanel() {
           ])
           break
       }
-    })
+    }
+    port.onMessage.addListener(onMessage)
 
-    return () => port.disconnect()
+    return () => {
+      port.onMessage.removeListener(onMessage)
+      port.disconnect()
+      portRef.current = null
+    }
   }, [])
+
+  const handleSendPrompt = (prompt: string) => {
+    setMessages((prev) => [...prev, { role: "user", content: prompt, timestamp: Date.now() }])
+    portRef.current?.postMessage({ type: "raw_prompt", prompt })
+  }
 
   return (
     <div style={{
@@ -100,6 +113,11 @@ function SidePanel() {
           <span className="cc-working-dot" />
         </div>
       )}
+
+      <PromptInput
+        onSubmit={handleSendPrompt}
+        disabled={isStreaming || connectionState !== "connected"}
+      />
 
       <SessionControls onClearChat={() => setMessages([])} />
     </div>

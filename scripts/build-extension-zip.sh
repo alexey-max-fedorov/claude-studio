@@ -3,7 +3,7 @@ set -e
 cd "$(dirname "$0")/.."
 
 # Build extension
-pnpm --filter @canvas-code/extension build
+pnpm --filter @claude-studio/extension build
 
 # Create dist directory
 mkdir -p dist
@@ -15,7 +15,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const srcDir = 'packages/extension/build/chrome-mv3-prod';
-const outFile = 'dist/canvas-code-extension.zip';
+const outFile = 'dist/claude-studio-extension.zip';
 
 // Use tar + gzip as fallback, but prefer creating a proper zip with node
 // We'll use the built-in zlib to create a simple zip file

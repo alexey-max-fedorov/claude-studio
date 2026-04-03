@@ -2,13 +2,13 @@ node_modules/
 dist/
 !dist/
 dist/*
-!dist/canvas-code-extension.zip
+!dist/claude-studio-extension.zip
 packages/*/dist/
 build/
 .plasmo/
 .env
 *.log
 .DS_Store
-.env.canvas-code
-.canvas-code-plugin/
+.env.claude-studio
+.claude-studio-plugin/
 .claude/

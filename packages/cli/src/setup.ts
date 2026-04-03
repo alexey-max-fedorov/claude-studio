@@ -89,7 +89,7 @@ export function runSetup() {
   console.log("      pnpm dev  (or npm run dev)")
   console.log("")
   console.log("   2. Start the Canvas Code bridge server:")
-  console.log("      npx canvas-code serve")
+  console.log("      npx claude-canvas-nextjs serve")
   console.log("")
   console.log("   3. Open your app in Chrome, click the Canvas Code extension icon")
   console.log("   4. Select an element, describe what you want to change")

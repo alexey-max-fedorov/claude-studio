@@ -8,3 +8,6 @@ build/
 .env
 *.log
 .DS_Store
+.env.canvas-code
+.canvas-code-plugin/
+.claude/

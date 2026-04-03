@@ -81,7 +81,6 @@ function ElementPicker() {
       if (!el) return
 
       const selection = captureElement(el)
-      setActive(false)
 
       sendToBackground({
         name: "element-selected",

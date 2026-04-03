@@ -5,6 +5,7 @@ import { config } from "./config.js"
 import { ConnectionManager } from "./connection-manager.js"
 import { ClaudeSessionManager } from "./claude-session.js"
 import { handleConnection } from "./ws-handler.js"
+import { log } from "./logger.js"
 
 const app = express()
 const server = createServer(app)
@@ -21,8 +22,8 @@ wss.on("connection", (ws) => {
 })
 
 server.listen(config.port, () => {
-  console.log(`Canvas Code bridge server listening on port ${config.port}`)
-  console.log(`Health: http://localhost:${config.port}/health`)
-  console.log(`WebSocket: ws://localhost:${config.port}`)
-  console.log(`Project directory: ${config.projectDir}`)
+  log.info("SRV", `Listening on port ${config.port}`)
+  log.dim("SRV", `Health: http://localhost:${config.port}/health`)
+  log.dim("SRV", `WebSocket: ws://localhost:${config.port}`)
+  log.dim("SRV", `Project: ${config.projectDir}`)
 })

@@ -1,4 +1,4 @@
-import type { ElementSelection } from "@canvas-code/shared"
+import type { ElementSelection } from "@claude-studio/shared"
 import { generateSelector, getElementDescription } from "./selector-generator"
 
 export function captureElement(el: Element): ElementSelection {

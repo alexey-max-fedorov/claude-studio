@@ -11,7 +11,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     prompt,
   })
 
-  console.log(`[Canvas Code] Prompt sent: "${prompt}" for ${element.cssSelector}`)
+  console.log(`[Claude Studio] Prompt sent: "${prompt}" for ${element.cssSelector}`)
   res.send({ ok: true })
 }
 

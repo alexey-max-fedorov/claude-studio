@@ -96,7 +96,7 @@ function SidePanel() {
         padding: "12px 16px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
         display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: "#c9a84c" }}>Canvas Code</span>
+        <span style={{ fontSize: 15, fontWeight: 700, color: "#c9a84c" }}>Claude Studio</span>
         <ConnectionStatus state={connectionState} />
       </div>
 

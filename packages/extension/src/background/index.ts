@@ -39,14 +39,14 @@ chrome.runtime.onConnect.addListener((port) => {
 })
 
 wsClient.onState((state) => {
-  console.log(`[Canvas Code] WebSocket: ${state}`)
+  console.log(`[Claude Studio] WebSocket: ${state}`)
   connectedPorts.forEach((port) => {
     try { port.postMessage({ type: "connection_state", state }) } catch {}
   })
 })
 
 wsClient.onMessage((msg: any) => {
-  console.log("[Canvas Code] Server message:", msg.type)
+  console.log("[Claude Studio] Server message:", msg.type)
   connectedPorts.forEach((port) => {
     try { port.postMessage(msg) } catch {}
   })

@@ -1,7 +1,7 @@
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import React, { useEffect, useRef, useState } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
-import type { ElementSelection } from "@canvas-code/shared"
+import type { ElementSelection } from "@claude-studio/shared"
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"]

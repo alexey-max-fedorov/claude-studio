@@ -13,7 +13,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     })
   }
 
-  console.log("[Canvas Code] Element selected:", selection?.cssSelector)
+  console.log("[Claude Studio] Element selected:", selection?.cssSelector)
   res.send({ ok: true })
 }
 

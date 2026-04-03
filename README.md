@@ -1,4 +1,4 @@
-# Canvas Code
+# Claude Studio
 
 A visual AI coding assistant that lets you select elements on a live Next.js dev server page, describe changes in natural language, and have Claude Code execute those changes in source code — with instant HMR feedback.
 
@@ -29,15 +29,15 @@ Run this inside your Next.js project directory:
 
 ```bash
 # npm
-npx claude-canvas-nextjs setup
+npx claude-studio setup
 
 # pnpm
-pnpm dlx claude-canvas-nextjs setup
+pnpm dlx claude-studio setup
 ```
 
 This will:
-1. Copy the Claude Code plugin into `.canvas-code-plugin/` in your project
-2. Create a `.env.canvas-code` config file pre-filled with your project path
+1. Copy the Claude Code plugin into `.claude-studio-plugin/` in your project
+2. Create a `.env.claude-studio` config file pre-filled with your project path
 3. Print instructions for installing the browser extension
 
 ### 1. Install the Claude Code plugin
@@ -45,12 +45,12 @@ This will:
 After setup runs, install the plugin:
 
 ```bash
-claude plugin install --source .canvas-code-plugin
+claude plugin install --source .claude-studio-plugin
 ```
 
 ### 2. Configure the bridge server
 
-The setup command creates `.env.canvas-code` in your project root. Edit it if needed:
+The setup command creates `.env.claude-studio` in your project root. Edit it if needed:
 
 ```env
 PROJECT_DIR=/path/to/your/nextjs/project   # auto-filled by setup
@@ -82,9 +82,9 @@ Download the pre-built extension ZIP from the setup output URL, then load it in 
 Start both servers in separate terminals:
 
 ```bash
-# Terminal 1 — Canvas Code bridge server (in your Next.js project directory)
-npx claude-canvas-nextjs serve        # npm
-pnpm dlx claude-canvas-nextjs serve   # pnpm
+# Terminal 1 — Claude Studio bridge server (in your Next.js project directory)
+npx claude-studio serve        # npm
+pnpm dlx claude-studio serve   # pnpm
 
 # Terminal 2 — your Next.js dev server
 pnpm dev
@@ -96,7 +96,7 @@ The bridge server listens on `ws://localhost:7281` by default.
 
 ### Element Picker
 
-**Toggle:** Click the Canvas Code extension icon or press `Ctrl+Shift+E` (`Cmd+Shift+E` on Mac).
+**Toggle:** Click the Claude Studio extension icon or press `Ctrl+Shift+E` (`Cmd+Shift+E` on Mac).
 
 When active, hovering over elements shows a gold highlight. Click any element to select it.
 
@@ -151,8 +151,8 @@ packages/
 Clone the repo and install dependencies:
 
 ```bash
-git clone https://github.com/alexey-max-fedorov/claude-canvas-nextjs
-cd claude-canvas-nextjs
+git clone https://github.com/alexey-max-fedorov/claude-studio
+cd claude-studio
 pnpm install
 ```
 

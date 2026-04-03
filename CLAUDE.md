@@ -1,4 +1,4 @@
-# Canvas Code
+# Claude Studio
 
 Monorepo with packages in `packages/`:
 - `shared` — Message protocol types shared between server and extension
@@ -9,5 +9,5 @@ Monorepo with packages in `packages/`:
 ## Conventions
 - pnpm workspaces, TypeScript strict mode everywhere
 - Tests with vitest, run via `pnpm -r test`
-- Extension dev: `pnpm --filter @canvas-code/extension dev`
-- Server dev: `pnpm --filter @canvas-code/server dev`
+- Extension dev: `pnpm --filter @claude-studio/extension dev`
+- Server dev: `pnpm --filter @claude-studio/server dev`

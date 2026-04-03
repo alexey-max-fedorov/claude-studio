@@ -1,7 +1,20 @@
 import { WsClient } from "./ws-client"
 
-const serverUrl = process.env.PLASMO_PUBLIC_SERVER_URL || "ws://localhost:7281"
-export const wsClient = new WsClient(serverUrl)
+const DEFAULT_SERVER_URL = process.env.PLASMO_PUBLIC_SERVER_URL || "ws://localhost:7281"
+export const STORAGE_KEY = "serverUrl"
+
+export const wsClient = new WsClient(DEFAULT_SERVER_URL)
+
+export async function getServerUrl(): Promise<string> {
+  const result = await chrome.storage.sync.get(STORAGE_KEY)
+  return (result[STORAGE_KEY] as string) || DEFAULT_SERVER_URL
+}
+
+export async function reconnectWithUrl(url: string): Promise<void> {
+  wsClient.disconnect()
+  wsClient.setUrl(url)
+  wsClient.connect()
+}
 
 // Track connected ports for broadcasting to side panel
 const connectedPorts: chrome.runtime.Port[] = []
@@ -32,7 +45,18 @@ wsClient.onMessage((msg: any) => {
   })
 })
 
-wsClient.connect()
+// Initialize with stored URL
+getServerUrl().then((url) => {
+  wsClient.setUrl(url)
+  wsClient.connect()
+})
+
+// Reconnect when user changes the server URL
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "sync" && changes[STORAGE_KEY]) {
+    reconnectWithUrl(changes[STORAGE_KEY].newValue as string)
+  }
+})
 
 // Listen for keyboard shortcut commands
 chrome.commands.onCommand.addListener((command) => {

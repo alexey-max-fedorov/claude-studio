@@ -19,6 +19,10 @@ export class WsClient {
     this.url = url
   }
 
+  setUrl(url: string): void {
+    this.url = url
+  }
+
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN) return
     this.setState("connecting")

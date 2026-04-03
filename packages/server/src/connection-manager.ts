@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto"
 import type { WebSocket } from "ws"
-import type { ServerMessage } from "@canvas-code/shared"
-import { serializeServerMessage } from "@canvas-code/shared"
+import type { ServerMessage } from "@claude-studio/shared"
+import { serializeServerMessage } from "@claude-studio/shared"
 
 interface Client {
   id: string

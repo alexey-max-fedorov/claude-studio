@@ -1,4 +1,4 @@
-import type { ElementSelection } from "@canvas-code/shared"
+import type { ElementSelection } from "@claude-studio/shared"
 
 interface PromptInput {
   route: string

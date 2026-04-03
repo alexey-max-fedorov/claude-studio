@@ -1,5 +1,5 @@
 import type { WebSocket } from "ws"
-import { parseClientMessage } from "@canvas-code/shared"
+import { parseClientMessage } from "@claude-studio/shared"
 import type { ConnectionManager } from "./connection-manager.js"
 import type { ClaudeSessionManager } from "./claude-session.js"
 import { log } from "./logger.js"

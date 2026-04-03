@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { buildPrompt } from "../prompt-builder.js"
-import type { ElementSelection } from "@canvas-code/shared"
+import type { ElementSelection } from "@claude-studio/shared"
 
 const mockElement: ElementSelection = {
   tagName: "h1",

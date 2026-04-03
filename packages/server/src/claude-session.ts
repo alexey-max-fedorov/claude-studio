@@ -1,5 +1,5 @@
 import { query } from "@anthropic-ai/claude-agent-sdk"
-import type { ElementSelection } from "@canvas-code/shared"
+import type { ElementSelection } from "@claude-studio/shared"
 import { buildPrompt } from "./prompt-builder.js"
 import { config } from "./config.js"
 import { log } from "./logger.js"

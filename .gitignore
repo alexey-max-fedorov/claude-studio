@@ -3,6 +3,7 @@ dist/
 !dist/
 dist/*
 !dist/canvas-code-extension.zip
+packages/*/dist/
 build/
 .plasmo/
 .env

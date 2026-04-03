@@ -2,6 +2,7 @@ import { query } from "@anthropic-ai/claude-agent-sdk"
 import type { ElementSelection } from "@canvas-code/shared"
 import { buildPrompt } from "./prompt-builder.js"
 import { config } from "./config.js"
+import { log } from "./logger.js"
 
 interface StreamCallbacks {
   onStreaming: (chunk: string) => void
@@ -52,6 +53,8 @@ export class ClaudeSessionManager {
       options.resume = existingSession
     }
 
+    log.dim("AI", `[${clientId.slice(0, 8)}] Query started${existingSession ? " (resuming)" : ""}`)
+
     const TIMEOUT_MS = 300_000 // 5 minutes
     let timedOut = false
     const timer = setTimeout(() => { timedOut = true }, TIMEOUT_MS)
@@ -59,6 +62,7 @@ export class ClaudeSessionManager {
     try {
       for await (const msg of query({ prompt, options })) {
         if (timedOut) {
+          log.error("AI", `[${clientId.slice(0, 8)}] Timed out after 5 minutes`)
           callbacks.onError("Session timed out after 5 minutes")
           break
         }
@@ -84,6 +88,7 @@ export class ClaudeSessionManager {
         }
       }
     } catch (err) {
+      log.error("AI", `[${clientId.slice(0, 8)}] Query failed: ${err instanceof Error ? err.message : String(err)}`)
       callbacks.onError(err instanceof Error ? err.message : String(err))
     } finally {
       clearTimeout(timer)

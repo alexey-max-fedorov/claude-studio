@@ -1,5 +1,8 @@
 node_modules/
 dist/
+!dist/
+dist/*
+!dist/canvas-code-extension.zip
 build/
 .plasmo/
 .env

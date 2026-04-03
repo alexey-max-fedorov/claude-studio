@@ -1,10 +1,11 @@
 {
-  "name": "canvas-code",
+  "name": "canvas-code-monorepo",
   "private": true,
   "scripts": {
     "dev:server": "pnpm --filter @canvas-code/server dev",
     "dev:ext": "pnpm --filter @canvas-code/extension dev",
     "build": "pnpm -r build",
+    "build:extension-zip": "bash scripts/build-extension-zip.sh",
     "test": "pnpm -r test"
   },
   "engines": {

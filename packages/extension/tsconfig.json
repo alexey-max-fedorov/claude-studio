@@ -4,12 +4,22 @@
     "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": [
+        "./src/*"
+      ]
     },
     "outDir": "dist",
     "noEmit": true
   },
-  "include": ["src/**/*", "*.ts"]
+  "include": [
+    ".plasmo/index.d.ts",
+    "src/**/*",
+    "*.ts"
+  ]
 }

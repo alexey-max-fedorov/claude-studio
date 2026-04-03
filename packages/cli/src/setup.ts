@@ -6,11 +6,11 @@ import { checkPrerequisites, isNextJsProject, hasClaudeCode } from "./utils.js"
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const PLUGIN_SOURCE = path.join(__dirname, "..", "plugin")
 
-const GITHUB_REPO = "alexey-max-fedorov/claude-canvas-nextjs"
-const EXTENSION_ZIP_URL = `https://github.com/${GITHUB_REPO}/raw/master/dist/canvas-code-extension.zip`
+const GITHUB_REPO = "alexey-max-fedorov/claude-studio"
+const EXTENSION_ZIP_URL = `https://github.com/${GITHUB_REPO}/raw/master/dist/claude-studio-extension.zip`
 
 export function runSetup() {
-  console.log("\nCanvas Code Setup\n")
+  console.log("\nClaude Studio Setup\n")
   console.log("Visual AI coding assistant for Next.js\n")
   console.log("-".repeat(50))
 
@@ -25,13 +25,13 @@ export function runSetup() {
 
   if (!isNextJsProject()) {
     console.log("\n[warn] This doesn't look like a Next.js project (no 'next' in dependencies)")
-    console.log("   Canvas Code is designed for Next.js but may work with other React frameworks.\n")
+    console.log("   Claude Studio is designed for Next.js but may work with other React frameworks.\n")
   }
 
   // 2. Install Claude Code plugin
   console.log("\nStep 1: Claude Code Plugin\n")
 
-  const pluginDest = path.join(process.cwd(), ".canvas-code-plugin")
+  const pluginDest = path.join(process.cwd(), ".claude-studio-plugin")
   if (existsSync(pluginDest)) {
     console.log(`   Plugin already exists at ${pluginDest}`)
   } else {
@@ -43,7 +43,7 @@ export function runSetup() {
     console.log("\n   To install the plugin in Claude Code, run:")
     console.log(`   claude plugin install --source ${pluginDest}`)
     console.log("\n   Or add this repo as a marketplace:")
-    console.log(`   claude plugin install canvas-code@canvas-code`)
+    console.log(`   claude plugin install claude-studio@claude-studio`)
     console.log(`   (requires adding the marketplace: github.com/${GITHUB_REPO})`)
   } else {
     console.log("\n   [warn] Claude Code CLI not found.")
@@ -54,10 +54,10 @@ export function runSetup() {
   // 3. Create .env template for bridge server
   console.log("\nStep 2: Bridge Server Configuration\n")
 
-  const envPath = path.join(process.cwd(), ".env.canvas-code")
+  const envPath = path.join(process.cwd(), ".env.claude-studio")
   if (!existsSync(envPath)) {
     const envContent = [
-      "# Canvas Code Bridge Server Configuration",
+      "# Claude Studio Bridge Server Configuration",
       `PROJECT_DIR=${process.cwd()}`,
       "PORT=7281",
       "MODEL=sonnet",
@@ -88,10 +88,10 @@ export function runSetup() {
   console.log("   1. Start your Next.js dev server:")
   console.log("      pnpm dev  (or npm run dev)")
   console.log("")
-  console.log("   2. Start the Canvas Code bridge server:")
-  console.log("      npx claude-canvas-nextjs serve")
+  console.log("   2. Start the Claude Studio bridge server:")
+  console.log("      npx claude-studio serve")
   console.log("")
-  console.log("   3. Open your app in Chrome, click the Canvas Code extension icon")
+  console.log("   3. Open your app in Chrome, click the Claude Studio extension icon")
   console.log("   4. Select an element, describe what you want to change")
   console.log("   5. Claude Code makes the edit in your source code!\n")
 }

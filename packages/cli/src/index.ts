@@ -6,12 +6,12 @@ const command = process.argv[2]
 
 function printHelp() {
   console.log(`
-canvas-code — Visual AI coding assistant for Next.js
+claude-studio — Visual AI coding assistant for Next.js
 
 Usage:
-  canvas-code setup     Set up Canvas Code in your Next.js project
-  canvas-code serve     Start the bridge server
-  canvas-code help      Show this help message
+  claude-studio setup     Set up Claude Studio in your Next.js project
+  claude-studio serve     Start the bridge server
+  claude-studio help      Show this help message
 `)
 }
 
@@ -23,7 +23,7 @@ async function main() {
 
     case "serve": {
       const { existsSync, readFileSync } = await import("node:fs")
-      const envPath = process.cwd() + "/.env.canvas-code"
+      const envPath = process.cwd() + "/.env.claude-studio"
       if (existsSync(envPath)) {
         const lines = readFileSync(envPath, "utf-8").split("\n")
         for (const line of lines) {
@@ -38,7 +38,7 @@ async function main() {
           }
         }
       }
-      await import("@canvas-code/server")
+      await import("@claude-studio/server")
       break
     }
 

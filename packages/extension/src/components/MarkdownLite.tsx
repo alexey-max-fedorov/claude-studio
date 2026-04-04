@@ -36,6 +36,83 @@ function renderInline(text: string, keyBase: number): React.ReactNode[] {
   return nodes.length ? nodes : [<span key={keyBase}>{text}</span>]
 }
 
+function renderBlocks(text: string, startKey: number): React.ReactNode[] {
+  const nodes: React.ReactNode[] = []
+  const lines = text.split("\n")
+  let i = startKey
+  let listItems: { type: "ul" | "ol"; content: string; num?: string }[] = []
+
+  const flushList = () => {
+    if (listItems.length === 0) return
+    const type = listItems[0].type
+    nodes.push(
+      <div key={`list-${i++}`} style={{ paddingLeft: 16, margin: "4px 0" }}>
+        {listItems.map((item, idx) => (
+          <div key={idx} style={{ lineHeight: 1.6 }}>
+            <span style={{ color: "#c9a84c", marginRight: 6 }}>
+              {type === "ul" ? "\u2022" : `${item.num}.`}
+            </span>
+            {renderInline(item.content, i++)}
+          </div>
+        ))}
+      </div>
+    )
+    listItems = []
+  }
+
+  for (const line of lines) {
+    // Horizontal rule
+    if (/^---+$/.test(line.trim())) {
+      flushList()
+      nodes.push(<div key={`hr-${i++}`} style={{ borderBottom: "1px solid #1a1a1a", margin: "8px 0" }} />)
+      continue
+    }
+
+    // Headers
+    const headerMatch = line.match(/^(#{1,3})\s+(.+)/)
+    if (headerMatch) {
+      flushList()
+      const level = headerMatch[1].length
+      const sizes = [16, 14, 13]
+      nodes.push(
+        <div key={`h-${i++}`} style={{
+          fontSize: sizes[level - 1], fontWeight: 600, color: "#fff",
+          margin: "8px 0 4px 0",
+        }}>
+          {renderInline(headerMatch[2], i++)}
+        </div>
+      )
+      continue
+    }
+
+    // Bullet list
+    const bulletMatch = line.match(/^[-*]\s+(.+)/)
+    if (bulletMatch) {
+      if (listItems.length > 0 && listItems[0].type !== "ul") flushList()
+      listItems.push({ type: "ul", content: bulletMatch[1] })
+      continue
+    }
+
+    // Numbered list
+    const numMatch = line.match(/^(\d+)\.\s+(.+)/)
+    if (numMatch) {
+      if (listItems.length > 0 && listItems[0].type !== "ol") flushList()
+      listItems.push({ type: "ol", content: numMatch[2], num: numMatch[1] })
+      continue
+    }
+
+    // Regular text / empty line
+    flushList()
+    if (line.trim() === "") {
+      nodes.push(<div key={`br-${i++}`} style={{ height: 4 }} />)
+    } else {
+      nodes.push(<div key={`p-${i++}`} style={{ lineHeight: 1.6 }}>{renderInline(line, i++)}</div>)
+    }
+  }
+  flushList()
+  return nodes
+}
+
 export function MarkdownLite({ text }: { text: string }) {
   const nodes: React.ReactNode[] = []
   const codeBlockRegex = /```(\w*)\n?([\s\S]*?)```/g
@@ -45,7 +122,7 @@ export function MarkdownLite({ text }: { text: string }) {
 
   while ((match = codeBlockRegex.exec(text)) !== null) {
     if (match.index > last) {
-      nodes.push(...renderInline(text.slice(last, match.index), i++))
+      nodes.push(...renderBlocks(text.slice(last, match.index), i++))
     }
     nodes.push(
       <pre key={`cb-${i++}`} style={codeBlockStyle}>
@@ -55,7 +132,7 @@ export function MarkdownLite({ text }: { text: string }) {
     last = match.index + match[0].length
   }
   if (last < text.length) {
-    nodes.push(...renderInline(text.slice(last), i))
+    nodes.push(...renderBlocks(text.slice(last), i))
   }
   return <>{nodes}</>
 }

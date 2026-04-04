@@ -72,12 +72,12 @@ function StatusDot({ connected }: { connected: boolean }) {
   return (
     <span
       className={`inline-block w-2 h-2 rounded-full mr-2 ${
-        connected ? "bg-amber-400" : "bg-red-500"
+        connected ? "bg-amber-400" : "bg-gray-500"
       }`}
       style={{
         boxShadow: connected
           ? "0 0 6px 2px rgba(201, 168, 76, 0.8)"
-          : "0 0 6px 2px rgba(239, 68, 68, 0.8)",
+          : "0 0 6px 2px rgba(107, 114, 128, 0.8)",
       }}
     />
   )
@@ -176,11 +176,11 @@ export default function Home() {
         {/* Header */}
         <div className="mb-6">
           <p className="text-xs mb-1" style={{ color: "#7a6530" }}>
-            CLAUDE STUDIO // VISUAL EDITOR v1.0.0
+            CLAUDE STUDIO // VISUAL EDITOR
           </p>
           <h1 className="text-3xl font-bold tracking-widest" style={{ color: "#e8d5a3" }}>
             CLAUDE
-            <span style={{ color: "#c9a84c" }}> CANVAS</span>
+            <span style={{ color: "#c9a84c" }}> STUDIO</span>
           </h1>
           <p className="text-sm mt-1" style={{ color: "#7a6530" }}>
             AI-powered visual editing for Next.js
@@ -201,7 +201,7 @@ export default function Home() {
                 {serverUrl}
               </span>
               <span
-                className={`ml-3 text-xs font-bold ${wsConnected ? "" : "text-red-500"}`}
+                className={`ml-3 text-xs font-bold ${wsConnected ? "" : "text-gray-500"}`}
                 style={wsConnected ? { color: "#c9a84c" } : undefined}
               >
                 {wsConnected ? "ONLINE" : "OFFLINE"}
@@ -212,7 +212,7 @@ export default function Home() {
               <StatusDot connected={extDetected} />
               <span style={{ color: "#c9a84c" }}>Browser extension</span>
               <span
-                className={`ml-auto text-xs font-bold ${extDetected ? "" : "text-yellow-600"}`}
+                className={`ml-auto text-xs font-bold ${extDetected ? "" : "text-gray-500"}`}
                 style={extDetected ? { color: "#c9a84c" } : undefined}
               >
                 {extDetected ? "DETECTED" : "NOT FOUND"}

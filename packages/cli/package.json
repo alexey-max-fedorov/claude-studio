@@ -1,6 +1,6 @@
 {
   "name": "claude-studio",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Visual AI coding assistant for Next.js — installer and bridge server",
   "type": "module",
   "bin": {

@@ -32,6 +32,9 @@ chrome.runtime.onConnect.addListener((port) => {
       if (msg.type === "query_capabilities") {
         wsClient.send({ type: "query_capabilities" })
       }
+      if (msg.type === "query_models") {
+        wsClient.send({ type: "query_models" })
+      }
     })
 
     port.onDisconnect.addListener(() => {

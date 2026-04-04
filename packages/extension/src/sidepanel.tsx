@@ -6,6 +6,7 @@ import { SessionControls } from "./components/SessionControls"
 import { PromptInput } from "./components/PromptInput"
 import { SessionInfoBar, type SessionInfo } from "./components/SessionInfoBar"
 import type { SlashCommandInfo } from "./components/CommandAutocomplete"
+import { ModelSelector, type ModelInfo } from "./components/ModelSelector"
 
 function SidePanel() {
   const [connectionState, setConnectionState] = useState("disconnected")
@@ -13,6 +14,8 @@ function SidePanel() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null)
   const [commands, setCommands] = useState<SlashCommandInfo[]>([])
+  const [models, setModels] = useState<ModelInfo[]>([])
+  const [currentModel, setCurrentModel] = useState("")
   const portRef = useRef<chrome.runtime.Port | null>(null)
 
   useEffect(() => {
@@ -26,8 +29,8 @@ function SidePanel() {
           break
 
         case "connected":
-          // Server confirmed connection, request capabilities
           portRef.current?.postMessage({ type: "query_capabilities" })
+          portRef.current?.postMessage({ type: "query_models" })
           break
 
         case "ai_streaming":
@@ -62,8 +65,9 @@ function SidePanel() {
             ...prev,
             { role: "system" as const, content: `Done (${msg.turns} turns, $${(msg.cost || 0).toFixed(4)})`, timestamp: Date.now() },
           ])
-          // Re-request capabilities after first query (commands get cached server-side)
+          // Re-request capabilities and models after query (commands get cached server-side)
           portRef.current?.postMessage({ type: "query_capabilities" })
+          portRef.current?.postMessage({ type: "query_models" })
           break
 
         case "session_info":
@@ -80,6 +84,18 @@ function SidePanel() {
 
         case "capabilities":
           setCommands(msg.commands || [])
+          break
+
+        case "command_output":
+          setMessages((prev) => [
+            ...prev,
+            { role: "system" as const, content: msg.content, timestamp: Date.now() },
+          ])
+          break
+
+        case "available_models":
+          setModels(msg.models || [])
+          setCurrentModel(msg.current || "")
           break
 
         case "ai_error":
@@ -108,6 +124,11 @@ function SidePanel() {
         })
       }
     })
+  }
+
+  const handleModelSelect = (modelId: string) => {
+    setMessages((prev) => [...prev, { role: "user", content: `/model ${modelId}`, timestamp: Date.now() }])
+    portRef.current?.postMessage({ type: "raw_prompt", prompt: `/model ${modelId}` })
   }
 
   const handleSendPrompt = (prompt: string) => {
@@ -162,6 +183,14 @@ function SidePanel() {
           letterSpacing: "-0.02em",
         }}>Claude Studio</span>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {models.length > 0 && (
+            <ModelSelector
+              models={models}
+              current={currentModel}
+              onSelect={handleModelSelect}
+              disabled={isStreaming || connectionState !== "connected"}
+            />
+          )}
           <button
             className="cs-btn-outline"
             onClick={togglePicker}

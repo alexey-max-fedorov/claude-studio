@@ -27,6 +27,10 @@ function withLogging(clientId: string, callbacks: StreamCallbacks): StreamCallba
       log.error("AI", `[${clientId.slice(0, 8)}] Error: ${error}`)
       callbacks.onError(error)
     },
+    onCommandOutput(content) {
+      log.dim("AI", `[${clientId.slice(0, 8)}] Command output: ${content.slice(0, 100)}`)
+      callbacks.onCommandOutput(content)
+    },
   }
 }
 
@@ -54,6 +58,7 @@ function makeCallbacks(clientId: string, connections: ConnectionManager, claude:
       }
     },
     onError: (error) => connections.send(clientId, { type: "ai_error", error }),
+    onCommandOutput: (content) => connections.send(clientId, { type: "command_output", content }),
   }
 }
 
@@ -103,6 +108,16 @@ export function handleConnection(ws: WebSocket, connections: ConnectionManager, 
           connections.send(clientId, {
             type: "capabilities",
             commands: caps.commands,
+          })
+          break
+        }
+
+        case "query_models": {
+          const models = claude.getAvailableModels()
+          connections.send(clientId, {
+            type: "available_models",
+            models: models.models,
+            current: models.current,
           })
           break
         }

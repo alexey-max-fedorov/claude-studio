@@ -7,6 +7,7 @@ export type ClientMessage =
   | { type: "raw_prompt"; prompt: string }
   | { type: "reset_session" }
   | { type: "query_capabilities" }
+  | { type: "query_models" }
 
 // --- Server → Client ---
 export type ServerMessage =
@@ -22,6 +23,8 @@ export type ServerMessage =
   | { type: "session_info"; model: string; cumulativeCost: number; cumulativeInputTokens: number;
       cumulativeOutputTokens: number; turnCount: number }
   | { type: "capabilities"; commands: Array<{ name: string; description: string; argumentHint: string }> }
+  | { type: "command_output"; content: string }
+  | { type: "available_models"; models: Array<{ id: string; name: string }>; current: string }
 
 export function parseClientMessage(raw: string): ClientMessage {
   const msg = JSON.parse(raw)

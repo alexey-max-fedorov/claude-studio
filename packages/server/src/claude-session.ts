@@ -19,6 +19,7 @@ export interface StreamCallbacks {
   onToolUse: (tool: string, input: Record<string, unknown>) => void
   onComplete: (data: CompletionData) => void
   onError: (error: string) => void
+  onCommandOutput: (content: string) => void
 }
 
 interface SessionStats {
@@ -28,10 +29,38 @@ interface SessionStats {
   turnCount: number
 }
 
+const KNOWN_COMMANDS: Record<string, { description: string; argumentHint: string }> = {
+  model: { description: "Switch the AI model", argumentHint: "<model-name>" },
+  cost: { description: "Show session cost breakdown", argumentHint: "" },
+  compact: { description: "Compact conversation context", argumentHint: "[instructions]" },
+  config: { description: "View or update settings", argumentHint: "[key] [value]" },
+  doctor: { description: "Run diagnostic checks", argumentHint: "" },
+  memory: { description: "View or edit CLAUDE.md memory", argumentHint: "" },
+  clear: { description: "Clear conversation history", argumentHint: "" },
+  help: { description: "Show available commands", argumentHint: "" },
+  permissions: { description: "Manage tool permissions", argumentHint: "" },
+  vim: { description: "Toggle vim mode", argumentHint: "" },
+  bug: { description: "Report a bug", argumentHint: "" },
+  init: { description: "Initialize project memory", argumentHint: "" },
+  review: { description: "Review code changes", argumentHint: "" },
+  login: { description: "Authenticate with Anthropic", argumentHint: "" },
+  logout: { description: "Sign out", argumentHint: "" },
+  mcp: { description: "Manage MCP servers", argumentHint: "" },
+  "approved-tools": { description: "View approved tools", argumentHint: "" },
+  terminal: { description: "Set up terminal integration", argumentHint: "" },
+}
+
+const KNOWN_MODELS: Array<{ id: string; name: string }> = [
+  { id: "sonnet", name: "Sonnet" },
+  { id: "opus", name: "Opus" },
+  { id: "haiku", name: "Haiku" },
+]
+
 export class ClaudeSessionManager {
   private sessions = new Map<string, string>() // clientId → sessionId
   private sessionStats = new Map<string, SessionStats>()
   private cachedCommands: Array<{ name: string; description: string; argumentHint: string }> = []
+  private currentModel: string = config.model
 
   async executePrompt(
     clientId: string,
@@ -61,6 +90,10 @@ export class ClaudeSessionManager {
 
   getCapabilities(): { commands: Array<{ name: string; description: string; argumentHint: string }> } {
     return { commands: this.cachedCommands }
+  }
+
+  getAvailableModels(): { models: Array<{ id: string; name: string }>; current: string } {
+    return { models: KNOWN_MODELS, current: this.currentModel }
   }
 
   private async runQuery(
@@ -99,6 +132,16 @@ export class ClaudeSessionManager {
         if (msg.type === "system") {
           const sys = msg as any
           log.dim("AI", `[${clientId.slice(0, 8)}] System message: subtype=${sys.subtype}, model=${sys.model || "?"}, slash_commands=${Array.isArray(sys.slash_commands) ? sys.slash_commands.length : "none"}, skills=${Array.isArray(sys.skills) ? sys.skills.length : "none"}`)
+
+          if (sys.subtype === "local_command_output") {
+            callbacks.onCommandOutput(sys.content || "")
+          }
+
+          if (sys.subtype === "init") {
+            if (sys.model) {
+              this.currentModel = sys.model
+            }
+          }
           if (sys.subtype === "init" && this.cachedCommands.length === 0) {
             // Combine slash_commands and skills arrays
             const commands: string[] = []
@@ -111,8 +154,8 @@ export class ClaudeSessionManager {
             if (commands.length > 0) {
               this.cachedCommands = commands.map((name: string) => ({
                 name,
-                description: "",
-                argumentHint: "",
+                description: KNOWN_COMMANDS[name]?.description || "",
+                argumentHint: KNOWN_COMMANDS[name]?.argumentHint || "",
               }))
               log.dim("AI", `Cached ${this.cachedCommands.length} commands: ${commands.slice(0, 10).join(", ")}`)
             }

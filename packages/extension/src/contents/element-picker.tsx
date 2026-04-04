@@ -19,6 +19,33 @@ export const getStyle: PlasmoGetStyle = () => {
       transition: top 0.08s ease, left 0.08s ease, width 0.08s ease, height 0.08s ease;
       border-radius: 2px;
     }
+    .cc-highlight-selected {
+      position: fixed;
+      pointer-events: none;
+      border: 2px solid #c9a84c;
+      background: transparent;
+      z-index: 2147483646;
+      border-radius: 2px;
+    }
+    .cc-highlight-working {
+      position: fixed;
+      pointer-events: none;
+      z-index: 2147483646;
+      border-radius: 4px;
+      padding: 2px;
+      background: linear-gradient(90deg, #c9a84c 0%, #000 25%, #c9a84c 50%, #000 75%, #c9a84c 100%);
+      background-size: 200% 100%;
+      animation: cc-border-flow 1.5s linear infinite;
+      -webkit-mask:
+        linear-gradient(#fff 0 0) content-box,
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+    @keyframes cc-border-flow {
+      from { background-position: 0% 0%; }
+      to { background-position: -200% 0%; }
+    }
     .cc-tooltip {
       position: fixed;
       pointer-events: none;
@@ -42,12 +69,22 @@ export const getStyle: PlasmoGetStyle = () => {
 // We bridge to React via a custom window event.
 // ---------------------------------------------------------------------------
 const TOGGLE_EVENT = "__claude_studio_toggle_picker__"
+const WORKING_EVENT = "__claude_studio_highlight_working__"
+const CLEAR_EVENT = "__claude_studio_highlight_clear__"
 
-// 1. chrome.runtime.onMessage — receives from background / side panel
+// 1. chrome.runtime.onMessage — receives from background / side panel / other content scripts
 chrome.runtime.onMessage.addListener((message: any) => {
   if (message.action === "toggle-picker") {
     console.log("[Claude Studio] toggle-picker message received")
     window.dispatchEvent(new CustomEvent(TOGGLE_EVENT))
+  }
+  if (message.action === "highlight-working") {
+    console.log("[Claude Studio] highlight-working message received")
+    window.dispatchEvent(new CustomEvent(WORKING_EVENT))
+  }
+  if (message.action === "highlight-clear") {
+    console.log("[Claude Studio] highlight-clear message received")
+    window.dispatchEvent(new CustomEvent(CLEAR_EVENT))
   }
 })
 
@@ -67,30 +104,55 @@ console.log("[Claude Studio] element-picker content script loaded")
 
 // ---------------------------------------------------------------------------
 
+type PickerMode = "off" | "picking" | "selected" | "working"
+
 function ElementPicker() {
-  const [active, setActive] = useState(false)
+  const [mode, setMode] = useState<PickerMode>("off")
   const [highlight, setHighlight] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null)
+  const [selectedRect, setSelectedRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
   const hoveredRef = useRef<Element | null>(null)
 
-  // Subscribe to the module-level toggle event
+  // Subscribe to module-level events
   useEffect(() => {
     console.log("[Claude Studio] ElementPicker component mounted")
+
     const onToggle = () => {
       console.log("[Claude Studio] toggle event received by React")
-      setActive((prev) => !prev)
-    }
-    window.addEventListener(TOGGLE_EVENT, onToggle)
-    return () => window.removeEventListener(TOGGLE_EVENT, onToggle)
-  }, [])
-
-  useEffect(() => {
-    if (!active) {
+      setMode((prev) => prev === "off" ? "picking" : "off")
       setHighlight(null)
       setTooltip(null)
+      setSelectedRect(null)
       hoveredRef.current = null
-      return
     }
+
+    const onWorking = () => {
+      console.log("[Claude Studio] highlight-working event received")
+      setMode("working")
+    }
+
+    const onClear = () => {
+      console.log("[Claude Studio] highlight-clear event received")
+      setMode("off")
+      setHighlight(null)
+      setTooltip(null)
+      setSelectedRect(null)
+      hoveredRef.current = null
+    }
+
+    window.addEventListener(TOGGLE_EVENT, onToggle)
+    window.addEventListener(WORKING_EVENT, onWorking)
+    window.addEventListener(CLEAR_EVENT, onClear)
+    return () => {
+      window.removeEventListener(TOGGLE_EVENT, onToggle)
+      window.removeEventListener(WORKING_EVENT, onWorking)
+      window.removeEventListener(CLEAR_EVENT, onClear)
+    }
+  }, [])
+
+  // Picking mode — hover tracking and click to select
+  useEffect(() => {
+    if (mode !== "picking") return
 
     console.log("[Claude Studio] picker activated")
 
@@ -122,24 +184,36 @@ function ElementPicker() {
       if (!el || isExtensionEl(el)) return
 
       const selection = captureElement(el)
+      const rect = el.getBoundingClientRect()
+      const rectData = { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
+
+      console.log("[Claude Studio] element clicked, switching to selected mode", rectData)
+
+      // Switch to selected mode — keep highlight visible
+      setSelectedRect(rectData)
+      setHighlight(null)
+      setTooltip(null)
+      setMode("selected")
 
       sendToBackground({
         name: "element-selected",
         body: {
           selection,
           position: {
-            top: el.getBoundingClientRect().bottom + window.scrollY,
-            left: el.getBoundingClientRect().left + window.scrollX,
+            top: rect.bottom + window.scrollY,
+            left: rect.left + window.scrollX,
           },
         },
       })
-
-      // Deactivate picker so prompt widget buttons are clickable
-      setTimeout(() => setActive(false), 50)
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setActive(false)
+      if (e.key === "Escape") {
+        setMode("off")
+        setHighlight(null)
+        setTooltip(null)
+        setSelectedRect(null)
+      }
     }
 
     document.addEventListener("mousemove", onMouseMove, true)
@@ -150,22 +224,39 @@ function ElementPicker() {
       document.removeEventListener("click", onClick, true)
       document.removeEventListener("keydown", onKeyDown, true)
     }
-  }, [active])
+  }, [mode])
 
-  if (!active) return null
+  if (mode === "off") return null
 
   return (
     <>
-      {highlight && (
+      {/* Picking mode — hover highlight with fill */}
+      {mode === "picking" && highlight && (
         <div
           className="cc-highlight"
           style={{ top: highlight.top, left: highlight.left, width: highlight.width, height: highlight.height }}
         />
       )}
-      {tooltip && (
+      {mode === "picking" && tooltip && (
         <div className="cc-tooltip" style={{ top: tooltip.y, left: tooltip.x }}>
           {tooltip.text}
         </div>
+      )}
+
+      {/* Selected mode — solid gold outline, no fill */}
+      {mode === "selected" && selectedRect && (
+        <div
+          className="cc-highlight-selected"
+          style={{ top: selectedRect.top, left: selectedRect.left, width: selectedRect.width, height: selectedRect.height }}
+        />
+      )}
+
+      {/* Working mode — animated gradient outline */}
+      {mode === "working" && selectedRect && (
+        <div
+          className="cc-highlight-working"
+          style={{ top: selectedRect.top, left: selectedRect.left, width: selectedRect.width, height: selectedRect.height }}
+        />
       )}
     </>
   )

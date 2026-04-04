@@ -56,6 +56,17 @@ wsClient.onMessage((msg: any) => {
   connectedPorts.forEach((port) => {
     try { port.postMessage(msg) } catch {}
   })
+
+  // Clear element highlight when Claude finishes or errors
+  if (msg.type === "ai_complete" || msg.type === "ai_error") {
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "highlight-clear" }, () => {
+          void chrome.runtime.lastError
+        })
+      }
+    })
+  }
 })
 
 // Initialize with stored URL
@@ -68,6 +79,18 @@ getServerUrl().then((url) => {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "sync" && changes[STORAGE_KEY]) {
     reconnectWithUrl(changes[STORAGE_KEY].newValue as string)
+  }
+})
+
+// Relay highlight messages from prompt widget content script to element picker content script
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (message.action === "highlight-working" || message.action === "highlight-clear") {
+    const tabId = sender.tab?.id
+    if (tabId) {
+      chrome.tabs.sendMessage(tabId, message, () => {
+        void chrome.runtime.lastError
+      })
+    }
   }
 })
 

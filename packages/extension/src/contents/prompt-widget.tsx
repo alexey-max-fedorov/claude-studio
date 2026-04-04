@@ -154,6 +154,8 @@ function PromptWidget() {
           prompt: prompt.trim(),
         },
       })
+      // Signal element picker to show working animation
+      chrome.runtime.sendMessage({ action: "highlight-working" }).catch(() => {})
       setWidget(null)
       setToast(true)
       setTimeout(() => setToast(false), 2500)
@@ -163,6 +165,8 @@ function PromptWidget() {
   }
 
   const handleCancel = () => {
+    // Signal element picker to clear highlight
+    chrome.runtime.sendMessage({ action: "highlight-clear" }).catch(() => {})
     setWidget(null)
     setPrompt("")
   }

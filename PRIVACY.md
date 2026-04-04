@@ -4,7 +4,7 @@
 
 ## Data Collection
 
-By default, Claude Studio is designed to work with a bridge server running on your local machine. However, you are responsible for configuring where data is sent. Claude Studio itself does not collect, transmit, or store any personal data on servers controlled by the project maintainers.
+By default, Claude Studio is designed to work with a bridge server running on your local machine. However, you are responsible for configuring where data is sent. Claude Studio may transmit data to the server URL you configure, but the project maintainers do not collect or store personal data on servers they control.
 
 ## How It Works
 

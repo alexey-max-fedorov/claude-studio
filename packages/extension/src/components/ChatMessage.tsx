@@ -2,7 +2,7 @@ import React from "react"
 import { MarkdownLite } from "./MarkdownLite"
 
 export interface Message {
-  role: "user" | "assistant" | "tool" | "error" | "system"
+  role: "user" | "assistant" | "tool" | "error" | "system" | "command_output"
   content: string
   tool?: string
   timestamp: number
@@ -36,6 +36,20 @@ export function ChatMessage({ message }: { message: Message }) {
     return (
       <div style={{ padding: "4px 0", fontSize: 11, color: "#666", textAlign: "center" }}>
         {message.content}
+      </div>
+    )
+  }
+
+  if (message.role === "command_output") {
+    return (
+      <div style={{
+        padding: "10px 14px", fontSize: 13, color: "#a0a0a0",
+        background: "#0a0a0a", border: "1px solid #1a1a1a",
+        borderRadius: 8, alignSelf: "flex-start" as const,
+        maxWidth: "90%", lineHeight: 1.5,
+        overflowWrap: "anywhere" as const,
+      }}>
+        <MarkdownLite text={message.content} />
       </div>
     )
   }

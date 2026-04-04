@@ -101,15 +101,21 @@ export class ClaudeSessionManager {
     prompt: string,
     callbacks: StreamCallbacks,
   ): Promise<void> {
+    const existingSession = this.sessions.get(clientId)
+
     const options: Record<string, unknown> = {
       allowedTools: ["Read", "Edit", "MultiEdit", "Glob", "Grep", "Bash"],
       permissionMode: "acceptEdits",
       cwd: config.projectDir,
-      model: config.model,
       maxTurns: config.maxTurns,
     }
 
-    const existingSession = this.sessions.get(clientId)
+    // Only set model for new sessions — resuming sessions inherit the model
+    // (which /model may have changed)
+    if (!existingSession) {
+      options.model = config.model
+    }
+
     if (existingSession) {
       options.resume = existingSession
     }

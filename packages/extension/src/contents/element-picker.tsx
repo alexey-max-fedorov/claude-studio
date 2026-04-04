@@ -94,8 +94,12 @@ function ElementPicker() {
 
     console.log("[Claude Studio] picker activated")
 
-    const isExtensionEl = (el: Element) =>
-      el.tagName.toLowerCase().startsWith("plasmo-")
+    const isExtensionEl = (el: Element) => {
+      const tag = el.tagName.toLowerCase()
+      return tag.startsWith("plasmo-") ||
+        tag.startsWith("nextjs-") ||
+        el.closest("nextjs-portal") !== null
+    }
 
     const onMouseMove = (e: MouseEvent) => {
       const el = document.elementFromPoint(e.clientX, e.clientY)

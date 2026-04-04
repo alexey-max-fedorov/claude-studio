@@ -8,6 +8,9 @@ import { SessionInfoBar, type SessionInfo } from "./components/SessionInfoBar"
 import type { SlashCommandInfo } from "./components/CommandAutocomplete"
 import { ModelSelector, type ModelInfo } from "./components/ModelSelector"
 
+const STORAGE_KEY_MESSAGES = "cs_messages"
+const STORAGE_KEY_SESSION_INFO = "cs_session_info"
+
 function SidePanel() {
   const [connectionState, setConnectionState] = useState("disconnected")
   const [messages, setMessages] = useState<Message[]>([])
@@ -17,6 +20,31 @@ function SidePanel() {
   const [models, setModels] = useState<ModelInfo[]>([])
   const [currentModel, setCurrentModel] = useState("")
   const portRef = useRef<chrome.runtime.Port | null>(null)
+  const restoredRef = useRef(false)
+
+  // Restore persisted state on mount
+  useEffect(() => {
+    chrome.storage.local.get([STORAGE_KEY_MESSAGES, STORAGE_KEY_SESSION_INFO], (result) => {
+      if (result[STORAGE_KEY_MESSAGES]?.length) {
+        setMessages(result[STORAGE_KEY_MESSAGES])
+      }
+      if (result[STORAGE_KEY_SESSION_INFO]) {
+        setSessionInfo(result[STORAGE_KEY_SESSION_INFO])
+      }
+      restoredRef.current = true
+    })
+  }, [])
+
+  // Persist messages and sessionInfo on change
+  useEffect(() => {
+    if (!restoredRef.current) return
+    chrome.storage.local.set({ [STORAGE_KEY_MESSAGES]: messages })
+  }, [messages])
+
+  useEffect(() => {
+    if (!restoredRef.current) return
+    chrome.storage.local.set({ [STORAGE_KEY_SESSION_INFO]: sessionInfo })
+  }, [sessionInfo])
 
   useEffect(() => {
     const port = chrome.runtime.connect({ name: "stream" })
@@ -89,7 +117,7 @@ function SidePanel() {
         case "command_output":
           setMessages((prev) => [
             ...prev,
-            { role: "system" as const, content: msg.content, timestamp: Date.now() },
+            { role: "command_output" as const, content: msg.content, timestamp: Date.now() },
           ])
           break
 
@@ -229,7 +257,11 @@ function SidePanel() {
         commands={commands}
       />
 
-      <SessionControls onClearChat={() => { setMessages([]); setSessionInfo(null) }} />
+      <SessionControls onClearChat={() => {
+        setMessages([])
+        setSessionInfo(null)
+        chrome.storage.local.remove([STORAGE_KEY_MESSAGES, STORAGE_KEY_SESSION_INFO])
+      }} />
     </div>
   )
 }

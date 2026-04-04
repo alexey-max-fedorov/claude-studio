@@ -1,0 +1,35 @@
+SHORT DESCRIPTION (132 chars max):
+Visual AI coding assistant — select elements on any page, describe changes, Claude Code executes them in your codebase.
+
+FULL DESCRIPTION:
+
+Claude Studio turns your browser into a visual coding interface. Select any element on a webpage, describe what you want to change in plain English, and Claude Code makes it happen in your source code.
+
+HOW IT WORKS
+
+1. Click the element picker (Ctrl+Shift+E or Hold Shift) to highlight elements on any page
+2. Click an element to select it — Claude Studio captures its CSS selector, styles, and structure
+3. Describe your change: "make this button larger" or "change the background to dark blue"
+4. Claude Code finds the right source file and makes the edit
+
+FEATURES
+
+- Element Picker: Gold highlight overlay shows exactly what you're selecting. Two activation modes: keyboard shortcut toggle or hold-shift for quick picks.
+- Side Panel Chat: Full conversation interface with Claude Code. Run slash commands (/model, /cost, /context), see streaming responses with markdown rendering.
+- Smart Element Capture: Generates robust CSS selectors, captures computed styles, parent chain, and element metadata for precise edits.
+- Model Switching: Switch between Sonnet, Opus, and Haiku directly from the sidebar dropdown.
+- Session Persistence: Chat history and session state survive sidebar reloads.
+- Cost Tracking: See token usage and cost per turn in the session info bar.
+
+REQUIREMENTS
+
+Claude Studio requires a local bridge server running on your machine. Install via npm:
+
+  npx claude-studio setup
+  npx claude-studio serve
+
+The bridge server connects to Claude Code (Anthropic's CLI tool) which must be installed and authenticated. Claude Studio only communicates with localhost — no data leaves your machine.
+
+PRIVACY
+
+No analytics. No telemetry. No external servers. All data stays on your machine. See our full privacy policy on GitHub.

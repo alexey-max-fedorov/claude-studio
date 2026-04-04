@@ -75,10 +75,22 @@ getServerUrl().then((url) => {
   wsClient.connect()
 })
 
-// Reconnect when user changes the server URL
+// Reconnect when user changes the server URL; broadcast picker mode changes to all tabs
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "sync" && changes[STORAGE_KEY]) {
     reconnectWithUrl(changes[STORAGE_KEY].newValue as string)
+  }
+  if (area === "sync" && changes["pickerMode"]) {
+    const mode = changes["pickerMode"].newValue
+    chrome.tabs.query({}, (tabs) => {
+      for (const tab of tabs) {
+        if (tab.id) {
+          chrome.tabs.sendMessage(tab.id, { action: "picker-mode-changed", mode }, () => {
+            void chrome.runtime.lastError
+          })
+        }
+      }
+    })
   }
 })
 

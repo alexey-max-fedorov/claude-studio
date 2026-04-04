@@ -71,36 +71,58 @@ export const getStyle: PlasmoGetStyle = () => {
 const TOGGLE_EVENT = "__claude_studio_toggle_picker__"
 const WORKING_EVENT = "__claude_studio_highlight_working__"
 const CLEAR_EVENT = "__claude_studio_highlight_clear__"
+const TEXTAREA_FOCUS_EVENT = "__claude_studio_textarea_focus__"
+
+// Picker activation mode: "toggle" (Ctrl+Shift+E) or "hold" (Hold Shift)
+let pickerMode: "toggle" | "hold" = "toggle"
+let textareaFocused = false
+
+// Load saved picker mode
+chrome.storage.sync.get("pickerMode", (result) => {
+  if (result.pickerMode) pickerMode = result.pickerMode
+})
+
+// Track textarea focus from prompt widget (suppresses shift-hold in textarea)
+window.addEventListener(TEXTAREA_FOCUS_EVENT, ((e: CustomEvent) => {
+  textareaFocused = e.detail.focused
+}) as EventListener)
 
 // 1. chrome.runtime.onMessage — receives from background / side panel / other content scripts
 chrome.runtime.onMessage.addListener((message: any) => {
   if (message.action === "toggle-picker") {
-    console.log("[Claude Studio] toggle-picker message received")
     window.dispatchEvent(new CustomEvent(TOGGLE_EVENT))
   }
   if (message.action === "highlight-working") {
-    console.log("[Claude Studio] highlight-working message received")
     window.dispatchEvent(new CustomEvent(WORKING_EVENT))
   }
   if (message.action === "highlight-clear") {
-    console.log("[Claude Studio] highlight-clear message received")
     window.dispatchEvent(new CustomEvent(CLEAR_EVENT))
+  }
+  if (message.action === "picker-mode-changed") {
+    pickerMode = message.mode
   }
 })
 
-// 2. Direct keyboard shortcut — catches Ctrl+Shift+E in the page even if
-//    chrome.commands doesn't deliver it. Note: Chrome may intercept this
-//    for the registered command, in which case the background handler fires
-//    instead and sends a message that hits listener #1 above.
+// 2. Direct keyboard shortcut — Ctrl+Shift+E toggle (works in both modes)
 document.addEventListener("keydown", (e: KeyboardEvent) => {
   if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "E" || e.key === "e")) {
     e.preventDefault()
-    console.log("[Claude Studio] Ctrl+Shift+E caught directly")
     window.dispatchEvent(new CustomEvent(TOGGLE_EVENT))
   }
 }, true)
 
-console.log("[Claude Studio] element-picker content script loaded")
+// 3. Hold Shift mode — activate picker on shift press, deactivate on release
+document.addEventListener("keydown", (e: KeyboardEvent) => {
+  if (pickerMode === "hold" && e.key === "Shift" && !e.ctrlKey && !e.metaKey && !e.altKey && !textareaFocused) {
+    window.dispatchEvent(new CustomEvent(TOGGLE_EVENT, { detail: "activate" }))
+  }
+}, true)
+
+document.addEventListener("keyup", (e: KeyboardEvent) => {
+  if (pickerMode === "hold" && e.key === "Shift") {
+    window.dispatchEvent(new CustomEvent(TOGGLE_EVENT, { detail: "deactivate" }))
+  }
+}, true)
 
 // ---------------------------------------------------------------------------
 
@@ -115,24 +137,31 @@ function ElementPicker() {
 
   // Subscribe to module-level events
   useEffect(() => {
-    console.log("[Claude Studio] ElementPicker component mounted")
-
-    const onToggle = () => {
-      console.log("[Claude Studio] toggle event received by React")
-      setMode((prev) => prev === "off" ? "picking" : "off")
-      setHighlight(null)
-      setTooltip(null)
-      setSelectedRect(null)
-      hoveredRef.current = null
+    const onToggle = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      if (detail === "activate") {
+        setMode("picking")
+      } else if (detail === "deactivate") {
+        setMode("off")
+        setHighlight(null)
+        setTooltip(null)
+        setSelectedRect(null)
+        hoveredRef.current = null
+      } else {
+        // Original toggle behavior (Ctrl+Shift+E or chrome.commands)
+        setMode((prev) => prev === "off" ? "picking" : "off")
+        setHighlight(null)
+        setTooltip(null)
+        setSelectedRect(null)
+        hoveredRef.current = null
+      }
     }
 
     const onWorking = () => {
-      console.log("[Claude Studio] highlight-working event received")
       setMode("working")
     }
 
     const onClear = () => {
-      console.log("[Claude Studio] highlight-clear event received")
       setMode("off")
       setHighlight(null)
       setTooltip(null)
@@ -153,8 +182,6 @@ function ElementPicker() {
   // Picking mode — hover tracking and click to select
   useEffect(() => {
     if (mode !== "picking") return
-
-    console.log("[Claude Studio] picker activated")
 
     const isExtensionEl = (el: Element) => {
       const tag = el.tagName.toLowerCase()
@@ -186,8 +213,6 @@ function ElementPicker() {
       const selection = captureElement(el)
       const rect = el.getBoundingClientRect()
       const rectData = { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
-
-      console.log("[Claude Studio] element clicked, switching to selected mode", rectData)
 
       // Switch to selected mode — keep highlight visible
       setSelectedRect(rectData)

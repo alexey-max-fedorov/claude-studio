@@ -3,15 +3,18 @@ import { sendToBackground } from "@plasmohq/messaging"
 
 const DEFAULT_URL = "ws://localhost:7281"
 const STORAGE_KEY = "serverUrl"
+const PICKER_MODE_KEY = "pickerMode"
 
 function Popup() {
   const [status, setStatus] = useState<"unknown" | "connected" | "disconnected">("unknown")
   const [serverUrl, setServerUrl] = useState(DEFAULT_URL)
   const [saved, setSaved] = useState(false)
+  const [pickerMode, setPickerMode] = useState<"toggle" | "hold">("toggle")
 
   useEffect(() => {
-    chrome.storage.sync.get(STORAGE_KEY, (result) => {
+    chrome.storage.sync.get([STORAGE_KEY, PICKER_MODE_KEY], (result) => {
       if (result[STORAGE_KEY]) setServerUrl(result[STORAGE_KEY] as string)
+      if (result[PICKER_MODE_KEY]) setPickerMode(result[PICKER_MODE_KEY] as "toggle" | "hold")
     })
   }, [])
 
@@ -105,6 +108,34 @@ function Popup() {
         </button>
       </div>
 
+      <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #1a1a1a" }}>
+        <label style={{
+          fontSize: 11, color: "#a0a0a0", display: "block", marginBottom: 8,
+          textTransform: "uppercase" as const, letterSpacing: "0.05em", fontWeight: 500,
+        }}>Picker Activation</label>
+        <div style={{ display: "flex", gap: 6 }}>
+          {(["toggle", "hold"] as const).map((mode) => (
+            <button
+              key={mode}
+              className={pickerMode === mode ? "" : "cs-btn-ghost"}
+              onClick={() => {
+                setPickerMode(mode)
+                chrome.storage.sync.set({ [PICKER_MODE_KEY]: mode })
+              }}
+              style={{
+                flex: 1, padding: "8px 0", fontSize: 11, fontWeight: 600, cursor: "pointer",
+                borderRadius: 6, transition: "all 200ms",
+                background: pickerMode === mode ? "rgba(201,168,76,0.15)" : "transparent",
+                color: pickerMode === mode ? "#c9a84c" : "#a0a0a0",
+                border: pickerMode === mode ? "1px solid rgba(201,168,76,0.3)" : "1px solid #1a1a1a",
+              }}
+            >
+              {mode === "toggle" ? "Ctrl+Shift+E" : "Hold Shift"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div style={{
         marginTop: 12, display: "flex", alignItems: "center", gap: 8,
         paddingTop: 12, borderTop: "1px solid #1a1a1a",
@@ -138,7 +169,7 @@ function Popup() {
         Test Connection
       </button>
       <p style={{ fontSize: 11, color: "#666", marginTop: 10, marginBottom: 0, textAlign: "center" as const }}>
-        Ctrl+Shift+E to activate picker
+        {pickerMode === "hold" ? "Hold Shift to activate picker" : "Ctrl+Shift+E to activate picker"}
       </p>
     </div>
   )

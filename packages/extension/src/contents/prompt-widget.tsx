@@ -206,6 +206,8 @@ function PromptWidget() {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={() => window.dispatchEvent(new CustomEvent("__claude_studio_textarea_focus__", { detail: { focused: true } }))}
+          onBlur={() => window.dispatchEvent(new CustomEvent("__claude_studio_textarea_focus__", { detail: { focused: false } }))}
         />
         <div className="cc-actions">
           <button className="cc-btn cc-btn-cancel" onClick={handleCancel}>Cancel</button>

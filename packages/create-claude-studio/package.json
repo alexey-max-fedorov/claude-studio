@@ -1,6 +1,6 @@
 {
   "name": "create-claude-studio",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "Scaffold a Claude Studio–enabled Next.js project",
   "type": "module",
   "bin": {

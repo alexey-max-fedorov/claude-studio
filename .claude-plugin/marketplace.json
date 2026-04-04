@@ -8,12 +8,12 @@
   "metadata": {
     "description": "Claude Studio plugin marketplace",
     "homepage": "https://github.com/alexey-max-fedorov/claude-studio",
-    "version": "1.0.0"
+    "version": "1.0.4"
   },
   "plugins": [
     {
       "name": "claude-studio",
-      "version": "1.0.0",
+      "version": "1.0.4",
       "source": "./packages/plugin",
       "description": "Optimizes Claude Code for visual element editing workflows — adds visual-edit skill and post-edit auto-formatting hook"
     }

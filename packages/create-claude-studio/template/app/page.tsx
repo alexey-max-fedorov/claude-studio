@@ -176,7 +176,7 @@ export default function Home() {
         {/* Header */}
         <div className="mb-6">
           <p className="text-xs mb-1" style={{ color: "#7a6530" }}>
-            CLAUDE STUDIO // VISUAL EDITOR v1.0.4
+            CLAUDE STUDIO // VISUAL EDITOR
           </p>
           <h1 className="text-3xl font-bold tracking-widest" style={{ color: "#e8d5a3" }}>
             CLAUDE

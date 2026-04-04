@@ -6,6 +6,7 @@ import { ConnectionManager } from "./connection-manager.js"
 import { ClaudeSessionManager } from "./claude-session.js"
 import { handleConnection } from "./ws-handler.js"
 import { log } from "./logger.js"
+import { logClaudeEnvironment } from "./env-check.js"
 
 const app = express()
 const server = createServer(app)
@@ -26,4 +27,5 @@ server.listen(config.port, () => {
   log.dim("SRV", `Health: http://localhost:${config.port}/health`)
   log.dim("SRV", `WebSocket: ws://localhost:${config.port}`)
   log.dim("SRV", `Project: ${config.projectDir}`)
+  logClaudeEnvironment()
 })

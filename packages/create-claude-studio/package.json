@@ -1,0 +1,25 @@
+{
+  "name": "create-claude-studio",
+  "version": "1.0.0",
+  "description": "Scaffold a Claude Studio–enabled Next.js project",
+  "type": "module",
+  "bin": {
+    "create-claude-studio": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "template"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": ["claude", "nextjs", "create", "scaffold", "ai", "visual-editing"],
+  "license": "MIT",
+  "publishConfig": { "access": "public" }
+}

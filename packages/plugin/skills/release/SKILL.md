@@ -12,11 +12,11 @@ Handles the full release cycle: version bumps across all packages, extension ZIP
 Packages must be published in dependency order — a downstream package must reference the already-published version of its upstream:
 
 ```
-@claude-studio/shared (0.x.x)   ← no internal deps
+@claude-studio/shared (1.x.x)   ← no internal deps
        ↓
-@claude-studio/server (0.x.x)   ← depends on shared
+@claude-studio/server (1.x.x)   ← depends on shared
        ↓
-claude-studio (CLI) (0.x.x)     ← depends on server + shared
+claude-studio (CLI) (1.x.x)     ← depends on server + shared
 ```
 
 The extension (`@claude-studio/extension`) is NOT published to npm — it ships as a ZIP for the Chrome Web Store.

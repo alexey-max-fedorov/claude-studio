@@ -25,8 +25,8 @@ REQUIREMENTS
 
 Claude Studio requires a local bridge server running on your machine. Install via npm:
 
-  npx claude-studio setup
-  npx claude-studio serve
+  pnpm dlx claude-studio setup   # or: npx claude-studio setup
+  pnpm dlx claude-studio serve   # or: npx claude-studio serve
 
 The bridge server connects to Claude Code (Anthropic's CLI tool) which must be installed and authenticated. Claude Studio only communicates with localhost — no data leaves your machine.
 

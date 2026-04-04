@@ -92,7 +92,7 @@ Next steps:
      pnpm dev
 
   3. In a separate terminal, start the Claude Studio bridge server:
-     npx claude-studio serve
+     pnpm dlx claude-studio serve   # or: npx claude-studio serve
 
   4. Open http://localhost:3000 in your browser and click the extension icon.
 

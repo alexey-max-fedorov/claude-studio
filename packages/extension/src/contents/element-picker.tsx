@@ -73,6 +73,9 @@ const WORKING_EVENT = "__claude_studio_highlight_working__"
 const CLEAR_EVENT = "__claude_studio_highlight_clear__"
 const TEXTAREA_FOCUS_EVENT = "__claude_studio_textarea_focus__"
 
+// Mark extension presence so host pages can detect us
+document.documentElement.setAttribute("data-claude-studio-ext", "true")
+
 // Picker activation mode: "toggle" (Ctrl+Shift+E) or "hold" (Hold Shift)
 let pickerMode: "toggle" | "hold" = "toggle"
 let textareaFocused = false

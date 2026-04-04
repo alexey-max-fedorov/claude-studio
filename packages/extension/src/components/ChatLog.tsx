@@ -14,7 +14,7 @@ export function ChatLog({ messages }: { messages: Message[] }) {
       gap: 8, padding: "8px 12px",
     }}>
       {messages.length === 0 && (
-        <div style={{ textAlign: "center", color: "#4b5563", fontSize: 13, marginTop: 40 }}>
+        <div style={{ textAlign: "center", color: "#666", fontSize: 13, marginTop: 40 }}>
           Select an element on the page and describe a change.
         </div>
       )}

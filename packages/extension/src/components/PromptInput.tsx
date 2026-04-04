@@ -23,13 +23,16 @@ export function PromptInput({ onSubmit, disabled }: PromptInputProps) {
     }
   }
 
+  const canSend = value.trim() && !disabled
+
   return (
     <div style={{
-      padding: "8px 16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+      padding: "10px 16px", borderTop: "1px solid #1a1a1a",
       display: "flex", gap: 8, alignItems: "flex-end",
     }}>
       <textarea
         ref={inputRef}
+        className="cs-prompt-input"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
@@ -37,21 +40,24 @@ export function PromptInput({ onSubmit, disabled }: PromptInputProps) {
         disabled={disabled}
         rows={1}
         style={{
-          flex: 1, padding: "6px 10px", background: "rgba(255, 255, 255, 0.06)",
-          color: "#fff", border: "1px solid rgba(255, 255, 255, 0.1)",
-          borderRadius: 6, fontSize: 13, fontFamily: "inherit",
-          resize: "none", outline: "none", lineHeight: 1.4,
+          flex: 1, padding: "10px 12px", background: "#111",
+          color: "#fff", border: "1px solid #1a1a1a",
+          borderRadius: 8, fontSize: 13, fontFamily: "inherit",
+          resize: "none", outline: "none", lineHeight: 1.5,
+          transition: "all 200ms",
         }}
       />
       <button
         onClick={handleSubmit}
-        disabled={!value.trim() || disabled}
+        disabled={!canSend}
         style={{
-          padding: "6px 12px", background: value.trim() && !disabled ? "#c9a84c" : "rgba(255, 255, 255, 0.06)",
-          color: value.trim() && !disabled ? "#0a0f1a" : "#6b7280",
-          border: "none", borderRadius: 6, fontSize: 12,
-          cursor: value.trim() && !disabled ? "pointer" : "default",
-          fontWeight: 600,
+          padding: "10px 14px",
+          background: canSend ? "#c9a84c" : "#111",
+          color: canSend ? "#000" : "#666",
+          border: canSend ? "none" : "1px solid #1a1a1a",
+          borderRadius: 6, fontSize: 12,
+          cursor: canSend ? "pointer" : "default",
+          fontWeight: 600, transition: "all 200ms",
         }}
       >
         Send

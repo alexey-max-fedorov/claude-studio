@@ -23,14 +23,14 @@ export const getStyle: PlasmoGetStyle = () => {
       position: fixed;
       pointer-events: none;
       z-index: 2147483647;
-      background: #0a0f1a;
+      background: #000;
       color: #c9a84c;
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 11px;
       font-family: ui-monospace, monospace;
       white-space: nowrap;
-      border: 1px solid rgba(201, 168, 76, 0.3);
+      border: 1px solid rgba(201, 168, 76, 0.25);
     }
   `
   return style
@@ -129,6 +129,9 @@ function ElementPicker() {
           },
         },
       })
+
+      // Deactivate picker so prompt widget buttons are clickable
+      setTimeout(() => setActive(false), 50)
     }
 
     const onKeyDown = (e: KeyboardEvent) => {

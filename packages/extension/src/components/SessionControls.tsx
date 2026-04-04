@@ -9,15 +9,17 @@ export function SessionControls({ onClearChat }: { onClearChat: () => void }) {
 
   return (
     <div style={{
-      padding: "8px 16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+      padding: "10px 16px", borderTop: "1px solid #1a1a1a",
       display: "flex", gap: 8,
     }}>
       <button
+        className="cs-btn-session"
         onClick={handleNewSession}
         style={{
-          flex: 1, padding: "6px 0", background: "rgba(255, 255, 255, 0.06)",
-          color: "#9ca3af", border: "1px solid rgba(255, 255, 255, 0.1)",
+          flex: 1, padding: "8px 0", background: "transparent",
+          color: "#a0a0a0", border: "1px solid #1a1a1a",
           borderRadius: 6, fontSize: 12, cursor: "pointer",
+          fontWeight: 500, transition: "all 200ms",
         }}
       >
         New Session

@@ -10,6 +10,7 @@ export const config: PlasmoCSConfig = {
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style")
   style.textContent = `
+    ::selection { background: rgba(201,168,76,0.3); color: #fff; }
     .cc-prompt-overlay {
       position: fixed; inset: 0; z-index: 2147483646;
     }
@@ -17,12 +18,12 @@ export const getStyle: PlasmoGetStyle = () => {
       position: absolute;
       z-index: 2147483647;
       width: 380px;
-      background: rgba(10, 15, 26, 0.95);
+      background: rgba(0, 0, 0, 0.95);
       backdrop-filter: blur(12px);
-      border: 1px solid rgba(201, 168, 76, 0.3);
+      border: 1px solid rgba(201, 168, 76, 0.25);
       border-radius: 12px;
       padding: 12px;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       animation: cc-widget-appear 0.15s ease;
     }
@@ -46,8 +47,8 @@ export const getStyle: PlasmoGetStyle = () => {
     }
     .cc-prompt-input {
       width: 100%;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #111;
+      border: 1px solid #1a1a1a;
       border-radius: 8px;
       padding: 10px 12px;
       color: #fff;
@@ -57,12 +58,14 @@ export const getStyle: PlasmoGetStyle = () => {
       outline: none;
       min-height: 60px;
       box-sizing: border-box;
+      transition: all 200ms;
     }
     .cc-prompt-input:focus {
-      border-color: rgba(201, 168, 76, 0.5);
+      border-color: #c9a84c;
+      box-shadow: 0 0 0 1px rgba(201,168,76,0.3);
     }
     .cc-prompt-input::placeholder {
-      color: #6b7280;
+      color: #666;
     }
     .cc-actions {
       display: flex;
@@ -76,31 +79,35 @@ export const getStyle: PlasmoGetStyle = () => {
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      border: none;
+      transition: all 200ms;
     }
     .cc-btn-submit {
       background: #c9a84c;
-      color: #0a0f1a;
+      color: #000;
+      border: none;
     }
-    .cc-btn-submit:hover { background: #d4af37; }
+    .cc-btn-submit:hover { background: #d4b65e; box-shadow: 0 0 24px rgba(201,168,76,0.4); }
+    .cc-btn-submit:active { transform: scale(0.98); }
     .cc-btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
     .cc-btn-cancel {
-      background: rgba(255, 255, 255, 0.08);
-      color: #9ca3af;
+      background: transparent;
+      color: #a0a0a0;
+      border: 1px solid #1a1a1a;
     }
-    .cc-btn-cancel:hover { background: rgba(255, 255, 255, 0.12); }
+    .cc-btn-cancel:hover { background: #1a1a1a; color: #fff; }
+    .cc-btn-cancel:active { transform: scale(0.98); }
     .cc-toast {
       position: fixed;
       bottom: 24px;
       right: 24px;
       z-index: 2147483647;
-      background: rgba(10, 15, 26, 0.95);
+      background: rgba(0, 0, 0, 0.95);
       color: #c9a84c;
       padding: 10px 16px;
       border-radius: 8px;
       font-size: 13px;
-      font-family: system-ui;
-      border: 1px solid rgba(201, 168, 76, 0.3);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      border: 1px solid rgba(201, 168, 76, 0.25);
       animation: cc-fade-in 0.2s ease;
     }
     @keyframes cc-fade-in {

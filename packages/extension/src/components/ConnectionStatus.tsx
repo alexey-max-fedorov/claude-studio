@@ -7,7 +7,7 @@ export function ConnectionStatus({ state }: { state: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
       <div style={{ width: 6, height: 6, borderRadius: "50%", background: color }} />
-      <span style={{ fontSize: 11, color: "#9ca3af" }}>{label}</span>
+      <span style={{ fontSize: 11, color: "#a0a0a0" }}>{label}</span>
     </div>
   )
 }

@@ -83,10 +83,23 @@ function SidePanel() {
   return (
     <div style={{
       width: "100%", height: "100vh", display: "flex", flexDirection: "column",
-      background: "#0a0f1a", color: "#fff", fontFamily: "system-ui, -apple-system, sans-serif",
+      background: "#000", color: "#fff",
+      fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
     }}>
       <style>{`
-        body { margin: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap');
+        body { margin: 0; background: #000; }
+        * { box-sizing: border-box; }
+        ::selection { background: rgba(201,168,76,0.3); color: #fff; }
+        :focus-visible { outline: 2px solid #c9a84c; outline-offset: 2px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c9a84c; }
+        .cs-prompt-input:focus { border-color: #c9a84c !important; box-shadow: 0 0 0 1px rgba(201,168,76,0.3); }
+        .cs-btn-session:hover { background: #1a1a1a !important; color: #fff !important; }
+        .cs-btn-outline:hover { background: rgba(201,168,76,0.08) !important; box-shadow: 0 0 16px rgba(201,168,76,0.2); }
+        .cs-btn-outline:active { transform: scale(0.98); }
         @keyframes cc-pulse {
           0%, 100% { opacity: 0.4; }
           50% { opacity: 1; }
@@ -103,18 +116,25 @@ function SidePanel() {
         .cc-working-dot:nth-child(2) { animation: cc-pulse 1.2s ease infinite 0.2s; }
         .cc-working-dot:nth-child(3) { animation: cc-pulse 1.2s ease infinite 0.4s; }
       `}</style>
+
       <div style={{
-        padding: "12px 16px", borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
+        padding: "14px 16px", borderBottom: "1px solid #1a1a1a",
         display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: "#c9a84c" }}>Claude Studio</span>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{
+          fontSize: 17, fontWeight: 700, color: "#c9a84c",
+          fontFamily: '"Playfair Display", Georgia, serif',
+          letterSpacing: "-0.02em",
+        }}>Claude Studio</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
+            className="cs-btn-outline"
             onClick={togglePicker}
             title="Toggle element picker (Ctrl+Shift+E)"
             style={{
-              background: "none", border: "1px solid rgba(201,168,76,0.4)", borderRadius: 4,
-              color: "#c9a84c", cursor: "pointer", fontSize: 11, padding: "3px 8px",
+              background: "transparent", border: "1px solid #c9a84c", borderRadius: 6,
+              color: "#c9a84c", cursor: "pointer", fontSize: 11, padding: "4px 10px",
+              fontWeight: 600, transition: "all 200ms",
             }}
           >
             Pick
@@ -127,7 +147,7 @@ function SidePanel() {
 
       {isStreaming && (
         <div style={{
-          padding: "8px 16px", borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+          padding: "10px 16px", borderTop: "1px solid #1a1a1a",
           fontSize: 12, color: "#c9a84c",
         }}>
           <span style={{ marginRight: 8 }}>Claude is working</span>

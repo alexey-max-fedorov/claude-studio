@@ -144,15 +144,6 @@ function SidePanel() {
     }
   }, [])
 
-  const togglePicker = () => {
-    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "toggle-picker" }, () => {
-          void chrome.runtime.lastError
-        })
-      }
-    })
-  }
 
   const handleModelSelect = (modelId: string) => {
     setMessages((prev) => [...prev, { role: "user", content: `/model ${modelId}`, timestamp: Date.now() }])
@@ -219,18 +210,6 @@ function SidePanel() {
               disabled={isStreaming || connectionState !== "connected"}
             />
           )}
-          <button
-            className="cs-btn-outline"
-            onClick={togglePicker}
-            title="Toggle element picker (Ctrl+Shift+E)"
-            style={{
-              background: "transparent", border: "1px solid #c9a84c", borderRadius: 6,
-              color: "#c9a84c", cursor: "pointer", fontSize: 11, padding: "4px 10px",
-              fontWeight: 600, transition: "all 200ms",
-            }}
-          >
-            Pick
-          </button>
           <ConnectionStatus state={connectionState} />
         </div>
       </div>

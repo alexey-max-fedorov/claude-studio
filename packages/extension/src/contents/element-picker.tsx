@@ -60,9 +60,12 @@ function ElementPicker() {
       return
     }
 
+    const isExtensionEl = (el: Element) =>
+      el.tagName.toLowerCase().startsWith("plasmo-")
+
     const onMouseMove = (e: MouseEvent) => {
       const el = document.elementFromPoint(e.clientX, e.clientY)
-      if (!el || el === hoveredRef.current) return
+      if (!el || el === hoveredRef.current || isExtensionEl(el)) return
       hoveredRef.current = el
 
       const rect = el.getBoundingClientRect()
@@ -78,7 +81,7 @@ function ElementPicker() {
       e.preventDefault()
       e.stopPropagation()
       const el = document.elementFromPoint(e.clientX, e.clientY)
-      if (!el) return
+      if (!el || isExtensionEl(el)) return
 
       const selection = captureElement(el)
 

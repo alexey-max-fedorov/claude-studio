@@ -142,11 +142,12 @@ function ElementPicker() {
       if (detail === "activate") {
         setMode("picking")
       } else if (detail === "deactivate") {
-        setMode("off")
+        // Only return to off if no element was selected yet
+        setMode((prev) => (prev === "picking" ? "off" : prev))
         setHighlight(null)
         setTooltip(null)
-        setSelectedRect(null)
         hoveredRef.current = null
+        // selectedRect intentionally NOT cleared — preserves gold box on selected/working
       } else {
         // Original toggle behavior (Ctrl+Shift+E or chrome.commands)
         setMode((prev) => prev === "off" ? "picking" : "off")

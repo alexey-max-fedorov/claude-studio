@@ -4,15 +4,34 @@ import { buildPrompt } from "./prompt-builder.js"
 import { config } from "./config.js"
 import { log } from "./logger.js"
 
-interface StreamCallbacks {
+export interface CompletionData {
+  result: string
+  sessionId: string
+  cost: number
+  turns: number
+  usage: { input_tokens: number; output_tokens: number; cache_read_input_tokens: number; cache_creation_input_tokens: number }
+  duration_ms: number
+  model: string
+}
+
+export interface StreamCallbacks {
   onStreaming: (chunk: string) => void
   onToolUse: (tool: string, input: Record<string, unknown>) => void
-  onComplete: (result: string, sessionId: string, cost: number, turns: number) => void
+  onComplete: (data: CompletionData) => void
   onError: (error: string) => void
+}
+
+interface SessionStats {
+  totalCost: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  turnCount: number
 }
 
 export class ClaudeSessionManager {
   private sessions = new Map<string, string>() // clientId → sessionId
+  private sessionStats = new Map<string, SessionStats>()
+  private cachedCommands: Array<{ name: string; description: string; argumentHint: string }> = []
 
   async executePrompt(
     clientId: string,
@@ -33,6 +52,15 @@ export class ClaudeSessionManager {
 
   resetSession(clientId: string): void {
     this.sessions.delete(clientId)
+    this.sessionStats.delete(clientId)
+  }
+
+  getSessionStats(clientId: string): SessionStats | null {
+    return this.sessionStats.get(clientId) || null
+  }
+
+  getCapabilities(): { commands: Array<{ name: string; description: string; argumentHint: string }> } {
+    return { commands: this.cachedCommands }
   }
 
   private async runQuery(
@@ -66,6 +94,20 @@ export class ClaudeSessionManager {
           callbacks.onError("Session timed out after 5 minutes")
           break
         }
+
+        // Capture slash commands from SDK system init message
+        if (msg.type === "system" && (msg as any).subtype === "init") {
+          const init = msg as any
+          if (this.cachedCommands.length === 0 && Array.isArray(init.slash_commands)) {
+            this.cachedCommands = (init.slash_commands as string[]).map((name: string) => ({
+              name,
+              description: "",
+              argumentHint: "",
+            }))
+            log.dim("AI", `Cached ${this.cachedCommands.length} slash commands`)
+          }
+        }
+
         if (msg.type === "assistant") {
           for (const block of (msg as any).message?.content || []) {
             if (block.type === "text") {
@@ -76,15 +118,35 @@ export class ClaudeSessionManager {
             }
           }
         }
+
         if (msg.type === "result") {
           const result = msg as any
           this.sessions.set(clientId, result.session_id)
-          callbacks.onComplete(
-            result.result_text || result.result || "",
-            result.session_id,
-            result.total_cost_usd || 0,
-            result.num_turns || 0,
-          )
+
+          // Update cumulative stats
+          const prev = this.sessionStats.get(clientId) || { totalCost: 0, totalInputTokens: 0, totalOutputTokens: 0, turnCount: 0 }
+          const usage = result.usage || { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
+          this.sessionStats.set(clientId, {
+            totalCost: prev.totalCost + (result.total_cost_usd || 0),
+            totalInputTokens: prev.totalInputTokens + (usage.input_tokens || 0),
+            totalOutputTokens: prev.totalOutputTokens + (usage.output_tokens || 0),
+            turnCount: prev.turnCount + (result.num_turns || 0),
+          })
+
+          callbacks.onComplete({
+            result: result.result_text || result.result || "",
+            sessionId: result.session_id,
+            cost: result.total_cost_usd || 0,
+            turns: result.num_turns || 0,
+            usage: {
+              input_tokens: usage.input_tokens || 0,
+              output_tokens: usage.output_tokens || 0,
+              cache_read_input_tokens: usage.cache_read_input_tokens || 0,
+              cache_creation_input_tokens: usage.cache_creation_input_tokens || 0,
+            },
+            duration_ms: result.duration_ms || 0,
+            model: config.model,
+          })
         }
       }
     } catch (err) {

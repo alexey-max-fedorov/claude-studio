@@ -67,7 +67,9 @@ describe("serializeServerMessage", () => {
 
   it("serializes an ai_complete message", () => {
     const json = serializeServerMessage({
-      type: "ai_complete", result: "Done", sessionId: "s1", cost: 0.05, turns: 3
+      type: "ai_complete", result: "Done", sessionId: "s1", cost: 0.05, turns: 3,
+      usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 },
+      duration_ms: 1500, model: "sonnet"
     })
     const parsed = JSON.parse(json)
     expect(parsed.sessionId).toBe("s1")

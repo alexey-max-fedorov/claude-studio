@@ -1,4 +1,5 @@
 import React from "react"
+import { MarkdownLite } from "./MarkdownLite"
 
 export interface Message {
   role: "user" | "assistant" | "tool" | "error" | "system"
@@ -47,9 +48,10 @@ export function ChatMessage({ message }: { message: Message }) {
       background: isUser ? "rgba(201, 168, 76, 0.1)" : "#111",
       border: isUser ? "1px solid rgba(201,168,76,0.15)" : "1px solid #1a1a1a",
       borderRadius: 8, alignSelf: isUser ? "flex-end" : "flex-start",
-      maxWidth: "90%", whiteSpace: "pre-wrap", wordBreak: "break-word", lineHeight: 1.5,
+      maxWidth: "90%", whiteSpace: "pre-wrap", wordBreak: "break-word",
+      overflowWrap: "anywhere" as const, lineHeight: 1.5,
     }}>
-      {message.content}
+      {isUser ? message.content : <MarkdownLite text={message.content} />}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 {
   "name": "@claude-studio/server",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "publishConfig": {
     "access": "public"
@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.90",
-    "@claude-studio/shared": "^0.2.0",
+    "@claude-studio/shared": "^0.3.0",
     "dotenv": "^16.0.0",
     "express": "^4.0.0",
     "ws": "^8.0.0"

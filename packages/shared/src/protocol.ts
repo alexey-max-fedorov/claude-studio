@@ -6,6 +6,7 @@ export type ClientMessage =
   | { type: "prompt"; route: string; element: ElementSelection; prompt: string }
   | { type: "raw_prompt"; prompt: string }
   | { type: "reset_session" }
+  | { type: "query_capabilities" }
 
 // --- Server → Client ---
 export type ServerMessage =
@@ -13,9 +14,14 @@ export type ServerMessage =
   | { type: "pong" }
   | { type: "ai_streaming"; chunk: string }
   | { type: "tool_use"; tool: string; input: Record<string, unknown> }
-  | { type: "ai_complete"; result: string; sessionId: string; cost: number; turns: number }
+  | { type: "ai_complete"; result: string; sessionId: string; cost: number; turns: number;
+      usage: { input_tokens: number; output_tokens: number; cache_read_input_tokens: number; cache_creation_input_tokens: number };
+      duration_ms: number; model: string }
   | { type: "ai_error"; error: string }
   | { type: "session_reset"; newSessionId: string }
+  | { type: "session_info"; model: string; cumulativeCost: number; cumulativeInputTokens: number;
+      cumulativeOutputTokens: number; turnCount: number }
+  | { type: "capabilities"; commands: Array<{ name: string; description: string; argumentHint: string }> }
 
 export function parseClientMessage(raw: string): ClientMessage {
   const msg = JSON.parse(raw)

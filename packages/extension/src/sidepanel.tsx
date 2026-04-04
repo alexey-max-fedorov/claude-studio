@@ -4,11 +4,15 @@ import { ChatLog } from "./components/ChatLog"
 import type { Message } from "./components/ChatMessage"
 import { SessionControls } from "./components/SessionControls"
 import { PromptInput } from "./components/PromptInput"
+import { SessionInfoBar, type SessionInfo } from "./components/SessionInfoBar"
+import type { SlashCommandInfo } from "./components/CommandAutocomplete"
 
 function SidePanel() {
   const [connectionState, setConnectionState] = useState("disconnected")
   const [messages, setMessages] = useState<Message[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
+  const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null)
+  const [commands, setCommands] = useState<SlashCommandInfo[]>([])
   const portRef = useRef<chrome.runtime.Port | null>(null)
 
   useEffect(() => {
@@ -19,6 +23,11 @@ function SidePanel() {
       switch (msg.type) {
         case "connection_state":
           setConnectionState(msg.state)
+          break
+
+        case "connected":
+          // Server confirmed connection, request capabilities
+          portRef.current?.postMessage({ type: "query_capabilities" })
           break
 
         case "ai_streaming":
@@ -41,10 +50,34 @@ function SidePanel() {
 
         case "ai_complete":
           setIsStreaming(false)
+          setSessionInfo((prev) => ({
+            model: msg.model || prev?.model || "sonnet",
+            cumulativeCost: (prev?.cumulativeCost || 0) + (msg.cost || 0),
+            cumulativeInputTokens: (prev?.cumulativeInputTokens || 0) + (msg.usage?.input_tokens || 0),
+            cumulativeOutputTokens: (prev?.cumulativeOutputTokens || 0) + (msg.usage?.output_tokens || 0),
+            turnCount: (prev?.turnCount || 0) + (msg.turns || 0),
+            lastDuration: msg.duration_ms,
+          }))
           setMessages((prev) => [
             ...prev,
             { role: "system" as const, content: `Done (${msg.turns} turns, $${(msg.cost || 0).toFixed(4)})`, timestamp: Date.now() },
           ])
+          break
+
+        case "session_info":
+          // Authoritative update from server — overwrites client-side estimate
+          setSessionInfo((prev) => ({
+            model: msg.model,
+            cumulativeCost: msg.cumulativeCost,
+            cumulativeInputTokens: msg.cumulativeInputTokens,
+            cumulativeOutputTokens: msg.cumulativeOutputTokens,
+            turnCount: msg.turnCount,
+            lastDuration: prev?.lastDuration,
+          }))
+          break
+
+        case "capabilities":
+          setCommands(msg.commands || [])
           break
 
         case "ai_error":
@@ -143,6 +176,8 @@ function SidePanel() {
         </div>
       </div>
 
+      <SessionInfoBar info={sessionInfo} />
+
       <ChatLog messages={messages} />
 
       {isStreaming && (
@@ -160,9 +195,10 @@ function SidePanel() {
       <PromptInput
         onSubmit={handleSendPrompt}
         disabled={isStreaming || connectionState !== "connected"}
+        commands={commands}
       />
 
-      <SessionControls onClearChat={() => setMessages([])} />
+      <SessionControls onClearChat={() => { setMessages([]); setSessionInfo(null) }} />
     </div>
   )
 }

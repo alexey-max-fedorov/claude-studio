@@ -29,6 +29,9 @@ chrome.runtime.onConnect.addListener((port) => {
       if (msg.type === "raw_prompt" && msg.prompt) {
         wsClient.send({ type: "raw_prompt", prompt: msg.prompt })
       }
+      if (msg.type === "query_capabilities") {
+        wsClient.send({ type: "query_capabilities" })
+      }
     })
 
     port.onDisconnect.addListener(() => {

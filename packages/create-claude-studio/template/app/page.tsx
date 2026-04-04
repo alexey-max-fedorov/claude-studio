@@ -54,6 +54,7 @@ function MatrixRain() {
   return (
     <canvas
       ref={canvasRef}
+      aria-hidden="true"
       className="fixed inset-0 opacity-20"
       style={{ zIndex: 0 }}
     />

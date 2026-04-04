@@ -1,4 +1,5 @@
 import { WsClient } from "./ws-client"
+import { debug } from "../lib/debug"
 
 const DEFAULT_SERVER_URL = process.env.PLASMO_PUBLIC_SERVER_URL || "ws://localhost:7281"
 export const STORAGE_KEY = "serverUrl"
@@ -45,14 +46,14 @@ chrome.runtime.onConnect.addListener((port) => {
 })
 
 wsClient.onState((state) => {
-  console.log(`[Claude Studio] WebSocket: ${state}`)
+  debug(`[Claude Studio] WebSocket: ${state}`)
   connectedPorts.forEach((port) => {
     try { port.postMessage({ type: "connection_state", state }) } catch {}
   })
 })
 
 wsClient.onMessage((msg: any) => {
-  console.log("[Claude Studio] Server message:", msg.type)
+  debug("[Claude Studio] Server message:", msg.type)
   connectedPorts.forEach((port) => {
     try { port.postMessage(msg) } catch {}
   })

@@ -1,4 +1,5 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
+import { debug } from "../../lib/debug"
 
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   const { selection, position } = req.body
@@ -13,7 +14,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     })
   }
 
-  console.log("[Claude Studio] Element selected:", selection?.cssSelector)
+  debug("[Claude Studio] Element selected:", selection?.cssSelector)
   res.send({ ok: true })
 }
 

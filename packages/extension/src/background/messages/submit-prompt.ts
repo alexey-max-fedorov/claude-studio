@@ -1,5 +1,6 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
 import { wsClient } from ".."
+import { debug } from "../../lib/debug"
 
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
   const { route, element, prompt } = req.body
@@ -11,7 +12,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     prompt,
   })
 
-  console.log(`[Claude Studio] Prompt sent: "${prompt}" for ${element.cssSelector}`)
+  debug(`[Claude Studio] Prompt sent: "${prompt}" for ${element.cssSelector}`)
   res.send({ ok: true })
 }
 

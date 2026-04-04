@@ -62,6 +62,8 @@ function SidePanel() {
             ...prev,
             { role: "system" as const, content: `Done (${msg.turns} turns, $${(msg.cost || 0).toFixed(4)})`, timestamp: Date.now() },
           ])
+          // Re-request capabilities after first query (commands get cached server-side)
+          portRef.current?.postMessage({ type: "query_capabilities" })
           break
 
         case "session_info":

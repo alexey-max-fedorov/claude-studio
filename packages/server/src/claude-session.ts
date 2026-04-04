@@ -96,15 +96,26 @@ export class ClaudeSessionManager {
         }
 
         // Capture slash commands from SDK system init message
-        if (msg.type === "system" && (msg as any).subtype === "init") {
-          const init = msg as any
-          if (this.cachedCommands.length === 0 && Array.isArray(init.slash_commands)) {
-            this.cachedCommands = (init.slash_commands as string[]).map((name: string) => ({
-              name,
-              description: "",
-              argumentHint: "",
-            }))
-            log.dim("AI", `Cached ${this.cachedCommands.length} slash commands`)
+        if (msg.type === "system") {
+          const sys = msg as any
+          log.dim("AI", `[${clientId.slice(0, 8)}] System message: subtype=${sys.subtype}, model=${sys.model || "?"}, slash_commands=${Array.isArray(sys.slash_commands) ? sys.slash_commands.length : "none"}, skills=${Array.isArray(sys.skills) ? sys.skills.length : "none"}`)
+          if (sys.subtype === "init" && this.cachedCommands.length === 0) {
+            // Combine slash_commands and skills arrays
+            const commands: string[] = []
+            if (Array.isArray(sys.slash_commands)) commands.push(...sys.slash_commands)
+            if (Array.isArray(sys.skills)) {
+              for (const s of sys.skills) {
+                if (typeof s === "string" && !commands.includes(s)) commands.push(s)
+              }
+            }
+            if (commands.length > 0) {
+              this.cachedCommands = commands.map((name: string) => ({
+                name,
+                description: "",
+                argumentHint: "",
+              }))
+              log.dim("AI", `Cached ${this.cachedCommands.length} commands: ${commands.slice(0, 10).join(", ")}`)
+            }
           }
         }
 

@@ -1,7 +1,7 @@
 {
   "name": "@claude-studio/extension",
   "displayName": "Claude Studio",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Visual AI coding assistant — select elements, describe changes, Claude Code executes",
   "scripts": {
     "dev": "plasmo dev",

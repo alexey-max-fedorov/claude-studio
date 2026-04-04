@@ -31,6 +31,12 @@ function Popup() {
     })
   }
 
+  const openSidePanel = () => {
+    chrome.windows.getCurrent((win) => {
+      if (win.id !== undefined) chrome.sidePanel.open({ windowId: win.id })
+    })
+  }
+
   const dotColor = status === "connected" ? "#22c55e" : status === "disconnected" ? "#ef4444" : "#6b7280"
 
   return (
@@ -73,10 +79,20 @@ function Popup() {
         </span>
       </div>
       <button
-        onClick={testConnection}
+        onClick={openSidePanel}
         style={{
           marginTop: 12, width: "100%", padding: "8px 0", background: "#c9a84c",
           color: "#0a0f1a", border: "none", borderRadius: 6, fontWeight: 600,
+          cursor: "pointer", fontSize: 13
+        }}
+      >
+        Open Side Panel
+      </button>
+      <button
+        onClick={testConnection}
+        style={{
+          marginTop: 8, width: "100%", padding: "8px 0", background: "#1f2937",
+          color: "#9ca3af", border: "1px solid #374151", borderRadius: 6, fontWeight: 600,
           cursor: "pointer", fontSize: 13
         }}
       >

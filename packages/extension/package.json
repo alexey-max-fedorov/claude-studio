@@ -29,10 +29,7 @@
   },
   "manifest": {
     "permissions": ["activeTab", "storage", "sidePanel", "tabs"],
-    "host_permissions": [
-      "http://localhost:*/*",
-      "http://127.0.0.1:*/*"
-    ],
+    "host_permissions": ["<all_urls>"],
     "commands": {
       "toggle-picker": {
         "suggested_key": { "default": "Ctrl+Shift+E", "mac": "Command+Shift+E" },

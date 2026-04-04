@@ -68,9 +68,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
 // Listen for keyboard shortcut commands
 chrome.commands.onCommand.addListener((command) => {
   if (command === "toggle-picker") {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
       if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "toggle-picker" })
+        chrome.tabs.sendMessage(tabs[0].id, { action: "toggle-picker" }, () => {
+          void chrome.runtime.lastError // suppress "no receiver" errors
+        })
       }
     })
   }

@@ -6,6 +6,7 @@
     "dev:ext": "pnpm --filter @claude-studio/extension dev",
     "build": "pnpm -r build",
     "build:extension-zip": "bash scripts/build-extension-zip.sh",
+    "serve-extension": "node scripts/serve-extension.mjs",
     "test": "pnpm -r test"
   },
   "engines": {

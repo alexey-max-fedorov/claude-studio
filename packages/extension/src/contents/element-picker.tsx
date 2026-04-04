@@ -36,20 +36,52 @@ export const getStyle: PlasmoGetStyle = () => {
   return style
 }
 
+// ---------------------------------------------------------------------------
+// Module-level listeners — fire as soon as Chrome loads this content script,
+// BEFORE Plasmo mounts the React component into the shadow DOM.
+// We bridge to React via a custom window event.
+// ---------------------------------------------------------------------------
+const TOGGLE_EVENT = "__claude_studio_toggle_picker__"
+
+// 1. chrome.runtime.onMessage — receives from background / side panel
+chrome.runtime.onMessage.addListener((message: any) => {
+  if (message.action === "toggle-picker") {
+    console.log("[Claude Studio] toggle-picker message received")
+    window.dispatchEvent(new CustomEvent(TOGGLE_EVENT))
+  }
+})
+
+// 2. Direct keyboard shortcut — catches Ctrl+Shift+E in the page even if
+//    chrome.commands doesn't deliver it. Note: Chrome may intercept this
+//    for the registered command, in which case the background handler fires
+//    instead and sends a message that hits listener #1 above.
+document.addEventListener("keydown", (e: KeyboardEvent) => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "E" || e.key === "e")) {
+    e.preventDefault()
+    console.log("[Claude Studio] Ctrl+Shift+E caught directly")
+    window.dispatchEvent(new CustomEvent(TOGGLE_EVENT))
+  }
+}, true)
+
+console.log("[Claude Studio] element-picker content script loaded")
+
+// ---------------------------------------------------------------------------
+
 function ElementPicker() {
   const [active, setActive] = useState(false)
   const [highlight, setHighlight] = useState<{ top: number; left: number; width: number; height: number } | null>(null)
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null)
   const hoveredRef = useRef<Element | null>(null)
 
+  // Subscribe to the module-level toggle event
   useEffect(() => {
-    const listener = (message: any) => {
-      if (message.action === "toggle-picker") {
-        setActive((prev) => !prev)
-      }
+    console.log("[Claude Studio] ElementPicker component mounted")
+    const onToggle = () => {
+      console.log("[Claude Studio] toggle event received by React")
+      setActive((prev) => !prev)
     }
-    chrome.runtime.onMessage.addListener(listener)
-    return () => chrome.runtime.onMessage.removeListener(listener)
+    window.addEventListener(TOGGLE_EVENT, onToggle)
+    return () => window.removeEventListener(TOGGLE_EVENT, onToggle)
   }, [])
 
   useEffect(() => {
@@ -59,6 +91,8 @@ function ElementPicker() {
       hoveredRef.current = null
       return
     }
+
+    console.log("[Claude Studio] picker activated")
 
     const isExtensionEl = (el: Element) =>
       el.tagName.toLowerCase().startsWith("plasmo-")

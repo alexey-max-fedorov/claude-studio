@@ -41,6 +41,7 @@ function Popup() {
 
   return (
     <div style={{ width: 300, padding: 16, background: "#0a0f1a", color: "#fff", fontFamily: "system-ui" }}>
+      <style>{`body { margin: 0; }`}</style>
       <h1 style={{ fontSize: 18, margin: 0, color: "#c9a84c" }}>Claude Studio</h1>
       <p style={{ fontSize: 13, color: "#9ca3af", marginTop: 8 }}>
         Select elements on any page and describe changes in natural language.

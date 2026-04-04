@@ -1,6 +1,6 @@
 {
   "name": "claude-studio",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Visual AI coding assistant for Next.js — installer and bridge server",
   "type": "module",
   "bin": {
@@ -15,8 +15,8 @@
     "dev": "tsx src/index.ts"
   },
   "dependencies": {
-    "@claude-studio/server": "^0.1.2",
-    "@claude-studio/shared": "^0.1.0"
+    "@claude-studio/server": "^0.2.0",
+    "@claude-studio/shared": "^0.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

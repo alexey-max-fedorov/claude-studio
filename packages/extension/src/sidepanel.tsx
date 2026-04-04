@@ -65,6 +65,16 @@ function SidePanel() {
     }
   }, [])
 
+  const togglePicker = () => {
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        chrome.tabs.sendMessage(tabs[0].id, { action: "toggle-picker" }, () => {
+          void chrome.runtime.lastError
+        })
+      }
+    })
+  }
+
   const handleSendPrompt = (prompt: string) => {
     setMessages((prev) => [...prev, { role: "user", content: prompt, timestamp: Date.now() }])
     portRef.current?.postMessage({ type: "raw_prompt", prompt })
@@ -76,6 +86,7 @@ function SidePanel() {
       background: "#0a0f1a", color: "#fff", fontFamily: "system-ui, -apple-system, sans-serif",
     }}>
       <style>{`
+        body { margin: 0; }
         @keyframes cc-pulse {
           0%, 100% { opacity: 0.4; }
           50% { opacity: 1; }
@@ -97,7 +108,19 @@ function SidePanel() {
         display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: "#c9a84c" }}>Claude Studio</span>
-        <ConnectionStatus state={connectionState} />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            onClick={togglePicker}
+            title="Toggle element picker (Ctrl+Shift+E)"
+            style={{
+              background: "none", border: "1px solid rgba(201,168,76,0.4)", borderRadius: 4,
+              color: "#c9a84c", cursor: "pointer", fontSize: 11, padding: "3px 8px",
+            }}
+          >
+            Pick
+          </button>
+          <ConnectionStatus state={connectionState} />
+        </div>
       </div>
 
       <ChatLog messages={messages} />

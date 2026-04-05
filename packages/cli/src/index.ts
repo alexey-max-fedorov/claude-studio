@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { runSetup } from "./setup.js"
+import { runConfig } from "./config.js"
 
 const command = process.argv[2]
 
@@ -9,9 +10,12 @@ function printHelp() {
 claude-studio — Visual AI coding assistant for Next.js
 
 Usage:
-  claude-studio setup     Set up Claude Studio in your Next.js project
-  claude-studio serve     Start the bridge server
-  claude-studio help      Show this help message
+  claude-studio setup                Set up Claude Studio in your Next.js project
+  claude-studio serve                Start the bridge server
+  claude-studio config               Configure settings interactively
+  claude-studio config <key> <value> Set a specific setting (e.g. config timeout_ms 15m)
+  claude-studio config --list        Show current configuration
+  claude-studio help                 Show this help message
 `)
 }
 
@@ -41,6 +45,10 @@ async function main() {
       await import("@claude-studio/server")
       break
     }
+
+    case "config":
+      await runConfig(process.argv.slice(3))
+      break
 
     case "help":
     case "--help":

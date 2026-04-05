@@ -63,6 +63,7 @@ export function runSetup() {
       "MODEL=sonnet",
       "MAX_BUDGET_USD=2.0",
       "MAX_TURNS=15",
+      "TIMEOUT_MS=600000",
       "",
     ].join("\n")
     writeFileSync(envPath, envContent)

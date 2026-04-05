@@ -122,15 +122,16 @@ export class ClaudeSessionManager {
 
     log.dim("AI", `[${clientId.slice(0, 8)}] Query started${existingSession ? " (resuming)" : ""}`)
 
-    const TIMEOUT_MS = 300_000 // 5 minutes
+    const TIMEOUT_MS = config.timeoutMs
     let timedOut = false
     const timer = setTimeout(() => { timedOut = true }, TIMEOUT_MS)
 
     try {
       for await (const msg of query({ prompt, options })) {
         if (timedOut) {
-          log.error("AI", `[${clientId.slice(0, 8)}] Timed out after 5 minutes`)
-          callbacks.onError("Session timed out after 5 minutes")
+          const mins = Math.round(TIMEOUT_MS / 60_000)
+          log.error("AI", `[${clientId.slice(0, 8)}] Timed out after ${mins} minutes`)
+          callbacks.onError(`Session timed out after ${mins} minutes`)
           break
         }
 

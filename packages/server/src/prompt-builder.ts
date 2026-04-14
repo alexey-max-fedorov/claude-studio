@@ -6,6 +6,14 @@ interface PromptInput {
   prompt: string
 }
 
+function appRouterPath(route: string): string {
+  return route === "/" ? "app/page.tsx" : `app${route}/page.tsx`
+}
+
+function pagesRouterPath(route: string): string {
+  return route === "/" ? "pages/index.tsx" : `pages${route}.tsx`
+}
+
 export function buildPrompt({ route, element, prompt }: PromptInput): string {
   const attrs = Object.entries(element.attributes)
     .map(([k, v]) => `${k}="${v}"`)
@@ -14,7 +22,7 @@ export function buildPrompt({ route, element, prompt }: PromptInput): string {
   return `The user is viewing their Next.js application at route: ${route}
 They selected an element on the live page and want to make a change.
 
-Selected element details:
+<element-context>
 - CSS Selector: ${element.cssSelector}
 - Tag: <${element.tagName}> with classes: [${element.classList.join(", ")}]
 - Element ID: ${element.id || "none"}
@@ -23,11 +31,14 @@ Selected element details:
 - Key attributes: ${attrs || "none"}
 - Current computed styles: color=${element.computedStyles.color}, bg=${element.computedStyles.backgroundColor}, font-size=${element.computedStyles.fontSize}
 - Parent chain: ${element.parentChain.join(" > ")}
+</element-context>
 
-User's instruction: "${prompt}"
+<user-instruction>
+${prompt}
+</user-instruction>
 
 Instructions for you:
-1. Use Grep and Glob to find the source file(s) that render this element. Look for matching text content, class names, and component structure. The route "${route}" maps to a Next.js page — check app/${route === "/" ? "" : route.slice(1)}/page.tsx or pages/${route}.tsx first.
+1. Use Grep and Glob to find the source file(s) that render this element. Look for matching text content, class names, and component structure. The route "${route}" maps to a Next.js page — check ${appRouterPath(route)} or ${pagesRouterPath(route)} first.
 2. Read the relevant file(s) to understand the current code.
 3. Make the requested change using Edit. Be surgical — change only what's needed.
 4. If the change involves styles, prefer editing Tailwind classes or CSS modules over inline styles, matching the project's existing patterns.

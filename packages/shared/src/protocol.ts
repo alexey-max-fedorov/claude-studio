@@ -26,10 +26,47 @@ export type ServerMessage =
   | { type: "command_output"; content: string }
   | { type: "available_models"; models: Array<{ id: string; name: string }>; current: string }
 
+const MAX_PROMPT_LEN = 50_000
+const MAX_ROUTE_LEN = 1_000
+const MAX_ELEMENT_STR_LEN = 2_000
+
+function assertStr(val: unknown, field: string, maxLen = MAX_ELEMENT_STR_LEN): string {
+  if (typeof val !== "string") throw new Error(`Invalid message: ${field} must be a string`)
+  if (val.length > maxLen) throw new Error(`Invalid message: ${field} exceeds max length of ${maxLen}`)
+  return val
+}
+
 export function parseClientMessage(raw: string): ClientMessage {
   const msg = JSON.parse(raw)
   if (!msg || typeof msg.type !== "string") {
     throw new Error("Invalid message: missing type field")
+  }
+  switch (msg.type) {
+    case "prompt": {
+      assertStr(msg.route, "route", MAX_ROUTE_LEN)
+      assertStr(msg.prompt, "prompt", MAX_PROMPT_LEN)
+      if (!msg.element || typeof msg.element !== "object") {
+        throw new Error("Invalid message: element must be an object")
+      }
+      assertStr(msg.element.cssSelector, "element.cssSelector")
+      assertStr(msg.element.tagName, "element.tagName")
+      assertStr(msg.element.textContent, "element.textContent")
+      assertStr(msg.element.outerHTML, "element.outerHTML")
+      if (!Array.isArray(msg.element.classList)) {
+        throw new Error("Invalid message: element.classList must be an array")
+      }
+      break
+    }
+    case "raw_prompt":
+      assertStr(msg.prompt, "prompt", MAX_PROMPT_LEN)
+      break
+    case "ping":
+    case "reset_session":
+    case "query_capabilities":
+    case "query_models":
+      break
+    default:
+      throw new Error(`Invalid message: unknown type "${msg.type}"`)
   }
   return msg as ClientMessage
 }

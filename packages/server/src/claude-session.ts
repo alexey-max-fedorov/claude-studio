@@ -103,8 +103,11 @@ export class ClaudeSessionManager {
   ): Promise<void> {
     const existingSession = this.sessions.get(clientId)
 
+    const allowedTools = ["Read", "Edit", "MultiEdit", "Glob", "Grep"]
+    if (config.allowBash) allowedTools.push("Bash")
+
     const options: Record<string, unknown> = {
-      allowedTools: ["Read", "Edit", "MultiEdit", "Glob", "Grep", "Bash"],
+      allowedTools,
       permissionMode: "acceptEdits",
       cwd: config.projectDir,
       maxTurns: config.maxTurns,

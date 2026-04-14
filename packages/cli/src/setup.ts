@@ -60,10 +60,12 @@ export function runSetup() {
       "# Claude Studio Bridge Server Configuration",
       `PROJECT_DIR=${process.cwd()}`,
       "PORT=7281",
+      "# BIND_HOST=0.0.0.0  # Set to 127.0.0.1 to restrict to localhost only",
       "MODEL=sonnet",
       "MAX_BUDGET_USD=2.0",
       "MAX_TURNS=15",
       "TIMEOUT_MS=600000",
+      "# ALLOW_BASH=false  # Set to true to allow Claude to run shell commands",
       "",
     ].join("\n")
     writeFileSync(envPath, envContent)

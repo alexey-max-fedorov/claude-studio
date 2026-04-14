@@ -13,3 +13,4 @@ build/
 .claude-studio-plugin/
 .claude/
 packages/create-claude-studio/package-lock.json
+.worktrees/

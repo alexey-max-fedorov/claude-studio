@@ -138,5 +138,6 @@ export function handleConnection(ws: WebSocket, connections: ConnectionManager, 
     log.info("WS", `Client disconnected: ${short}`)
     clearInterval(heartbeat)
     connections.remove(clientId)
+    claude.resetSession(clientId)
   })
 }

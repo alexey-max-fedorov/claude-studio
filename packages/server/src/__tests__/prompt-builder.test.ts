@@ -58,7 +58,8 @@ describe("buildPrompt", () => {
 
   it("handles root route correctly", () => {
     const prompt = buildPrompt({ route: "/", element: mockElement, prompt: "test" })
-    expect(prompt).toContain("app//page.tsx")  // root route
+    expect(prompt).toContain("app/page.tsx")
+    expect(prompt).not.toContain("app//page.tsx")
   })
 
   it("handles empty attributes", () => {

@@ -38,6 +38,15 @@ export function startServer(opts: {
   // Realtime config sync: any store change → broadcast to every client.
   config.on("change", () => connections.broadcast(buildConfigState(config)))
 
+  http.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      log.error("SRV", `port ${port} is already in use — try a different port with --port <n>`)
+    } else {
+      log.error("SRV", `server error: ${err.message}`)
+    }
+    process.exit(1)
+  })
+
   http.listen(port, host, () => {
     log.success("SRV", `listening on ${host}:${port}`)
   })

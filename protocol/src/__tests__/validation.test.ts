@@ -64,6 +64,16 @@ describe("validateConfigPatch", () => {
     const patch = validateConfigPatch({ enabledPlugins: ["a", "b"], enabledSkills: ["x"] })
     expect(patch).toEqual({ enabledPlugins: ["a", "b"], enabledSkills: ["x"] })
   })
+
+  it("clamps to the upper bounds", () => {
+    const patch = validateConfigPatch({ maxTurns: 999, maxBudgetUsd: 9999 })
+    expect(patch.maxTurns).toBe(100)
+    expect(patch.maxBudgetUsd).toBe(1000)
+  })
+
+  it("returns an empty patch for an array input", () => {
+    expect(validateConfigPatch(["model"] as unknown)).toEqual({})
+  })
 })
 
 describe("mergeConfig", () => {

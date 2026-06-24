@@ -88,7 +88,7 @@ function num(val: unknown): number | undefined {
 /** Returns a sanitized partial config: only known keys, correct types, clamped ranges. */
 export function validateConfigPatch(patch: unknown): Partial<StudioConfig> {
   const out: Partial<StudioConfig> = {}
-  if (!patch || typeof patch !== "object") return out
+  if (!patch || typeof patch !== "object" || Array.isArray(patch)) return out
   const p = patch as Record<string, unknown>
 
   if (typeof p.model === "string" && p.model.length <= MAX_SHORT_STR_LEN) out.model = p.model

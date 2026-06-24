@@ -55,6 +55,15 @@ async function main() {
   if (args.help) { process.stdout.write(HELP); return }
   if (args.version) { process.stdout.write(version + "\n"); return }
 
+  if (!Number.isFinite(args.port)) {
+    log.error("SRV", "--port requires a numeric value")
+    process.exit(1)
+  }
+  if (!args.host) {
+    log.error("SRV", "--host requires a value (omit --host to bind 127.0.0.1)")
+    process.exit(1)
+  }
+
   const config = new ConfigStore(process.cwd())
   const server = startServer({ config, host: args.host, port: args.port, serverVersion: version })
 

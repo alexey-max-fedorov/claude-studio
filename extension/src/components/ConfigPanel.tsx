@@ -53,7 +53,7 @@ export function ConfigPanel({
           placeholder="Extra instructions for the agent…"
           style={{
             width: "100%", minHeight: 56, marginTop: 6, background: "#111", color: "#fff",
-            border: "1px solid #1a1a1a", borderRadius: 6, padding: 8, fontSize: 12, resize: "vertical",
+            border: "1px solid #1a1a1a", borderRadius: 6, padding: 8, fontSize: 12, resize: "vertical", boxSizing: "border-box",
           }}
         />
       </div>

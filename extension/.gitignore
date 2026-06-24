@@ -1,4 +1,0 @@
-# Un-ignore the manually maintained Plasmo type declarations
-# (the root .gitignore blocks .plasmo/ but this file must be tracked)
-!.plasmo/
-!.plasmo/index.d.ts

@@ -60,7 +60,7 @@ export function runSetup() {
       "# Claude Studio Bridge Server Configuration",
       `PROJECT_DIR=${process.cwd()}`,
       "PORT=7281",
-      "# BIND_HOST=0.0.0.0  # Set to 127.0.0.1 to restrict to localhost only",
+      "# BIND_HOST=127.0.0.1  # Default; set to 0.0.0.0 to expose to LAN (NOT recommended)",
       "MODEL=sonnet",
       "MAX_BUDGET_USD=2.0",
       "MAX_TURNS=15",

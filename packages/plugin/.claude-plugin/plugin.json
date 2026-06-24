@@ -1,5 +1,5 @@
 {
   "name": "claude-studio",
-  "version": "1.0.4",
+  "version": "1.1.1",
   "description": "Optimizes Claude Code for visual element editing workflows from Claude Studio browser extension"
 }

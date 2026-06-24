@@ -2,7 +2,7 @@ import "dotenv/config"
 
 export const config = {
   port: parseInt(process.env.PORT || "7281", 10),
-  bindHost: process.env.BIND_HOST || "0.0.0.0",
+  bindHost: process.env.BIND_HOST || "127.0.0.1",
   projectDir: process.env.PROJECT_DIR || process.cwd(),
   model: process.env.MODEL || "sonnet",
   maxBudgetUsd: parseFloat(process.env.MAX_BUDGET_USD || "2.0"),

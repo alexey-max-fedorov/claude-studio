@@ -45,6 +45,64 @@ describe("parseClientMessage", () => {
   it("throws on non-object message", () => {
     expect(() => parseClientMessage('"just a string"')).toThrow("missing type")
   })
+
+  const validElement = {
+    tagName: "h1", id: "", classList: ["title"], cssSelector: "h1.title",
+    textContent: "About", outerHTML: "<h1>About</h1>",
+    attributes: {}, boundingRect: { top: 0, left: 0, width: 0, height: 0 },
+    computedStyles: { color: "black", backgroundColor: "white", fontSize: "32px", fontFamily: "x", padding: "0", margin: "0" },
+    parentChain: ["body"], siblingCount: 0, childCount: 0,
+  }
+  const buildPromptMsg = (overrides: Record<string, unknown> = {}) => JSON.stringify({
+    type: "prompt", route: "/", element: validElement, prompt: "x", ...overrides,
+  })
+  const buildElementMsg = (elementOverrides: Record<string, unknown>) => JSON.stringify({
+    type: "prompt", route: "/", prompt: "x",
+    element: { ...validElement, ...elementOverrides },
+  })
+
+  it("throws when element.id is not a string", () => {
+    expect(() => parseClientMessage(buildElementMsg({ id: 123 }))).toThrow("element.id must be a string")
+  })
+
+  it("throws when element.attributes is not an object", () => {
+    expect(() => parseClientMessage(buildElementMsg({ attributes: "x" }))).toThrow("element.attributes must be an object")
+  })
+
+  it("throws when element.attributes is an array", () => {
+    expect(() => parseClientMessage(buildElementMsg({ attributes: [] }))).toThrow("element.attributes must be an object")
+  })
+
+  it("throws when element.attributes value is not a string", () => {
+    expect(() => parseClientMessage(buildElementMsg({ attributes: { foo: 1 } }))).toThrow("element.attributes")
+  })
+
+  it("throws when element.attributes has too many entries", () => {
+    const big: Record<string, string> = {}
+    for (let i = 0; i < 51; i++) big[`k${i}`] = "v"
+    expect(() => parseClientMessage(buildElementMsg({ attributes: big }))).toThrow("exceeds max entries")
+  })
+
+  it("throws when element.parentChain contains non-strings", () => {
+    expect(() => parseClientMessage(buildElementMsg({ parentChain: [1, 2] }))).toThrow("element.parentChain[0] must be a string")
+  })
+
+  it("throws when element.classList contains non-strings", () => {
+    expect(() => parseClientMessage(buildElementMsg({ classList: [{}] }))).toThrow("element.classList[0] must be a string")
+  })
+
+  it("throws when element.computedStyles is missing", () => {
+    expect(() => parseClientMessage(buildElementMsg({ computedStyles: null }))).toThrow("element.computedStyles must be an object")
+  })
+
+  it("throws when element.computedStyles.color is not a string", () => {
+    expect(() => parseClientMessage(buildElementMsg({ computedStyles: { ...validElement.computedStyles, color: 1 } }))).toThrow("element.computedStyles.color must be a string")
+  })
+
+  it("accepts a fully-valid prompt message", () => {
+    const msg = parseClientMessage(buildPromptMsg())
+    expect(msg.type).toBe("prompt")
+  })
 })
 
 describe("serializeServerMessage", () => {

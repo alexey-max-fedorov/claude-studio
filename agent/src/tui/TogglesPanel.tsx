@@ -8,7 +8,7 @@ export function TogglesPanel({
   if (plugins.length === 0 && skills.length === 0) return null
   return (
     <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1} marginTop={1}>
-      <Text color="gray" bold>Plugins &amp; skills</Text>
+      <Text color="gray" bold>Plugins & skills</Text>
       {plugins.map((p) => (
         <Text key={`p-${p.name}`}>
           <Text color={config.enabledPlugins.includes(p.name) ? "green" : "gray"}>

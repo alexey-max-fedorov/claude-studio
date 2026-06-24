@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { Box, useApp, useInput } from "ink"
-import type { StudioConfig } from "@claude-studio/protocol"
+import type { PluginInfo, SkillInfo, StudioConfig } from "@claude-studio/protocol"
 import type { ConfigStore } from "../config-store.js"
 import type { ConnectionManager } from "../connection-manager.js"
 import { availableModels, discoverPlugins, discoverSkills } from "../discovery.js"
@@ -16,6 +16,8 @@ export function App({ config, connections, url }: { config: ConfigStore; connect
   const [cfg, setCfg] = useState<StudioConfig>(config.get())
   const [count, setCount] = useState(connections.count)
   const [sel, setSel] = useState(0)
+  const [plugins, setPlugins] = useState<PluginInfo[]>([])
+  const [skills, setSkills] = useState<SkillInfo[]>([])
 
   useEffect(() => {
     const onChange = (c: StudioConfig) => setCfg(c)
@@ -25,10 +27,13 @@ export function App({ config, connections, url }: { config: ConfigStore; connect
     return () => { config.off("change", onChange); connections.off("count", onCount) }
   }, [config, connections])
 
+  useEffect(() => {
+    setPlugins(discoverPlugins(cfg.projectDir))
+    setSkills(discoverSkills(cfg.projectDir))
+  }, [cfg.projectDir])
+
   const rows = configRows(cfg)
-  const models = availableModels()
-  const plugins = discoverPlugins(cfg.projectDir)
-  const skills = discoverSkills(cfg.projectDir)
+  const models = useMemo(() => availableModels(), [])
 
   function change(dir: 1 | -1) {
     const row = rows[sel]

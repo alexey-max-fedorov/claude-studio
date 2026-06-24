@@ -1,10 +1,9 @@
 packages:
-  - "protocol"
-  - "agent"
-  - "extension"
-  - "website"
+  - "packages/*"
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true
   esbuild: true
+  lmdb: true
+  msgpackr-extract: true
   sharp: true

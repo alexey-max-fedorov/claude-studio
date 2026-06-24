@@ -1,15 +1,15 @@
 {
-  "name": "claude-studio",
+  "name": "claude-studio-monorepo",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev:server": "pnpm --filter @claude-studio/server dev",
-    "dev:ext": "pnpm --filter @claude-studio/extension dev",
     "build": "pnpm -r build",
-    "build:extension-zip": "bash scripts/build-extension-zip.sh",
-    "serve-extension": "node scripts/serve-extension.mjs",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "dev:agent": "pnpm --filter claude-studio dev",
+    "dev:ext": "pnpm --filter @claude-studio/extension dev",
+    "build:extension-zip": "bash scripts/build-extension-zip.sh"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }

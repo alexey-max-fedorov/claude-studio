@@ -46,4 +46,12 @@ describe("buildPrompt", () => {
     const p = buildPrompt({ route: "/", element, prompt: "x", routeHints: true })
     expect(p).toMatch(/untrusted data/i)
   })
+
+  it("declares the trust boundary before any untrusted content (route included)", () => {
+    const p = buildPrompt({ route: "/checkout", element, prompt: "x", routeHints: true })
+    const trustIdx = p.search(/only the numbered .* are authoritative/i)
+    const routeIdx = p.indexOf("/checkout")
+    expect(trustIdx).toBeGreaterThanOrEqual(0)
+    expect(trustIdx).toBeLessThan(routeIdx) // trust framing precedes the untrusted route value
+  })
 })

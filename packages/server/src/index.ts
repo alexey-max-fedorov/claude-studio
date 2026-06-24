@@ -10,7 +10,7 @@ import { logClaudeEnvironment } from "./env-check.js"
 
 const app = express()
 const server = createServer(app)
-const wss = new WebSocketServer({ server })
+const wss = new WebSocketServer({ server, maxPayload: 1 * 1024 * 1024 })
 const connections = new ConnectionManager()
 const claude = new ClaudeSessionManager()
 
@@ -22,8 +22,8 @@ wss.on("connection", (ws) => {
   handleConnection(ws, connections, claude)
 })
 
-server.listen(config.port, () => {
-  log.info("SRV", `Listening on port ${config.port}`)
+server.listen(config.port, config.bindHost, () => {
+  log.info("SRV", `Listening on ${config.bindHost}:${config.port}`)
   log.dim("SRV", `Health: http://localhost:${config.port}/health`)
   log.dim("SRV", `WebSocket: ws://localhost:${config.port}`)
   log.dim("SRV", `Project: ${config.projectDir}`)

@@ -46,8 +46,10 @@ export class ConfigStore extends EventEmitter {
   private persist(): void {
     try {
       writeFileSync(this.path, JSON.stringify(this.config, null, 2) + "\n")
-    } catch {
-      /* best-effort; non-writable cwd shouldn't crash the server */
+    } catch (err) {
+      // best-effort: a non-writable cwd must not crash the server, but surface
+      // the failure on stderr so a silent in-memory/on-disk divergence is visible.
+      console.error(`[CONFIG] failed to persist ${this.path}: ${String(err)}`)
     }
   }
 }

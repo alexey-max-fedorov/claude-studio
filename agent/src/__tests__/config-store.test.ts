@@ -40,4 +40,11 @@ describe("ConfigStore", () => {
     const store = new ConfigStore(dir)
     expect(store.get().model).toBe("sonnet")
   })
+
+  it("keeps projectDir authoritative even if the file specifies a different one", () => {
+    writeFileSync(join(dir, "claude-studio.config.json"), JSON.stringify({ model: "opus", projectDir: "/wrong" }))
+    const store = new ConfigStore(dir)
+    expect(store.get().projectDir).toBe(dir)
+    expect(store.get().model).toBe("opus")
+  })
 })

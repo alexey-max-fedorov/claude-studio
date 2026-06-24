@@ -57,12 +57,12 @@ interface ElementSelection {
   attributes: Record<string, string>  // element attributes (max 50 keys)
   boundingRect: { top: number; left: number; width: number; height: number }
   computedStyles: {
-    color: string            // max 200 chars each
-    backgroundColor: string
-    fontSize: string
-    fontFamily: string
-    padding: string
-    margin: string
+    color: string            // max 200 chars (validated)
+    backgroundColor: string  // max 200 chars (validated)
+    fontSize: string         // max 200 chars (validated)
+    fontFamily: string       // not validated for size
+    padding: string          // not validated for size
+    margin: string           // not validated for size
   }
   parentChain: string[]      // ancestor selectors, root-first (max 50 entries)
   siblingCount: number
@@ -179,7 +179,7 @@ Any client can send `set_config` at any time. The flow is:
 
 This is bidirectional and realtime: both the TUI and the extension see every config change, no matter which client initiated it.
 
-If validation fails the sending client receives `config_error` and the config is not changed.
+On a valid `set_config`, the agent validates the patch (silently clamping out-of-range numbers and dropping unknown or wrong-typed keys), merges it into the live config, persists to `claude-studio.config.json`, and broadcasts `config_state` to all clients. A `set_config` whose `patch` is not a JSON object is rejected at message-parse time (the sending client receives an `ai_error`). `config_error` is reserved for the rare case where applying an otherwise-parsed config update fails.
 
 ---
 
@@ -204,7 +204,7 @@ These limits are enforced by the server on incoming `ClientMessage` frames. Payl
 | `prompt` (in `prompt` and `raw_prompt`) | 50 000 chars |
 | `route` (in `prompt`) | 1 000 chars |
 | Element string fields (`cssSelector`, `tagName`, `id`, `textContent`, `outerHTML`) | 2 000 chars each |
-| Short string fields (`computedStyles.*`, list entry values) | 200 chars each |
+| `computedStyles.color`, `computedStyles.backgroundColor`, `computedStyles.fontSize` | 200 chars each |
 | List fields (`classList`, `parentChain`, `attributes`, `enabledPlugins`, `enabledSkills`) | 50 entries max |
 | `StudioConfig.maxTurns` | Clamped to 1–100 |
 | `StudioConfig.maxBudgetUsd` | Clamped to 0–1 000 (USD) |

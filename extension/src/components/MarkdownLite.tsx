@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 
 const codeBlockStyle: React.CSSProperties = {
   background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: 6,
@@ -36,6 +36,62 @@ function renderInline(text: string, keyBase: number): React.ReactNode[] {
   return nodes.length ? nodes : [<span key={keyBase}>{text}</span>]
 }
 
+const tableCellStyle: React.CSSProperties = {
+  border: "1px solid #1a1a1a", padding: "5px 9px", textAlign: "left",
+  verticalAlign: "top", lineHeight: 1.45,
+}
+const tableHeadStyle: React.CSSProperties = {
+  ...tableCellStyle, color: "#fff", fontWeight: 600, background: "#111",
+}
+
+function isDelimiterRow(line: string): boolean {
+  return /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(line)
+}
+function isTableRow(line: string): boolean {
+  return line.includes("|") && line.trim().length > 0
+}
+function parseRow(line: string): string[] {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim())
+}
+
+function CollapsibleTable({ header, rows, keyBase }: { header: string[]; rows: string[][]; keyBase: number }) {
+  const [open, setOpen] = useState(true)
+  return (
+    <div style={{ margin: "8px 0", border: "1px solid #1a1a1a", borderRadius: 6, overflow: "hidden" }}>
+      <div
+        data-cs-table-toggle=""
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          cursor: "pointer", padding: "6px 10px", background: "#0a0a0a", color: "#c9a84c",
+          fontSize: 11, display: "flex", justifyContent: "space-between", alignItems: "center",
+          userSelect: "none",
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {header.join("  ·  ")}
+        </span>
+        <span style={{ marginLeft: 8, flexShrink: 0 }}>{rows.length} rows {open ? "▾" : "▸"}</span>
+      </div>
+      {open && (
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 12, color: "#d4d4d4" }}>
+            <thead>
+              <tr>{header.map((h, j) => <th key={j} style={tableHeadStyle}>{renderInline(h, keyBase * 1000 + j)}</th>)}</tr>
+            </thead>
+            <tbody>
+              {rows.map((r, ri) => (
+                <tr key={ri} style={ri % 2 ? { background: "#0c0c0c" } : undefined}>
+                  {header.map((_, ci) => <td key={ci} style={tableCellStyle}>{renderInline(r[ci] ?? "", keyBase * 1000 + (ri + 1) * 50 + ci)}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function renderBlocks(text: string, startKey: number): React.ReactNode[] {
   const nodes: React.ReactNode[] = []
   const lines = text.split("\n")
@@ -60,7 +116,24 @@ function renderBlocks(text: string, startKey: number): React.ReactNode[] {
     listItems = []
   }
 
-  for (const line of lines) {
+  for (let li = 0; li < lines.length; li++) {
+    const line = lines[li]
+
+    // GFM table: a row followed by a delimiter row.
+    if (isTableRow(line) && li + 1 < lines.length && isDelimiterRow(lines[li + 1])) {
+      flushList()
+      const header = parseRow(line)
+      li += 2
+      const rows: string[][] = []
+      while (li < lines.length && isTableRow(lines[li]) && !isDelimiterRow(lines[li])) {
+        rows.push(parseRow(lines[li]))
+        li++
+      }
+      li-- // the for-loop will increment; we consumed up to the last table row
+      nodes.push(<CollapsibleTable key={`tbl-${i++}`} header={header} rows={rows} keyBase={i++} />)
+      continue
+    }
+
     // Horizontal rule
     if (/^---+$/.test(line.trim())) {
       flushList()

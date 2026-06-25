@@ -61,11 +61,14 @@ function SidePanel() {
       switch (msg.type) {
         case "connection_state":
           setConnectionState(msg.state)
-          break
-
-        case "connected":
-          portRef.current?.postMessage({ type: "query_capabilities" })
-          portRef.current?.postMessage({ type: "get_config" })
+          // The agent emits `connected`/`config_state` only once per WS session —
+          // which usually happens before this panel is open, so we can't rely on it.
+          // connection_state is delivered to the panel on connect AND on every state
+          // change, so (re)sync capabilities + config whenever we observe a live link.
+          if (msg.state === "connected") {
+            portRef.current?.postMessage({ type: "query_capabilities" })
+            portRef.current?.postMessage({ type: "get_config" })
+          }
           break
 
         case "ai_streaming":
@@ -76,6 +79,17 @@ function SidePanel() {
               return [...prev.slice(0, -1), { ...last, content: last.content + msg.chunk }]
             }
             return [...prev, { role: "assistant", content: msg.chunk, timestamp: Date.now() }]
+          })
+          break
+
+        case "ai_thinking":
+          setIsStreaming(true)
+          setMessages((prev) => {
+            const last = prev[prev.length - 1]
+            if (last?.role === "thinking") {
+              return [...prev.slice(0, -1), { ...last, content: last.content + msg.chunk }]
+            }
+            return [...prev, { role: "thinking", content: msg.chunk, timestamp: Date.now() }]
           })
           break
 

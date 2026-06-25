@@ -1,3 +1,5 @@
+<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/e7c954c6-1206-41b8-b1b5-12244eab05f9" />
+
 # Claude Studio
 
 Claude Studio is a visual AI coding assistant: select an element in your browser, describe a change, and Claude Code edits your source files in real time. It consists of exactly two components — a **browser extension** and an **agent** you run locally via `pnpx claude-studio` — connected over a WebSocket protocol documented in [`protocol/README.md`](protocol/README.md).

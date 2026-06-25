@@ -56,4 +56,17 @@ describe("ClaudeSession streaming", () => {
     expect(helper.out.done).toBe(true)
     expect(activityBuffer.entries().some((e) => e.kind === "tool" && e.text.includes("Edit"))).toBe(true)
   })
+
+  it("appends the ultracode workflow directive and tools to the query when effort is ultracode", async () => {
+    queryMock.mockReturnValue(fakeQuery([
+      { type: "result", subtype: "success", session_id: "s", result: "", num_turns: 1, total_cost_usd: 0, usage: {} },
+    ]))
+    const session = new ClaudeSession(() => ({ ...DEFAULT_CONFIG, model: "opus", effort: "ultracode" }))
+    const helper = collect()
+    session.executeRawPrompt("c", "do it", helper.cb as any)
+    await new Promise((r) => setTimeout(r, 20))
+    const arg = queryMock.mock.calls[0][0]
+    expect(arg.prompt).toMatch(/ultracode/i)
+    expect(arg.options.allowedTools).toContain("Workflow")
+  })
 })

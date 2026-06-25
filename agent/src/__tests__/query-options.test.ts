@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { buildQueryOptions, effortToSdk } from "../query-options.js"
+import { buildQueryOptions, effortToSdk, ultracodeAugment, isUltracodeActive } from "../query-options.js"
 import { DEFAULT_CONFIG } from "@claude-studio/protocol"
 
 describe("buildQueryOptions", () => {
@@ -56,6 +56,12 @@ describe("buildQueryOptions", () => {
     expect(o.includePartialMessages).toBe(true)
   })
 
+  it("appends extraTools to allowedTools without duplicates", () => {
+    const o = buildQueryOptions({ ...DEFAULT_CONFIG, allowBash: true }, undefined, ["WebFetch", "Bash"])
+    expect(o.allowedTools).toContain("WebFetch")
+    expect((o.allowedTools as string[]).filter((t) => t === "Bash").length).toBe(1)
+  })
+
   it("passes the clamped effort through to SDK options", () => {
     const o = buildQueryOptions({ ...DEFAULT_CONFIG, model: "opus", effort: "xhigh" }, undefined)
     expect(o.effort).toBe("xhigh")
@@ -75,20 +81,41 @@ describe("effortToSdk", () => {
     expect(effortToSdk("opus", "max")).toEqual({ effort: "max" })
   })
 
-  it("maps ultracode to max effort + a forced thinking budget", () => {
+  it("maps ultracode to xhigh effort (no thinking budget)", () => {
     const o = effortToSdk("opus", "ultracode")
-    expect(o.effort).toBe("max")
-    expect(o.thinking).toEqual({ type: "enabled", budgetTokens: 32_000 })
+    expect(o).toEqual({ effort: "xhigh" })
+    expect(o.thinking).toBeUndefined()
   })
 
   it("clamps an unsupported tier down to the model's strongest available (xhigh → high on Sonnet)", () => {
     expect(effortToSdk("sonnet", "xhigh")).toEqual({ effort: "high" })
     // sonnet still supports max + ultracode
     expect(effortToSdk("sonnet", "max")).toEqual({ effort: "max" })
-    expect(effortToSdk("sonnet", "ultracode").effort).toBe("max")
+    expect(effortToSdk("sonnet", "ultracode")).toEqual({ effort: "xhigh" })
   })
 
   it("returns nothing for a model with no effort ladder (Haiku)", () => {
     expect(effortToSdk("haiku", "max")).toEqual({})
+  })
+})
+
+describe("ultracode augmentation", () => {
+  it("isUltracodeActive: true for opus+ultracode, false for haiku+ultracode and opus+high", () => {
+    expect(isUltracodeActive({ ...DEFAULT_CONFIG, model: "opus", effort: "ultracode" })).toBe(true)
+    expect(isUltracodeActive({ ...DEFAULT_CONFIG, model: "haiku", effort: "ultracode" })).toBe(false)
+    expect(isUltracodeActive({ ...DEFAULT_CONFIG, model: "opus", effort: "high" })).toBe(false)
+  })
+
+  it("ultracodeAugment appends the workflow directive + Task/Workflow tools when active", () => {
+    const r = ultracodeAugment("do it", { ...DEFAULT_CONFIG, model: "opus", effort: "ultracode" }, ["WebFetch"])
+    expect(r.prompt).toMatch(/ultracode/i)
+    expect(r.prompt).toMatch(/workflow/i)
+    expect(r.tools).toEqual(expect.arrayContaining(["WebFetch", "Task", "Workflow"]))
+  })
+
+  it("ultracodeAugment is a no-op when not active", () => {
+    const r = ultracodeAugment("do it", { ...DEFAULT_CONFIG, model: "opus", effort: "high" }, ["WebFetch"])
+    expect(r.prompt).toBe("do it")
+    expect(r.tools).toEqual(["WebFetch"])
   })
 })

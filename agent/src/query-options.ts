@@ -2,13 +2,6 @@ import { BASE_ALLOWED_TOOLS, effortLevelsForModel, EFFORT_LEVELS, type StudioCon
 import { pluginPathByName } from "./discovery.js"
 
 /**
- * Forced thinking budget (tokens) for the "ultracode" tier. The SDK effort
- * ladder tops out at "max", so "ultracode" = max effort PLUS this explicit
- * large thinking budget, making it strictly stronger than plain "max".
- */
-const ULTRACODE_THINKING_BUDGET = 32_000
-
-/**
  * Translate a Studio effort tier into SDK query options, clamped to what the
  * active model actually supports. Models with no effort ladder (Haiku) get
  * nothing. If the configured tier isn't offered by the model, fall back to the
@@ -25,7 +18,9 @@ export function effortToSdk(model: string, effort: EffortLevel): Record<string, 
   }
 
   if (chosen === "ultracode") {
-    return { effort: "max", thinking: { type: "enabled", budgetTokens: ULTRACODE_THINKING_BUDGET } }
+    // "ultracode" is Studio's top tier: xHigh effort PLUS a dynamic-workflow
+    // directive (applied in the session layer). The SDK effort itself is xhigh.
+    return { effort: "xhigh" }
   }
   return { effort: chosen }
 }
@@ -33,9 +28,11 @@ export function effortToSdk(model: string, effort: EffortLevel): Record<string, 
 export function buildQueryOptions(
   config: StudioConfig,
   resumeSessionId: string | undefined,
+  extraTools: string[] = [],
 ): Record<string, unknown> {
   const allowedTools: string[] = [...BASE_ALLOWED_TOOLS]
   if (config.allowBash) allowedTools.push("Bash")
+  for (const t of extraTools) if (!allowedTools.includes(t)) allowedTools.push(t)
 
   const options: Record<string, unknown> = {
     // Reliability fix: model is authoritative on EVERY call. The SDK writes
@@ -76,4 +73,33 @@ export function buildQueryOptions(
   }
 
   return options
+}
+
+/**
+ * Directive appended to a prompt when the user selects the "ultracode" tier:
+ * it asks the agent to author and run a dynamic multi-agent workflow for the turn.
+ */
+export const ULTRACODE_DIRECTIVE = `
+
+---
+ultracode: For this turn, author and run a dynamic multi-agent workflow. Decompose the task, fan out the independent parts to subagents, verify the results, and synthesize. Assign the right model to each subtask by difficulty — opus for hard reasoning or design, sonnet for standard implementation, haiku for mechanical edits.`
+
+/** Tools enabled for an ultracode turn so the agent can actually orchestrate. */
+export const ULTRACODE_TOOLS = ["Task", "Workflow"]
+
+/** True when the active model offers the ultracode tier AND it is selected. */
+export function isUltracodeActive(config: StudioConfig): boolean {
+  return config.effort === "ultracode" && effortLevelsForModel(config.model).includes("ultracode")
+}
+
+/** Augment a prompt + tool list for an ultracode turn (no-op otherwise). */
+export function ultracodeAugment(
+  prompt: string,
+  config: StudioConfig,
+  extraTools: string[],
+): { prompt: string; tools: string[] } {
+  if (!isUltracodeActive(config)) return { prompt, tools: extraTools }
+  const tools = [...extraTools]
+  for (const t of ULTRACODE_TOOLS) if (!tools.includes(t)) tools.push(t)
+  return { prompt: prompt + ULTRACODE_DIRECTIVE, tools }
 }

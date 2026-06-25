@@ -1,6 +1,6 @@
 import { query } from "@anthropic-ai/claude-agent-sdk"
 import type { ElementSelection, StudioConfig, Usage, SlashCommand } from "@claude-studio/protocol"
-import { buildQueryOptions } from "./query-options.js"
+import { buildQueryOptions, ultracodeAugment } from "./query-options.js"
 import { buildPrompt } from "./prompt-builder.js"
 import { log } from "./logger.js"
 import { activityBuffer } from "./activity.js"
@@ -71,15 +71,16 @@ export class ClaudeSession {
     void this.run(clientId, text, cb, this.getConfig())
   }
 
-  private async run(clientId: string, prompt: string, cb: SessionCallbacks, cfg: StudioConfig): Promise<void> {
+  private async run(clientId: string, prompt: string, cb: SessionCallbacks, cfg: StudioConfig, extraTools: string[] = []): Promise<void> {
     const start = Date.now()
     const existing = this.sessions.get(clientId)
-    const options = buildQueryOptions(cfg, existing)
+    const { prompt: finalPrompt, tools } = ultracodeAugment(prompt, cfg, extraTools)
+    const options = buildQueryOptions(cfg, existing, tools)
     try {
       // buildQueryOptions returns Record<string, unknown> (model is authoritative
       // on every call); the SDK types `options` strictly as `Options`, so cast at
       // the call boundary. The result handle is iterated/inspected dynamically.
-      const q = query({ prompt, options: options as never }) as any
+      const q = query({ prompt: finalPrompt, options: options as never }) as any
       if (typeof q.interrupt === "function") this.active.set(clientId, { interrupt: () => q.interrupt() })
 
       for await (const msg of q) {

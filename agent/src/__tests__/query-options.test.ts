@@ -106,11 +106,11 @@ describe("ultracode augmentation", () => {
     expect(isUltracodeActive({ ...DEFAULT_CONFIG, model: "opus", effort: "high" })).toBe(false)
   })
 
-  it("ultracodeAugment appends the workflow directive + Task/Workflow tools when active", () => {
+  it("ultracodeAugment appends the workflow directive + Task tool when active", () => {
     const r = ultracodeAugment("do it", { ...DEFAULT_CONFIG, model: "opus", effort: "ultracode" }, ["WebFetch"])
     expect(r.prompt).toMatch(/ultracode/i)
     expect(r.prompt).toMatch(/workflow/i)
-    expect(r.tools).toEqual(expect.arrayContaining(["WebFetch", "Task", "Workflow"]))
+    expect(r.tools).toEqual(expect.arrayContaining(["WebFetch", "Task"]))
   })
 
   it("ultracodeAugment is a no-op when not active", () => {

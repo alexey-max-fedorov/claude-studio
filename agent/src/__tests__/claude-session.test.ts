@@ -67,6 +67,6 @@ describe("ClaudeSession streaming", () => {
     await new Promise((r) => setTimeout(r, 20))
     const arg = queryMock.mock.calls[0][0]
     expect(arg.prompt).toMatch(/ultracode/i)
-    expect(arg.options.allowedTools).toContain("Workflow")
+    expect(arg.options.allowedTools).toContain("Task")
   })
 })

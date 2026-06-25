@@ -82,10 +82,10 @@ export function buildQueryOptions(
 export const ULTRACODE_DIRECTIVE = `
 
 ---
-ultracode: For this turn, author and run a dynamic multi-agent workflow. Decompose the task, fan out the independent parts to subagents, verify the results, and synthesize. Assign the right model to each subtask by difficulty — opus for hard reasoning or design, sonnet for standard implementation, haiku for mechanical edits.`
+ultracode: For this turn, run a dynamic multi-agent workflow — use the Task tool to spawn subagents for the independent parts, verify the results, and synthesize. Assign the right model per subtask by difficulty: opus for hard reasoning or design, sonnet for standard implementation, haiku for mechanical edits.`
 
 /** Tools enabled for an ultracode turn so the agent can actually orchestrate. */
-export const ULTRACODE_TOOLS = ["Task", "Workflow"]
+export const ULTRACODE_TOOLS = ["Task"]
 
 /** True when the active model offers the ultracode tier AND it is selected. */
 export function isUltracodeActive(config: StudioConfig): boolean {

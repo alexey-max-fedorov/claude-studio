@@ -33,7 +33,7 @@ export function startServer(opts: {
   })
 
   const wss = new WebSocketServer({ server: http, maxPayload: 1024 * 1024 })
-  wss.on("connection", (ws) => handleConnection(ws, { connections, claude, config, serverVersion }))
+  wss.on("connection", (ws, req) => handleConnection(ws, req, { connections, claude, config, serverVersion }))
 
   // Realtime config sync: any store change → broadcast to every client.
   config.on("change", () => connections.broadcast(buildConfigState(config)))

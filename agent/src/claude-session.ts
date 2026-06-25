@@ -1,7 +1,8 @@
 import { query } from "@anthropic-ai/claude-agent-sdk"
 import type { ElementSelection, StudioConfig, Usage, SlashCommand } from "@claude-studio/protocol"
 import { buildQueryOptions, ultracodeAugment } from "./query-options.js"
-import { buildPrompt } from "./prompt-builder.js"
+import { buildPrompt, isDevServer } from "./prompt-builder.js"
+import { locateElement } from "./locate-element.js"
 import { log } from "./logger.js"
 import { activityBuffer } from "./activity.js"
 
@@ -61,10 +62,15 @@ export class ClaudeSession {
     }
   }
 
-  executePrompt(clientId: string, input: { route: string; element: ElementSelection; prompt: string }, cb: SessionCallbacks): void {
+  executePrompt(clientId: string, input: { route: string; url: string; element: ElementSelection; prompt: string; devHost?: string }, cb: SessionCallbacks): void {
     const cfg = this.getConfig()
-    const prompt = buildPrompt({ route: input.route, element: input.element, prompt: input.prompt, routeHints: cfg.routeHints })
-    void this.run(clientId, prompt, cb, cfg)
+    const external = input.url ? !isDevServer(input.url, input.devHost) : false
+    const locations = external ? [] : locateElement(cfg.projectDir, input.element)
+    const prompt = buildPrompt({
+      route: input.route, url: input.url, element: input.element,
+      locations, prompt: input.prompt, routeHints: cfg.routeHints, external,
+    })
+    void this.run(clientId, prompt, cb, cfg, external ? ["WebFetch"] : [])
   }
 
   executeRawPrompt(clientId: string, text: string, cb: SessionCallbacks): void {

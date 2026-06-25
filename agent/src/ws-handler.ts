@@ -1,4 +1,5 @@
 import type { WebSocket } from "ws"
+import type { IncomingMessage } from "node:http"
 import { parseClientMessage, type ServerMessage } from "@claude-studio/protocol"
 import type { ConnectionManager } from "./connection-manager.js"
 import type { ClaudeSession, SessionCallbacks } from "./claude-session.js"
@@ -24,9 +25,10 @@ export function buildConfigState(config: ConfigStore): ServerMessage {
   }
 }
 
-export function handleConnection(ws: WebSocket, deps: HandlerDeps): void {
+export function handleConnection(ws: WebSocket, req: IncomingMessage, deps: HandlerDeps): void {
   const { connections, claude, config, serverVersion } = deps
   const clientId = connections.add(ws)
+  const devHost = hostFromHeader(req.headers.host)
   const short = clientId.slice(0, 8)
   log.info("WS", `client connected: ${short}`)
   connections.send(clientId, { type: "connected", clientId, serverVersion })
@@ -72,7 +74,7 @@ export function handleConnection(ws: WebSocket, deps: HandlerDeps): void {
         connections.send(clientId, { type: "pong" })
         break
       case "prompt":
-        claude.executePrompt(clientId, { route: msg.route, element: msg.element, prompt: msg.prompt }, callbacks())
+        claude.executePrompt(clientId, { route: msg.route, url: msg.url ?? "", element: msg.element, prompt: msg.prompt, devHost }, callbacks())
         break
       case "raw_prompt":
         claude.executeRawPrompt(clientId, msg.prompt, callbacks())
@@ -106,4 +108,10 @@ export function handleConnection(ws: WebSocket, deps: HandlerDeps): void {
     connections.remove(clientId)
     claude.resetSession(clientId)
   })
+}
+
+/** The hostname the client dialed (from the WS upgrade Host header), lowercased, port stripped. */
+function hostFromHeader(h: string | undefined): string | undefined {
+  if (!h) return undefined
+  try { return new URL("http://" + h).hostname.toLowerCase() } catch { return undefined }
 }

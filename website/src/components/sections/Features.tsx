@@ -4,10 +4,10 @@ import { motion } from "framer-motion"
 import {
   MousePointerClick,
   MessageSquareText,
-  Radio,
-  History,
-  DollarSign,
   Layers,
+  Puzzle,
+  RefreshCw,
+  Radio,
 } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/ScrollReveal"
 import { siteConfig } from "@/data/site"
@@ -15,10 +15,10 @@ import { siteConfig } from "@/data/site"
 const iconMap = {
   MousePointerClick,
   MessageSquareText,
-  Radio,
-  History,
-  DollarSign,
   Layers,
+  Puzzle,
+  RefreshCw,
+  Radio,
 } as const
 
 export function Features() {

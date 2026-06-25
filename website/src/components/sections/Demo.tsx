@@ -39,10 +39,10 @@ export function Demo() {
               <div className="px-5 py-5 font-mono text-sm leading-7 space-y-1">
                 <p>
                   <span className="text-[#666]">$</span>{" "}
-                  <span className="text-[#c9a84c]">pnpm dlx claude-studio serve</span>
+                  <span className="text-[#c9a84c]">pnpx claude-studio</span>
                 </p>
                 <p className="text-[#a0a0a0]">
-                  Bridge server running on ws://localhost:7281
+                  Claude Studio 2.0 &middot; WebSocket: ws://localhost:7281
                 </p>
                 <p className="text-[#333]">&nbsp;</p>
                 <p className="text-[#a0a0a0]">
@@ -55,16 +55,13 @@ export function Demo() {
                 </p>
                 <p className="text-[#333]">&nbsp;</p>
                 <p className="text-[#666]">
-                  Reading app/components/Button.tsx...
+                  Reading src/components/Button.tsx...
                 </p>
                 <p className="text-[#c9a84c]">
-                  Editing app/components/Button.tsx:12-15
+                  Editing src/components/Button.tsx:12-15
                 </p>
                 <p className="text-green-500">
                   Done. 1 file changed.
-                </p>
-                <p className="text-[#a0a0a0]">
-                  <span className="text-[#666]">[hmr]</span> Page reloaded
                 </p>
               </div>
             </div>

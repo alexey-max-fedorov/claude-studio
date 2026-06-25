@@ -1,8 +1,8 @@
 export const siteConfig = {
   name: "Claude Studio",
-  tagline: "Visual AI coding assistant for Next.js",
+  tagline: "Visual AI coding assistant for the web",
   description:
-    "Select elements on your page, describe changes in plain English, and Claude Code makes it happen in your source code.",
+    "Select an element on your live page, describe the change in plain English, and Claude Code edits your source — in any framework. A browser extension and a local agent, talking over WebSocket.",
   github: "https://github.com/alexey-max-fedorov/claude-studio",
   chromeWebStore:
     "https://chromewebstore.google.com/detail/claude-studio/bpcmnngncojfbddicenjebaglkdplodk",
@@ -35,7 +35,7 @@ export const siteConfig = {
   metrics: [
     { value: "Open Source", label: "Free Forever" },
     { value: "Privacy-First", label: "No Telemetry" },
-    { value: "Next.js", label: "Optimized" },
+    { value: "Any Framework", label: "React · Vue · Svelte · HTML" },
     { value: "Local", label: "Runs On Your Machine" },
   ],
   features: [
@@ -43,66 +43,66 @@ export const siteConfig = {
       icon: "MousePointerClick" as const,
       title: "Smart Element Picker",
       description:
-        "Select any element with a gold highlight overlay. Captures CSS selectors, computed styles, and full HTML context for precise edits.",
+        "Select any element with a gold highlight overlay. Captures the selector, computed styles, and full HTML context for precise edits.",
     },
     {
       icon: "MessageSquareText" as const,
       title: "Natural Language Edits",
       description:
-        'Describe what you want to change in plain English. "Make this button rounded with a subtle shadow" \u2014 done.',
-    },
-    {
-      icon: "Radio" as const,
-      title: "Real-time Streaming",
-      description:
-        "Watch Claude work in the side panel. See file reads, edits, and tool calls as they happen.",
-    },
-    {
-      icon: "History" as const,
-      title: "Session Persistence",
-      description:
-        "Chat history and session state survive sidebar reloads. Pick up right where you left off.",
-    },
-    {
-      icon: "DollarSign" as const,
-      title: "Cost Tracking",
-      description:
-        "Monitor token usage, spend per turn, and cumulative cost. Full transparency, no surprises.",
+        'Describe what you want in plain English. "Make this button rounded with a subtle shadow" — done, in your source.',
     },
     {
       icon: "Layers" as const,
-      title: "Model Flexibility",
+      title: "Reliable Model Switching",
       description:
-        "Switch between Sonnet, Opus, and Haiku on the fly. Use the right model for the right task.",
+        "Switch between Sonnet, Opus, Haiku, and Fable on the fly. The agent applies your choice on every turn — no flaky slash commands.",
+    },
+    {
+      icon: "Puzzle" as const,
+      title: "Plugin & Skill Control",
+      description:
+        "Toggle Claude Code plugins and skills straight from the extension's Agent tab. Shape how the agent works without touching config files.",
+    },
+    {
+      icon: "RefreshCw" as const,
+      title: "Realtime Config Sync",
+      description:
+        "Tune the model, permissions, turns, and budget from the extension or the server's TUI — changes broadcast to every connected client instantly over WebSocket.",
+    },
+    {
+      icon: "Radio" as const,
+      title: "Live Streaming",
+      description:
+        "Watch Claude work in the side panel — file reads, edits, and tool calls as they happen, with token and cost tracking.",
     },
   ],
   howItWorks: [
     {
       step: 1,
-      title: "Start the Server",
+      title: "Run the agent",
       description:
-        "Run the bridge server with a single command. It connects your browser to Claude Code.",
-      code: "pnpm dlx claude-studio serve",
+        "In your project directory, run one command. An interactive terminal UI starts and shows your WebSocket URL.",
+      code: "pnpx claude-studio",
     },
     {
       step: 2,
-      title: "Pick an Element",
+      title: "Connect the extension",
       description:
-        "Toggle the element picker with Ctrl+Shift+E. Hover over any element to see the gold highlight.",
+        "Install the browser extension, open the side panel, and point it at the ws:// URL from the terminal.",
       code: null,
     },
     {
       step: 3,
-      title: "Describe the Change",
+      title: "Pick & describe",
       description:
-        "Type what you want in the floating prompt widget. Press Ctrl+Enter to send.",
+        "Toggle the element picker with Ctrl+Shift+E, select an element, and describe your change in the floating widget.",
       code: null,
     },
     {
       step: 4,
-      title: "Watch It Happen",
+      title: "Watch it ship",
       description:
-        "Claude edits your source files. Next.js HMR reloads the page instantly with your changes.",
+        "Claude Code edits your source files. Save and the change is live — in React, Vue, Svelte, plain HTML, whatever you use.",
       code: null,
     },
   ],

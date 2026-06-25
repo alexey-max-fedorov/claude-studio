@@ -23,7 +23,7 @@ export function CTA() {
           {/* Install command */}
           <div className="mb-8">
             <code className="inline-block bg-[#111] border border-[#1a1a1a] rounded-lg px-6 py-3 text-[#c9a84c] text-sm sm:text-base font-mono">
-              $ pnpm dlx claude-studio setup
+              $ pnpx claude-studio
             </code>
           </div>
 

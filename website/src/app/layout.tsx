@@ -2,18 +2,18 @@ import type { Metadata } from "next"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Claude Studio — Visual AI Coding for Next.js",
+  title: "Claude Studio — Visual AI Coding for the Web",
   description:
-    "Select elements on your page, describe changes in plain English, and Claude Code makes it happen in your source code.",
+    "Select an element on your live page, describe the change in plain English, and Claude Code edits your source — in any framework.",
   openGraph: {
     title: "Claude Studio",
-    description: "Visual AI coding assistant for Next.js",
+    description: "Visual AI coding assistant for the web",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Claude Studio",
-    description: "Visual AI coding assistant for Next.js",
+    description: "Visual AI coding assistant for the web",
   },
 }
 

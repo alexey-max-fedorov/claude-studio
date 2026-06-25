@@ -24,6 +24,7 @@ export type ServerMessage =
   | { type: "connected"; clientId: string; serverVersion: string }
   | { type: "pong" }
   | { type: "ai_streaming"; chunk: string }
+  | { type: "ai_thinking"; chunk: string }
   | { type: "tool_use"; tool: string; input: Record<string, unknown> }
   | {
       type: "ai_complete"

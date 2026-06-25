@@ -40,6 +40,7 @@ export function parseClientMessage(raw: string): ClientMessage {
   switch (msg.type) {
     case "prompt": {
       assertStr(msg.route, "route", MAX_ROUTE_LEN)
+      if (msg.url !== undefined) assertStr(msg.url, "url", MAX_ROUTE_LEN)
       assertStr(msg.prompt, "prompt", MAX_PROMPT_LEN)
       if (!msg.element || typeof msg.element !== "object") throw new Error("Invalid message: element must be an object")
       const el = msg.element

@@ -11,7 +11,7 @@ import type {
 // --- Client → Server (extension / TUI → agent) ---
 export type ClientMessage =
   | { type: "ping" }
-  | { type: "prompt"; route: string; element: ElementSelection; prompt: string }
+  | { type: "prompt"; route: string; url?: string; element: ElementSelection; prompt: string }
   | { type: "raw_prompt"; prompt: string }
   | { type: "reset_session" }
   | { type: "interrupt" }

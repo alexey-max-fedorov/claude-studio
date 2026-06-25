@@ -41,6 +41,27 @@ describe("parseClientMessage", () => {
     const msg = parseClientMessage(JSON.stringify({ type: "prompt", route: "/", element, prompt: "go" }))
     expect(msg.type).toBe("prompt")
   })
+
+  it("accepts a prompt with a full url", () => {
+    const element = {
+      tagName: "div", id: "x", classList: ["a"], cssSelector: ".a", textContent: "t",
+      outerHTML: "<div/>", attributes: { role: "button" }, parentChain: ["body"],
+      computedStyles: { color: "#000", backgroundColor: "#fff", fontSize: "16px" },
+    }
+    const msg = parseClientMessage(JSON.stringify({ type: "prompt", route: "/", url: "http://localhost:3000/", element, prompt: "go" }))
+    expect(msg.type).toBe("prompt")
+    expect((msg as any).url).toBe("http://localhost:3000/")
+  })
+
+  it("rejects an over-long url", () => {
+    const element = {
+      tagName: "div", id: "x", classList: ["a"], cssSelector: ".a", textContent: "t",
+      outerHTML: "<div/>", attributes: { role: "button" }, parentChain: ["body"],
+      computedStyles: { color: "#000", backgroundColor: "#fff", fontSize: "16px" },
+    }
+    const big = "http://x/" + "a".repeat(1100)
+    expect(() => parseClientMessage(JSON.stringify({ type: "prompt", route: "/", url: big, element, prompt: "go" }))).toThrow(/url/)
+  })
 })
 
 describe("validateConfigPatch", () => {

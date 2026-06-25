@@ -10,22 +10,24 @@
   "keywords": ["claude", "ai", "visual-editing", "browser-extension", "agent"],
   "publishConfig": { "access": "public" },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
     "dev": "tsx watch src/cli.tsx",
     "start": "node dist/cli.js",
     "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.90",
-    "@claude-studio/protocol": "workspace:*",
     "ink": "^5.0.0",
     "react": "^18.0.0",
     "ws": "^8.0.0"
   },
   "devDependencies": {
+    "@claude-studio/protocol": "workspace:*",
     "@types/node": "^22.0.0",
     "@types/react": "^18.0.0",
     "@types/ws": "^8.0.0",
+    "tsup": "^8.0.0",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0",
     "vitest": "^3.0.0"

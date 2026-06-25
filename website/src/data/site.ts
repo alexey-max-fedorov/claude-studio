@@ -1,11 +1,13 @@
+const CHROME_WEB_STORE_URL =
+  "https://chromewebstore.google.com/detail/claude-studio/bpcmnngncojfbddicenjebaglkdplodk"
+
 export const siteConfig = {
   name: "Claude Studio",
   tagline: "Visual AI coding assistant for the web",
   description:
     "Select an element on your live page, describe the change in plain English, and Claude Code edits your source — in any framework. A browser extension and a local agent, talking over WebSocket.",
   github: "https://github.com/alexey-max-fedorov/claude-studio",
-  chromeWebStore:
-    "https://chromewebstore.google.com/detail/claude-studio/bpcmnngncojfbddicenjebaglkdplodk",
+  chromeWebStore: CHROME_WEB_STORE_URL,
   nav: [
     { label: "Features", href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
@@ -16,7 +18,7 @@ export const siteConfig = {
     },
     {
       label: "Add to Chrome",
-      href: "https://chromewebstore.google.com/detail/claude-studio/bpcmnngncojfbddicenjebaglkdplodk",
+      href: CHROME_WEB_STORE_URL,
       external: true,
     },
   ],

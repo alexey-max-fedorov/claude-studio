@@ -50,4 +50,9 @@ describe("buildQueryOptions", () => {
     expect(bypass.allowDangerouslySkipPermissions).toBe(true)
     expect(normal.allowDangerouslySkipPermissions).toBeUndefined()
   })
+
+  it("enables partial message streaming", () => {
+    const o = buildQueryOptions(DEFAULT_CONFIG, undefined)
+    expect(o.includePartialMessages).toBe(true)
+  })
 })

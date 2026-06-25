@@ -3,9 +3,11 @@ import type { ElementSelection, StudioConfig, Usage, SlashCommand } from "@claud
 import { buildQueryOptions } from "./query-options.js"
 import { buildPrompt } from "./prompt-builder.js"
 import { log } from "./logger.js"
+import { activityBuffer } from "./activity.js"
 
 export interface SessionCallbacks {
   onStreaming(chunk: string): void
+  onThinking(chunk: string): void
   onToolUse(tool: string, input: Record<string, unknown>): void
   onComplete(c: {
     result: string; sessionId: string; cost: number; turns: number
@@ -91,10 +93,27 @@ export class ClaudeSession {
                 : { name: String(c.name ?? ""), description: String(c.description ?? ""), argumentHint: String(c.argumentHint ?? c.argument_hint ?? "") },
             )
           }
+        } else if (msg.type === "stream_event") {
+          // Token-level deltas drive live text + thinking.
+          const ev = msg.event
+          if (ev?.type === "content_block_delta") {
+            const d = ev.delta
+            if (d?.type === "text_delta" && d.text) {
+              cb.onStreaming(d.text)
+              activityBuffer.append("text", d.text)
+            } else if (d?.type === "thinking_delta" && d.thinking) {
+              cb.onThinking(d.thinking)
+              activityBuffer.append("thinking", d.thinking)
+            }
+          }
         } else if (msg.type === "assistant") {
+          // Text + thinking already streamed via stream_event deltas; here we only
+          // pick up tool_use blocks (their inputs aren't streamed as usable deltas).
           for (const block of msg.message?.content ?? []) {
-            if (block.type === "text" && block.text) cb.onStreaming(block.text)
-            else if (block.type === "tool_use") cb.onToolUse(block.name, block.input ?? {})
+            if (block.type === "tool_use") {
+              cb.onToolUse(block.name, block.input ?? {})
+              activityBuffer.append("tool", `${block.name} ${JSON.stringify(block.input ?? {}).slice(0, 80)}`)
+            }
           }
         } else if (msg.type === "result") {
           const sessionId = msg.session_id ?? existing ?? ""

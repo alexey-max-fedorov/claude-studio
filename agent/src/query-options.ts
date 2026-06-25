@@ -20,6 +20,8 @@ export function buildQueryOptions(
     permissionMode: config.permissionMode,
     allowedTools,
     settingSources: ["user", "project", "local"],
+    // Stream token-level deltas (text + thinking) so clients render live.
+    includePartialMessages: true,
   }
 
   if (config.permissionMode === "bypassPermissions") {

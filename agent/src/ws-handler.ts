@@ -42,6 +42,7 @@ export function handleConnection(ws: WebSocket, deps: HandlerDeps): void {
 
   const callbacks = (): SessionCallbacks => ({
     onStreaming: (chunk) => connections.send(clientId, { type: "ai_streaming", chunk }),
+    onThinking: (chunk) => connections.send(clientId, { type: "ai_thinking", chunk }),
     onToolUse: (tool, input) => connections.send(clientId, { type: "tool_use", tool, input }),
     onError: (error) => connections.send(clientId, { type: "ai_error", error }),
     onComplete: (c) => {

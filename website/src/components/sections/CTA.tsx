@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react"
+import { Download } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/ScrollReveal"
 import { siteConfig } from "@/data/site"
 
@@ -28,17 +28,24 @@ export function CTA() {
           </div>
 
           <a
-            href={siteConfig.github}
+            href={siteConfig.chromeWebStore}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#c9a84c] text-black font-semibold px-10 py-4 rounded-md text-base hover:bg-[#d4b65e] hover:shadow-[0_0_32px_rgba(201,168,76,0.45)] transition-all duration-200 active:scale-[0.98] group"
           >
-            View on GitHub
-            <ArrowRight
-              size={18}
-              className="group-hover:translate-x-1 transition-transform duration-200"
-            />
+            <Download size={18} />
+            Add to Chrome
           </a>
+          <div className="mt-4">
+            <a
+              href={siteConfig.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#c9a84c] text-sm hover:underline"
+            >
+              View on GitHub →
+            </a>
+          </div>
           <p className="text-[#555] text-xs mt-5 tracking-wide">
             Open source. No analytics. No telemetry.
           </p>

@@ -4,12 +4,19 @@ export const siteConfig = {
   description:
     "Select elements on your page, describe changes in plain English, and Claude Code makes it happen in your source code.",
   github: "https://github.com/alexey-max-fedorov/claude-studio",
+  chromeWebStore:
+    "https://chromewebstore.google.com/detail/claude-studio/bpcmnngncojfbddicenjebaglkdplodk",
   nav: [
     { label: "Features", href: "#features" },
     { label: "How It Works", href: "#how-it-works" },
     {
       label: "GitHub",
       href: "https://github.com/alexey-max-fedorov/claude-studio",
+      external: true,
+    },
+    {
+      label: "Add to Chrome",
+      href: "https://chromewebstore.google.com/detail/claude-studio/bpcmnngncojfbddicenjebaglkdplodk",
       external: true,
     },
   ],

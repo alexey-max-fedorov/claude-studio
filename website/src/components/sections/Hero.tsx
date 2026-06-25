@@ -1,7 +1,7 @@
 "use client"
 
 import { motion, useReducedMotion } from "framer-motion"
-import { ArrowRight, ChevronDown, ExternalLink } from "lucide-react"
+import { Download, ChevronDown, ExternalLink } from "lucide-react"
 import Image from "next/image"
 import { AnimatedText, FadeIn } from "@/components/ui/AnimatedText"
 import { siteConfig } from "@/data/site"
@@ -99,6 +99,15 @@ export function Hero() {
         <FadeIn delay={0.8}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
+              href={siteConfig.chromeWebStore}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-[#c9a84c] text-black font-semibold px-8 py-4 rounded-md text-sm hover:bg-[#d4b65e] hover:shadow-[0_0_24px_rgba(201,168,76,0.4)] transition-all duration-200 active:scale-[0.98] w-full sm:w-auto justify-center"
+            >
+              <Download size={16} />
+              Add to Chrome
+            </a>
+            <a
               href={siteConfig.github}
               target="_blank"
               rel="noopener noreferrer"
@@ -106,13 +115,6 @@ export function Hero() {
             >
               <ExternalLink size={16} />
               View on GitHub
-            </a>
-            <a
-              href="#how-it-works"
-              className="inline-flex items-center gap-2 bg-[#c9a84c] text-black font-semibold px-8 py-4 rounded-md text-sm hover:bg-[#d4b65e] hover:shadow-[0_0_24px_rgba(201,168,76,0.4)] transition-all duration-200 active:scale-[0.98] w-full sm:w-auto justify-center"
-            >
-              Get Started
-              <ArrowRight size={16} />
             </a>
           </div>
         </FadeIn>

@@ -43,4 +43,11 @@ describe("buildQueryOptions", () => {
     expect(o.skills).toEqual(["visual-edit"])
     expect(o.settingSources).toEqual(["user", "project", "local"])
   })
+
+  it("sets allowDangerouslySkipPermissions only for bypassPermissions mode", () => {
+    const bypass = buildQueryOptions({ ...DEFAULT_CONFIG, permissionMode: "bypassPermissions" }, undefined)
+    const normal = buildQueryOptions({ ...DEFAULT_CONFIG, permissionMode: "acceptEdits" }, undefined)
+    expect(bypass.allowDangerouslySkipPermissions).toBe(true)
+    expect(normal.allowDangerouslySkipPermissions).toBeUndefined()
+  })
 })

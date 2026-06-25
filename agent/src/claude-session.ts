@@ -21,6 +21,15 @@ interface Stats {
   turnCount: number
 }
 
+function resultErrorMessage(msg: any): string {
+  switch (msg.subtype) {
+    case "error_max_budget_usd": return `Stopped: reached the max budget cap${typeof msg.total_cost_usd === "number" ? ` ($${msg.total_cost_usd.toFixed(4)})` : ""}.`
+    case "error_max_turns": return `Stopped: reached the max turns limit${typeof msg.num_turns === "number" ? ` (${msg.num_turns} turns)` : ""}.`
+    case "error_during_execution": return "The agent stopped due to an error during execution."
+    default: return (typeof msg.result === "string" && msg.result) ? msg.result : `The agent stopped with an error (${msg.subtype ?? "unknown"}).`
+  }
+}
+
 export class ClaudeSession {
   private sessions = new Map<string, string>()          // clientId → sessionId
   private stats = new Map<string, Stats>()
@@ -103,15 +112,19 @@ export class ClaudeSession {
             totalOutputTokens: prev.totalOutputTokens + usage.output_tokens,
             turnCount: prev.turnCount + (msg.num_turns ?? 0),
           })
-          cb.onComplete({
-            result: msg.result ?? "",
-            sessionId,
-            cost: msg.total_cost_usd ?? 0,
-            turns: msg.num_turns ?? 0,
-            usage,
-            duration_ms: Date.now() - start,
-            model: cfg.model,
-          })
+          if (msg.is_error === true || msg.subtype !== "success") {
+            cb.onError(resultErrorMessage(msg))
+          } else {
+            cb.onComplete({
+              result: msg.result ?? "",
+              sessionId,
+              cost: msg.total_cost_usd ?? 0,
+              turns: msg.num_turns ?? 0,
+              usage,
+              duration_ms: Date.now() - start,
+              model: cfg.model,
+            })
+          }
         }
       }
     } catch (err) {

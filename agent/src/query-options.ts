@@ -22,6 +22,10 @@ export function buildQueryOptions(
     settingSources: ["user", "project", "local"],
   }
 
+  if (config.permissionMode === "bypassPermissions") {
+    options.allowDangerouslySkipPermissions = true
+  }
+
   if (resumeSessionId) options.resume = resumeSessionId
 
   if (config.enabledSkills.length > 0) options.skills = [...config.enabledSkills]

@@ -3,11 +3,12 @@ import { wsClient } from ".."
 import { debug } from "../../lib/debug"
 
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
-  const { route, element, prompt } = req.body
+  const { route, url, element, prompt } = req.body
 
   wsClient.send({
     type: "prompt",
     route,
+    url,
     element,
     prompt,
   })

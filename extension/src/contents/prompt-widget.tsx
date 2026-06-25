@@ -150,6 +150,7 @@ function PromptWidget() {
         name: "submit-prompt",
         body: {
           route: window.location.pathname,
+          url: window.location.href,
           element: widget.selection,
           prompt: prompt.trim(),
         },

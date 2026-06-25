@@ -32,7 +32,7 @@ chrome.runtime.onConnect.addListener((port) => {
           if (msg.prompt) wsClient.send({ type: "raw_prompt", prompt: msg.prompt })
           break
         case "prompt":
-          wsClient.send({ type: "prompt", route: msg.route, element: msg.element, prompt: msg.prompt })
+          wsClient.send({ type: "prompt", route: msg.route, url: msg.url, element: msg.element, prompt: msg.prompt })
           break
         case "set_config":
           wsClient.send({ type: "set_config", patch: msg.patch })

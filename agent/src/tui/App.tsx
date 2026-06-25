@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react"
-import { Box, useApp, useInput } from "ink"
+import { Box, Text, useApp, useInput } from "ink"
 import type { PluginInfo, SkillInfo, StudioConfig } from "@claude-studio/protocol"
 import type { ConfigStore } from "../config-store.js"
 import type { ConnectionManager } from "../connection-manager.js"
@@ -8,16 +8,18 @@ import { StatusBar } from "./StatusBar.js"
 import { ConfigPanel, configRows } from "./ConfigPanel.js"
 import { TogglesPanel } from "./TogglesPanel.js"
 import { LogPanel } from "./LogPanel.js"
+import { ActivityPanel } from "./ActivityPanel.js"
 
 const PERMISSION_CYCLE = ["acceptEdits", "default", "plan", "bypassPermissions"] as const
 
-export function App({ config, connections, url }: { config: ConfigStore; connections: ConnectionManager; url: string }) {
+export function App({ config, connections, url, version }: { config: ConfigStore; connections: ConnectionManager; url: string; version: string }) {
   const { exit } = useApp()
   const [cfg, setCfg] = useState<StudioConfig>(config.get())
   const [count, setCount] = useState(connections.count)
   const [sel, setSel] = useState(0)
   const [plugins, setPlugins] = useState<PluginInfo[]>([])
   const [skills, setSkills] = useState<SkillInfo[]>([])
+  const [peek, setPeek] = useState(false)
 
   useEffect(() => {
     const onChange = (c: StudioConfig) => setCfg(c)
@@ -57,6 +59,7 @@ export function App({ config, connections, url }: { config: ConfigStore; connect
 
   useInput((input, key) => {
     if (input === "q" || (key.ctrl && input === "c")) { exit(); return }
+    if (input === "v") { setPeek((p) => !p); return }
     if (key.upArrow) setSel((s) => (s - 1 + rows.length) % rows.length)
     else if (key.downArrow) setSel((s) => (s + 1) % rows.length)
     else if (key.leftArrow) change(-1)
@@ -65,10 +68,12 @@ export function App({ config, connections, url }: { config: ConfigStore; connect
 
   return (
     <Box flexDirection="column">
-      <StatusBar url={url} count={count} />
+      <StatusBar url={url} count={count} version={version} />
       <ConfigPanel config={cfg} selected={sel} />
       <TogglesPanel plugins={plugins} skills={skills} config={cfg} />
+      {peek && <ActivityPanel />}
       <LogPanel />
+      <Text color="gray">↑↓ select · ←→ change · v {peek ? "hide" : "show"} agent activity · q quit</Text>
     </Box>
   )
 }

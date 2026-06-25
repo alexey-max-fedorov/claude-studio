@@ -69,7 +69,7 @@ async function main() {
 
   const useTui = args.tui && process.stdout.isTTY
   if (useTui) {
-    const { waitUntilExit } = render(<App config={config} connections={server.connections} url={server.url} />)
+    const { waitUntilExit } = render(<App config={config} connections={server.connections} url={server.url} version={version} />)
     await waitUntilExit()
     await server.close()
   } else {

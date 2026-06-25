@@ -1,5 +1,34 @@
-import { BASE_ALLOWED_TOOLS, type StudioConfig } from "@claude-studio/protocol"
+import { BASE_ALLOWED_TOOLS, effortLevelsForModel, EFFORT_LEVELS, type StudioConfig, type EffortLevel } from "@claude-studio/protocol"
 import { pluginPathByName } from "./discovery.js"
+
+/**
+ * Forced thinking budget (tokens) for the "ultracode" tier. The SDK effort
+ * ladder tops out at "max", so "ultracode" = max effort PLUS this explicit
+ * large thinking budget, making it strictly stronger than plain "max".
+ */
+const ULTRACODE_THINKING_BUDGET = 32_000
+
+/**
+ * Translate a Studio effort tier into SDK query options, clamped to what the
+ * active model actually supports. Models with no effort ladder (Haiku) get
+ * nothing. If the configured tier isn't offered by the model, fall back to the
+ * strongest supported tier at or below it (e.g. xhigh → high on Sonnet).
+ */
+export function effortToSdk(model: string, effort: EffortLevel): Record<string, unknown> {
+  const ladder = effortLevelsForModel(model)
+  if (ladder.length === 0) return {} // e.g. Haiku — no effort control
+
+  let chosen = effort
+  if (!ladder.includes(chosen)) {
+    const wantIdx = EFFORT_LEVELS.indexOf(chosen)
+    chosen = [...ladder].reverse().find((l) => EFFORT_LEVELS.indexOf(l) <= wantIdx) ?? ladder[0]
+  }
+
+  if (chosen === "ultracode") {
+    return { effort: "max", thinking: { type: "enabled", budgetTokens: ULTRACODE_THINKING_BUDGET } }
+  }
+  return { effort: chosen }
+}
 
 export function buildQueryOptions(
   config: StudioConfig,
@@ -22,6 +51,8 @@ export function buildQueryOptions(
     settingSources: ["user", "project", "local"],
     // Stream token-level deltas (text + thinking) so clients render live.
     includePartialMessages: true,
+    // Reasoning effort, clamped to the model's ladder (omitted for Haiku).
+    ...effortToSdk(config.model, config.effort),
   }
 
   if (config.permissionMode === "bypassPermissions") {

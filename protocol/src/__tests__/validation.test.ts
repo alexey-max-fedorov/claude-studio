@@ -74,6 +74,13 @@ describe("validateConfigPatch", () => {
   it("returns an empty patch for an array input", () => {
     expect(validateConfigPatch(["model"] as unknown)).toEqual({})
   })
+
+  it("accepts a known effort tier and rejects an unknown one", () => {
+    expect(validateConfigPatch({ effort: "ultracode" }).effort).toBe("ultracode")
+    expect(validateConfigPatch({ effort: "xhigh" }).effort).toBe("xhigh")
+    expect(validateConfigPatch({ effort: "turbo" }).effort).toBeUndefined()
+    expect(validateConfigPatch({ effort: 5 }).effort).toBeUndefined()
+  })
 })
 
 describe("mergeConfig", () => {

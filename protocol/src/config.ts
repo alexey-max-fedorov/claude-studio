@@ -36,12 +36,36 @@ export interface SlashCommand {
 export type PermissionMode = "default" | "acceptEdits" | "plan" | "bypassPermissions"
 
 /**
+ * Reasoning-effort tier. The first five map directly to the SDK's `effort`
+ * option; "ultracode" is Claude Studio's branded top tier (above the SDK
+ * ceiling — see the agent's effort mapping).
+ */
+export type EffortLevel = "low" | "medium" | "high" | "xhigh" | "max" | "ultracode"
+
+/** All effort tiers, ordered weakest → strongest. */
+export const EFFORT_LEVELS: EffortLevel[] = ["low", "medium", "high", "xhigh", "max", "ultracode"]
+
+/**
+ * Effort tiers a given model exposes. Empty array = no effort control (Haiku).
+ * Unknown models get the full ladder (safe superset; the agent clamps anyway).
+ */
+export function effortLevelsForModel(modelId: string): EffortLevel[] {
+  const id = modelId.toLowerCase()
+  if (id.includes("haiku")) return []
+  if (id.includes("sonnet")) return ["low", "medium", "high", "max", "ultracode"]
+  // opus, fable, and anything unrecognized → full ladder
+  return ["low", "medium", "high", "xhigh", "max", "ultracode"]
+}
+
+/**
  * The single source of truth for agent behavior. Held by the agent's ConfigStore,
  * persisted to claude-studio.config.json, broadcast to all clients as `config_state`.
  */
 export interface StudioConfig {
   /** Claude model alias ("sonnet"|"opus"|"haiku"|"fable") or full model id. */
   model: string
+  /** Reasoning-effort tier; clamped per-model by the agent. */
+  effort: EffortLevel
   /** Absolute working directory Claude Code operates in (display/info). */
   projectDir: string
   /** Max agentic turns per prompt. */
@@ -67,6 +91,7 @@ export const BASE_ALLOWED_TOOLS = ["Read", "Edit", "MultiEdit", "Glob", "Grep"] 
 
 export const DEFAULT_CONFIG: StudioConfig = {
   model: "sonnet",
+  effort: "high",
   projectDir: "",
   maxTurns: 20,
   maxBudgetUsd: 2,

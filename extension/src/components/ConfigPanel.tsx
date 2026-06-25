@@ -1,5 +1,7 @@
 import type { PermissionMode, PluginInfo, SkillInfo, StudioConfig, ModelInfo } from "@claude-studio/protocol"
+import { effortLevelsForModel } from "@claude-studio/protocol"
 import { ModelSelector } from "./ModelSelector"
+import { EffortSelector } from "./EffortSelector"
 import { Toggle } from "./Toggle"
 import { NumberField } from "./NumberField"
 import { PluginToggleList } from "./PluginToggleList"
@@ -28,6 +30,17 @@ export function ConfigPanel({
         <span style={label}>Model</span>
         <ModelSelector models={models} current={config.model} onSelect={(model) => onPatch({ model })} />
       </div>
+
+      {effortLevelsForModel(config.model).length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 8 }}>
+          <span style={label}>Effort</span>
+          <EffortSelector
+            levels={effortLevelsForModel(config.model)}
+            current={config.effort ?? "high"}
+            onSelect={(effort) => onPatch({ effort })}
+          />
+        </div>
+      )}
 
       <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
         <span style={label}>Permission mode</span>

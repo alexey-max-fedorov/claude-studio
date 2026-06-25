@@ -1,6 +1,6 @@
 {
   "name": "claude-studio",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Visual AI coding assistant — agent server with interactive TUI",
   "type": "module",
   "bin": { "claude-studio": "dist/cli.js" },

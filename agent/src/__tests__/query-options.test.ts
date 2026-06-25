@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { buildQueryOptions } from "../query-options.js"
+import { buildQueryOptions, effortToSdk } from "../query-options.js"
 import { DEFAULT_CONFIG } from "@claude-studio/protocol"
 
 describe("buildQueryOptions", () => {
@@ -54,5 +54,41 @@ describe("buildQueryOptions", () => {
   it("enables partial message streaming", () => {
     const o = buildQueryOptions(DEFAULT_CONFIG, undefined)
     expect(o.includePartialMessages).toBe(true)
+  })
+
+  it("passes the clamped effort through to SDK options", () => {
+    const o = buildQueryOptions({ ...DEFAULT_CONFIG, model: "opus", effort: "xhigh" }, undefined)
+    expect(o.effort).toBe("xhigh")
+  })
+
+  it("omits effort entirely for Haiku", () => {
+    const o = buildQueryOptions({ ...DEFAULT_CONFIG, model: "haiku", effort: "high" }, undefined)
+    expect(o.effort).toBeUndefined()
+    expect(o.thinking).toBeUndefined()
+  })
+})
+
+describe("effortToSdk", () => {
+  it("passes the standard ladder straight through for opus", () => {
+    expect(effortToSdk("opus", "low")).toEqual({ effort: "low" })
+    expect(effortToSdk("opus", "xhigh")).toEqual({ effort: "xhigh" })
+    expect(effortToSdk("opus", "max")).toEqual({ effort: "max" })
+  })
+
+  it("maps ultracode to max effort + a forced thinking budget", () => {
+    const o = effortToSdk("opus", "ultracode")
+    expect(o.effort).toBe("max")
+    expect(o.thinking).toEqual({ type: "enabled", budgetTokens: 32_000 })
+  })
+
+  it("clamps an unsupported tier down to the model's strongest available (xhigh → high on Sonnet)", () => {
+    expect(effortToSdk("sonnet", "xhigh")).toEqual({ effort: "high" })
+    // sonnet still supports max + ultracode
+    expect(effortToSdk("sonnet", "max")).toEqual({ effort: "max" })
+    expect(effortToSdk("sonnet", "ultracode").effort).toBe("max")
+  })
+
+  it("returns nothing for a model with no effort ladder (Haiku)", () => {
+    expect(effortToSdk("haiku", "max")).toEqual({})
   })
 })

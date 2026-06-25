@@ -1,5 +1,6 @@
 import type { ClientMessage, ServerMessage } from "./protocol.js"
-import type { StudioConfig, PermissionMode } from "./config.js"
+import type { StudioConfig, PermissionMode, EffortLevel } from "./config.js"
+import { EFFORT_LEVELS } from "./config.js"
 
 const MAX_PROMPT_LEN = 50_000
 const MAX_ROUTE_LEN = 1_000
@@ -92,6 +93,9 @@ export function validateConfigPatch(patch: unknown): Partial<StudioConfig> {
   const p = patch as Record<string, unknown>
 
   if (typeof p.model === "string" && p.model.length <= MAX_SHORT_STR_LEN) out.model = p.model
+  if (typeof p.effort === "string" && EFFORT_LEVELS.includes(p.effort as EffortLevel)) {
+    out.effort = p.effort as EffortLevel
+  }
   if (typeof p.projectDir === "string" && p.projectDir.length <= MAX_ROUTE_LEN) out.projectDir = p.projectDir
   if (typeof p.systemPromptAppend === "string" && p.systemPromptAppend.length <= MAX_PROMPT_LEN) {
     out.systemPromptAppend = p.systemPromptAppend

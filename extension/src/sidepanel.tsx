@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
-import type { StudioConfig, ModelInfo, PluginInfo, SkillInfo } from "@claude-studio/protocol"
+import type { StudioConfig, ModelInfo, PluginInfo, SkillInfo, EffortLevel } from "@claude-studio/protocol"
+import { effortLevelsForModel } from "@claude-studio/protocol"
 import { ConnectionStatus } from "./components/ConnectionStatus"
 import { ChatLog } from "./components/ChatLog"
 import type { Message } from "./components/ChatMessage"
@@ -8,6 +9,7 @@ import { PromptInput } from "./components/PromptInput"
 import { SessionInfoBar, type SessionInfo } from "./components/SessionInfoBar"
 import type { SlashCommandInfo } from "./components/CommandAutocomplete"
 import { ModelSelector } from "./components/ModelSelector"
+import { EffortSelector } from "./components/EffortSelector"
 import { ConfigPanel } from "./components/ConfigPanel"
 
 const STORAGE_KEY_MESSAGES = "cs_messages"
@@ -238,6 +240,14 @@ function SidePanel() {
               models={availableModels}
               current={studioConfig?.model ?? ""}
               onSelect={(model) => patchConfig({ model })}
+              disabled={isStreaming || connectionState !== "connected"}
+            />
+          )}
+          {studioConfig && (
+            <EffortSelector
+              levels={effortLevelsForModel(studioConfig.model)}
+              current={studioConfig.effort ?? "high"}
+              onSelect={(effort) => patchConfig({ effort })}
               disabled={isStreaming || connectionState !== "connected"}
             />
           )}

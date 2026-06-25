@@ -26,9 +26,9 @@ export function ModelSelector({
       {open && (
         <div
           style={{
-            position: "absolute", bottom: "calc(100% + 4px)", left: 0, minWidth: 160,
+            position: "absolute", top: "calc(100% + 4px)", right: 0, minWidth: 160,
             background: "#0a0a0a", border: "1px solid #1a1a1a", borderRadius: 8,
-            boxShadow: "0 -4px 16px rgba(0,0,0,0.5)", zIndex: 10, overflow: "hidden",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.5)", zIndex: 10, overflow: "hidden",
           }}
         >
           {models.map((m) => (

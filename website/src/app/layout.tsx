@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: "Claude Studio — Visual AI Coding for the Web",
   description:
     "Select an element on your live page, describe the change in plain English, and Claude Code edits your source — in any framework.",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
+  },
   openGraph: {
     title: "Claude Studio",
     description: "Visual AI coding assistant for the web",

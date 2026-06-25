@@ -1,35 +1,92 @@
-SHORT DESCRIPTION (132 chars max):
-Visual AI coding assistant — select elements on any page, describe changes, Claude Code executes them in your codebase.
+Claude Studio is a visual AI coding assistant for your browser. Select any element on a page, describe the change in plain English, and Claude Code edits the real source file in your project — live, in your own codebase. By Alexey Fedorov.
 
-FULL DESCRIPTION:
+Setup is one command. In your project directory, run:
 
-Claude Studio turns your browser into a visual coding interface. Select any element on a webpage, describe what you want to change in plain English, and Claude Code makes it happen in your source code.
+  pnpx claude-studio        (or)        npx claude-studio
+
+The agent starts a local terminal UI and prints a WebSocket URL (ws://localhost:7281 by default). Open the extension, connect to that URL, and you're editing. No accounts, no build step, no config file to write.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT IT IS
+
+Claude Studio bridges your browser and your codebase. Instead of describing a UI change in a terminal and guessing which file it lives in, you point at the element on the page. Claude Studio captures its selector, styles, and structure, locates the source file (with framework route hints), and Claude Code makes the edit. It's the visual front end for Claude Code — built for the moment you're looking at your running app and want to change what you see.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 HOW IT WORKS
 
-1. Click the element picker (Ctrl+Shift+E or Hold Shift) to highlight elements on any page
-2. Click an element to select it — Claude Studio captures its CSS selector, styles, and structure
-3. Describe your change: "make this button larger" or "change the background to dark blue"
-4. Claude Code finds the right source file and makes the edit
+1. Run "pnpx claude-studio" (or "npx claude-studio") in your project directory.
+2. Connect the extension to the ws:// URL the agent prints.
+3. Press Ctrl+Shift+E (or hold Shift) to activate the element picker — a gold highlight follows your cursor.
+4. Click an element and type your change: "make this button larger" or "change the background to dark blue."
+5. Claude Code finds the right source file and edits it. Watch the streaming response in the side panel.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 FEATURES
 
-- Element Picker: Gold highlight overlay shows exactly what you're selecting. Two activation modes: keyboard shortcut toggle or hold-shift for quick picks.
-- Side Panel Chat: Full conversation interface with Claude Code. Run slash commands (/model, /cost, /context), see streaming responses with markdown rendering.
-- Smart Element Capture: Generates robust CSS selectors, captures computed styles, parent chain, and element metadata for precise edits.
-- Model Switching: Switch between Sonnet, Opus, and Haiku directly from the sidebar dropdown.
-- Session Persistence: Chat history and session state survive sidebar reloads.
+- Element Picker: Gold highlight overlay shows exactly what you're selecting. Two activation modes — Ctrl+Shift+E to toggle, or hold Shift for quick one-off picks.
+- In-Page Prompt: After picking an element, type your change right on the page. No need to switch windows.
+- Source File Targeting: Generates robust CSS selectors, captures computed styles and the parent chain, and uses framework route hints to find the actual file behind the element.
+- Side Panel Chat: Full conversation with Claude Code — streaming responses, markdown and tables, slash-command autocomplete (/model, /cost, /context).
+- Model Switching: Choose Claude Sonnet 4.6, Opus 4.8, Haiku 4.5, or Fable 5 from a dropdown. The agent applies it to every request — no slash commands needed.
+- Reasoning Effort Control: Dial the effort tier from low up to max, plus Claude Studio's "ultracode" top tier, per model.
+- Plugins & Skills: Toggle any Claude Code plugin or skill discovered in your project on or off from the Agent tab.
+- Synced Config: The terminal UI and the extension share one source of truth. Change the model, max turns, budget, or permission mode in either place and it syncs to all connected clients instantly.
+- Guardrails: Set max turns and a per-session USD budget. Pick a permission mode (accept edits, plan, or full bypass) and choose whether Bash is allowed.
 - Cost Tracking: See token usage and cost per turn in the session info bar.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WHAT'S NEW IN 2.0
+
+Claude Studio 2.0 is a ground-up rewrite. A single "pnpx claude-studio" command replaces the old setup/serve steps and boots an interactive terminal UI alongside the WebSocket server. New in this line: reasoning-effort tiers (including "ultracode"), per-project plugin and skill toggles, Fable 5 support, live config sync between the TUI and the extension, and source-file targeting with framework route hints.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 REQUIREMENTS
 
-Claude Studio requires a local bridge server running on your machine. Install via npm:
+- Node.js 20 or newer
+- Claude Code CLI, installed and authenticated ("claude --version" should work)
+- A Chromium-based browser (Chrome, Edge, Brave, Arc)
 
-  pnpm dlx claude-studio setup   # or: npx claude-studio setup
-  pnpm dlx claude-studio serve   # or: npx claude-studio serve
+Claude Studio talks only to localhost. The extension connects to the agent on your machine over a local WebSocket — your code never leaves your computer.
 
-The bridge server connects to Claude Code (Anthropic's CLI tool) which must be installed and authenticated. Claude Studio only communicates with localhost — no data leaves your machine.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 PRIVACY
 
-No analytics. No telemetry. No external servers. All data stays on your machine. See our full privacy policy on GitHub.
+No analytics. No telemetry. No external servers. The extension communicates only with the local agent on 127.0.0.1, and the agent runs Claude Code in your own project. All editing happens on your machine. See PRIVACY.md in the repository for the full policy.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FAQ
+
+What is Claude Studio?
+A browser extension plus a local agent that let you edit your codebase visually. You select an element in your browser, describe a change, and Claude Code edits the real source file. It's a visual interface for Claude Code.
+
+How do I install Claude Studio?
+Install the extension, then run "pnpx claude-studio" or "npx claude-studio" in your project directory. The agent prints a ws:// URL; connect the extension to it. No separate setup command.
+
+Do I need Claude Code to use it?
+Yes. Claude Studio runs the Claude Code CLI locally, so you need it installed and authenticated. It uses your existing Claude Code account.
+
+Does Claude Studio send my code anywhere?
+No. The extension only talks to the local agent over a localhost WebSocket (default ws://localhost:7281). Your source files stay on your machine; only Claude Code's normal model calls leave, exactly as they would in the terminal.
+
+Which AI models can I use?
+Claude Sonnet 4.6, Claude Opus 4.8, Claude Haiku 4.5, and Claude Fable 5 — switchable from a dropdown, with a reasoning-effort dial per model.
+
+How is this different from using Claude Code in the terminal?
+Claude Code in the terminal can't see your running UI. Claude Studio lets you point at the exact element you want changed, captures its styles and structure, and finds the source file for you — then hands a precise, context-rich prompt to Claude Code.
+
+Is Claude Studio free?
+Yes, Claude Studio is free to use. It runs on your own Claude Code account, so model usage is billed through Claude Code as usual. The source is available under the Elastic License 2.0.
+
+Which browsers are supported?
+Chromium-based browsers — Chrome, Edge, Brave, and Arc.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Created by Alexey Fedorov.

@@ -2,7 +2,7 @@
   "name": "@claude-studio/extension",
   "displayName": "Claude Studio",
   "version": "2.1.0",
-  "description": "Visual AI coding assistant — select elements, describe changes, Claude Code executes",
+  "description": "Visual AI coding assistant. Pick any element in your browser, describe a change, and Claude Code edits your real source files.",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",

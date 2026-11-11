@@ -1,211 +1,123 @@
 # @claude-studio/protocol
 
-Human-readable reference for the WebSocket protocol between the Claude Studio agent and its clients (browser extension, TUI, or any other integrator).
+The WebSocket contract between the Claude Studio agent daemon and the browser side panel. Version **3** (`PROTOCOL_VERSION = 3`). The TypeScript source of truth is [`src/protocol.ts`](src/protocol.ts), [`src/config.ts`](src/config.ts) and [`src/validation.ts`](src/validation.ts); this file is the readable summary.
 
----
+## Model
 
-## Transport
+One agent daemon runs Claude Code (Agent SDK) in a single project dir. The side panel is a chat client for that project:
+
+- A conversation is a real Claude Code session keyed by a UUID `sessionId`. The **client mints** the UUID for a new conversation. On the first `send` the agent resumes it if a transcript exists on disk, otherwise starts a new session with that id.
+- Every conversation event carries its `sessionId`. A client receives events for sessions it has opened (`open_session`) or sent to (`send`).
+- Transcripts on disk, including terminal sessions in the same project, can be listed and resumed.
+- Closing the panel does not stop anything. A live Claude Code process stays up until 20 minutes idle, `close_session`, or the daemon stops.
+
+## Transport and security
 
 | Property | Value |
 |---|---|
-| Protocol | WebSocket |
-| Frame format | JSON text frames (UTF-8) |
-| Bind address | `127.0.0.1` (loopback only, by default) |
-| Max payload | 1 MB |
-| Discriminator | Every message has a required `type: string` field |
+| URL | `ws://127.0.0.1:7281` (default) |
+| Frames | JSON text, every message has a `type` |
+| Max payload | 16 MB (screenshots) |
+| Origin | must be in the allowlist; default only `chrome-extension://geiimncmpakilhfdnkmcbgabpchhllol` |
+| Host header | must be `127.0.0.1`, `localhost` or `[::1]` (DNS rebinding guard), HTTP and WS |
+| Bind | loopback only; a non-loopback `--host` is refused unless `--unsafe-bind` is passed |
+| Health | `GET /health` returns `{status, version, projectDir, live}` |
+| Heartbeat | server pings every 30 s; the client may also send `ping` and get `pong` |
 
-All messages are plain JSON objects. The `type` field is the discriminated-union tag. Unknown `type` values are rejected with an error.
+Rejected connections get HTTP 403 and are logged. `CLAUDE_STUDIO_ALLOW_NO_ORIGIN=1` admits connections with no Origin header (local test scripts only).
 
----
+## Handshake
 
-## Connection Handshake
+On connect the server sends `hello { serverVersion, protocol, projectDir }`, then `config_state`.
 
-On every new client connection the server immediately sends two messages in sequence:
+## Client to server
 
-1. `connected` — identifies the client and the server version.
-2. `config_state` — a full snapshot of the current config, available models, plugins, and skills.
-
-Clients do not need to send `get_config` on startup; they receive the state automatically.
-
----
-
-## Client → Server Messages
-
-Messages sent from a client (extension or TUI) to the agent.
-
-| `type` | Fields | Description |
+| `type` | Fields | Notes |
 |---|---|---|
-| `ping` | _(none)_ | Keepalive. Server replies with `pong`. |
-| `prompt` | `route: string`, `element: ElementSelection`, `prompt: string` | Run a prompt in the context of a picked DOM element. `route` is the current page route (max 1 000 chars). `prompt` is the user instruction (max 50 000 chars). |
-| `raw_prompt` | `prompt: string` | Run a prompt with no element context (max 50 000 chars). |
-| `reset_session` | _(none)_ | Discard the current agent session and start a fresh one. Server replies with `session_reset`. |
-| `interrupt` | _(none)_ | Abort the in-flight agent turn. |
-| `get_config` | _(none)_ | Request the current config. Server replies with `config_state`. |
-| `set_config` | `patch: Partial<StudioConfig>` | Merge a partial config update. See [Config sync rule](#config-sync-rule). |
-| `query_capabilities` | _(none)_ | Ask what slash commands the agent exposes. Server replies with `capabilities`. |
+| `ping` | | replies `pong` |
+| `get_state` | | replies `config_state` |
+| `set_config` | `patch: Partial<StudioConfig>` | sanitized by `validateConfigPatch`; success broadcasts `config_state` to all clients, nothing valid replies `config_error` |
+| `list_sessions` | `limit?` (default 40), `offset?` | replies `session_list` |
+| `open_session` | `sessionId` | subscribes, replies `session_history` (see below) |
+| `send` | `sessionId, text, attachments` | subscribes; starts or resumes the session; queued if a turn is running |
+| `interrupt` | `sessionId` | stops the running turn (Esc in the terminal) |
+| `permission_response` | `sessionId, requestId, behavior, always?, message?, updatedInput?` | first answer wins; a late answer gets `error` |
+| `close_session` | `sessionId` | stops the live process; history stays on disk |
+| `rename_session` | `sessionId, title` | replies with a fresh `session_list` (offset 0) |
 
-### `ElementSelection` shape (used in `prompt`)
+Every inbound frame goes through `parseClientMessage`; failures reply `error`.
 
-```ts
-interface ElementSelection {
-  tagName: string            // e.g. "DIV"
-  id: string                 // element id attribute (may be empty)
-  classList: string[]        // CSS classes (max 50 entries, each max 200 chars)
-  cssSelector: string        // unique CSS selector (max 2 000 chars)
-  textContent: string        // visible text (max 2 000 chars)
-  outerHTML: string          // serialised HTML (max 2 000 chars)
-  attributes: Record<string, string>  // element attributes (max 50 keys)
-  boundingRect: { top: number; left: number; width: number; height: number }
-  computedStyles: {
-    color: string            // max 200 chars (validated)
-    backgroundColor: string  // max 200 chars (validated)
-    fontSize: string         // max 200 chars (validated)
-    fontFamily: string       // not validated for size
-    padding: string          // not validated for size
-    margin: string           // not validated for size
-  }
-  parentChain: string[]      // ancestor selectors, root-first (max 50 entries)
-  siblingCount: number
-  childCount: number
-}
-```
+## Server to client
 
----
+| `type` | Fields |
+|---|---|
+| `hello` | `serverVersion, protocol, projectDir` |
+| `pong` | |
+| `config_state` | `config, models, commands, permissionModes` (sent on connect and on every config change. At boot the daemon reads the real model and slash command lists from Claude Code without a model call, about 2 s; until then `models` is a static fallback and `commands` is empty, and a fresh `config_state` is broadcast when they arrive) |
+| `config_error` | `error` |
+| `session_list` | `sessions: SessionSummary[], offset, hasMore` |
+| `session_history` | `sessionId, items: ChatItem[], running, pending` (pending permission requests to re-show) |
+| `event` | `sessionId, event: LiveEvent` |
+| `error` | `error, sessionId?` |
 
-## Server → Client Messages
+## LiveEvent
 
-Messages sent from the agent to all connected clients.
+| `kind` | Meaning |
+|---|---|
+| `status` | `starting` (process launching), `running` (a turn is in progress), `idle` |
+| `text_delta` / `thinking_delta` | streamed text for block `id`; append to that block |
+| `item` | a finished `ChatItem` (see below) |
+| `permission_request` | `requestId, toolName, input, title?, blockedPath?, canAlwaysAllow` |
+| `permission_resolved` | `requestId, behavior` (sent to every subscriber, so other panels can hide the prompt) |
 
-| `type` | Fields | Description |
+Typical turn: `status:starting` (new process only), `item:user`, `status:running`, deltas, `item:thinking` / `item:assistant` / `item:tool_use` / `item:tool_result` ..., `item:result`, `status:idle`.
+
+## ChatItem ids
+
+Live events and `session_history` use the same ids, so clients should **upsert by id**:
+
+- `user`: the id of the SDK user message (a UUID the agent mints on `send`). The agent echoes the user item to all subscribers, including the sender.
+- `assistant` / `thinking`: `${apiMessageId}:${blockIndex}`, identical to the `text_delta` / `thinking_delta` id, so the final item replaces the streamed text.
+- `tool_use`: the real tool_use id (`toolu_...`). `tool_result.toolUseId` is that same id. Subagent tool calls carry `parentToolUseId` = the parent Task/Agent call's `toolu_` id; subagent text and thinking are not sent.
+- `result`: `costUsd` is the cost of this turn. For a session resumed from outside this daemon (for example a terminal session) the prior total is unknown, so the first result after resuming reports 0. `errorText` is set when the turn stopped early ("Interrupted by the user.", max turns, budget cap, API error).
+- `system`: compaction, API retries, interrupts, local slash-command output. In history a slash command shows as a `user` item (`/model opus`) followed by a `system` item with its output; `!cmd` shell entries likewise. History does not include subagent tool calls (they live in separate transcripts); live events do.
+- `error`: the Claude Code process failed.
+
+Empty thinking blocks (models that hide thinking) are not sent.
+
+`session_history` for a live session merges the transcript on disk with what the current turn emitted that the transcript does not have yet (so a brand-new session reopened mid-turn still shows the user message), deduped by id, appending only items newer than the last one already on disk. Between turns history is the transcript alone. Blocks still streaming are included as `assistant` / `thinking` items holding the text so far, with their block id; keep appending later `text_delta` / `thinking_delta` events to them, and the final item with the same id replaces them.
+
+## Attachments
+
+`send.attachments` carry browser context: `page`, `selection`, `page_text`, `screenshot` (data URL, png/jpeg/webp) and `element` (`ElementSelection`; `id`, `classList` (max 100 x 500 chars), `attributes` (max 100) and `parentChain` (max 100) are type-checked). The agent turns each into a `<browser-context type="..." url="..." title="...">` text block (screenshots add an image block), followed by the user's typed text as the **last** block. Claude is told this is untrusted page data. History shows them as `AttachmentSummary { type, label }`, where label is the title or URL, and the user item's `text` is exactly what was typed (empty for an attachments-only message, live and in history).
+
+Page data is made inert: every `@` in attachment-derived text (including url and title) gets an invisible U+2060 after it, so Claude Code never expands a page's `@/path` or `@server:resource` mention into a file read, and `<browser-context` tags in page data (any spacing or case) are escaped. Only `@` mentions the user typed work, as in the terminal.
+
+A `send` with no attachments goes to Claude Code as a plain string, exactly like the terminal, so slash commands (for example `/compact`) work.
+
+## Permissions
+
+`permission_request` is raised by the SDK `canUseTool` callback, depending on `config.permissionMode` and the project's permission rules (read-only commands such as `echo` or `ls` are usually auto-approved).
+
+- allow: `{behavior: "allow", always?: true}`. `always` applies the SDK's "always allow" suggestions (only when `canAlwaysAllow`).
+- deny: `{behavior: "deny", message?}`. Claude sees the message (default "User denied this in the browser panel.").
+- AskUserQuestion also arrives as a `permission_request` (toolName `AskUserQuestion`). Answer with `behavior: "allow"` and `updatedInput: {...input, answers: {"<question text>": "<chosen label(s), comma-joined>"}}`.
+
+## StudioConfig
+
+Persisted in `~/.claude-studio/config.json` (never in the project). `projectDir` comes from the daemon's `--project` flag and is read-only.
+
+| Field | Default | Applies |
 |---|---|---|
-| `connected` | `clientId: string`, `serverVersion: string` | First message on connect. Gives the client a unique id and the server version string. |
-| `pong` | _(none)_ | Reply to `ping`. |
-| `ai_streaming` | `chunk: string` | Incremental text chunk from the model during a streaming response. |
-| `tool_use` | `tool: string`, `input: Record<string, unknown>` | Emitted each time the agent calls a tool (e.g. `Read`, `Edit`). |
-| `ai_complete` | `result: string`, `sessionId: string`, `cost: number`, `turns: number`, `usage: Usage`, `duration_ms: number`, `model: string` | The agent turn finished. Includes total cost (USD), turn count, token usage, wall-clock duration, and the model that was used. |
-| `ai_error` | `error: string` | The agent turn failed. Contains a human-readable error message. |
-| `session_reset` | `newSessionId: string` | Confirms the session was reset. `newSessionId` is the fresh session identifier. |
-| `session_info` | `model: string`, `cumulativeCost: number`, `cumulativeInputTokens: number`, `cumulativeOutputTokens: number`, `turnCount: number` | Periodic snapshot of session-level stats. |
-| `capabilities` | `commands: SlashCommand[]` | Reply to `query_capabilities`. Lists the slash commands the agent exposes. |
-| `command_output` | `content: string` | Output from a slash command invocation. |
-| `config_state` | `config: StudioConfig`, `availableModels: ModelInfo[]`, `availablePlugins: PluginInfo[]`, `availableSkills: SkillInfo[]` | Full config snapshot. Sent on connect and after every `set_config`. |
-| `config_error` | `error: string` | A `set_config` patch was rejected (validation failed). |
+| `model` | `""` (Claude Code default) | live (`setModel`) |
+| `permissionMode` | `acceptEdits` | live (`setPermissionMode`) |
+| `effort` | `""` | next process start |
+| `systemPromptAppend` | `""` | next process start |
+| `maxBudgetUsd` | `null` | next process start |
+| `maxTurns` | `null` | next process start |
 
-### Supporting types
+When a "next process start" field changes, idle live sessions are closed right away (busy ones when their turn ends), and the next `send` resumes them with the new options.
 
-```ts
-interface Usage {
-  input_tokens: number
-  output_tokens: number
-  cache_read_input_tokens: number
-  cache_creation_input_tokens: number
-}
+## Validation limits
 
-interface ModelInfo {
-  id: string    // Claude model alias or full model id
-  name: string  // Human-readable display name
-}
-
-interface PluginInfo {
-  name: string
-  description: string
-  path: string  // Absolute path to the plugin on disk
-}
-
-interface SkillInfo {
-  name: string
-  description: string
-  source: string  // Skill source (file path or identifier)
-}
-
-interface SlashCommand {
-  name: string
-  description: string
-  argumentHint: string  // Placeholder shown in the UI, e.g. "<file>"
-}
-```
-
----
-
-## `StudioConfig` Shape
-
-The agent holds a single `StudioConfig` object as its source of truth. It is persisted to `claude-studio.config.json` and broadcast to all clients after every change.
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `model` | `string` | `"sonnet"` | Claude model alias (`"sonnet"`, `"opus"`, `"haiku"`, `"fable"`) or a full model id. Applied on every `query()` call. |
-| `projectDir` | `string` | `""` | Absolute working directory Claude Code operates in. Used for display / informational purposes. Max 1 000 chars. |
-| `maxTurns` | `number` | `20` | Max agentic turns per prompt. Clamped to **1–100**. |
-| `maxBudgetUsd` | `number` | `2` | Max spend (USD) per session. Clamped to **0–1 000**. |
-| `permissionMode` | `PermissionMode` | `"acceptEdits"` | SDK permission mode. One of `"default"`, `"acceptEdits"`, `"plan"`, `"bypassPermissions"`. |
-| `allowBash` | `boolean` | `false` | When `true`, `"Bash"` is added to the agent's allowed tools alongside the base set. |
-| `systemPromptAppend` | `string` | `""` | Extra instructions appended to the agent's system prompt. Max 50 000 chars. |
-| `routeHints` | `boolean` | `true` | When `true`, framework route→file hints are included in element-edit prompts. |
-| `enabledPlugins` | `string[]` | `[]` | Names of discovered Claude Code plugins that are active. Max 50 entries. |
-| `enabledSkills` | `string[]` | `[]` | Names of discovered Claude Code skills that are active. Max 50 entries. |
-
-### Base allowed tools
-
-The agent always has these tools available:
-
-```
-Read, Edit, MultiEdit, Glob, Grep
-```
-
-`Bash` is added when `allowBash: true`.
-
-### Known models
-
-The curated default model list (refined at runtime by discovery):
-
-| Alias | Display name |
-|---|---|
-| `sonnet` | Claude Sonnet 4.6 |
-| `opus` | Claude Opus 4.8 |
-| `haiku` | Claude Haiku 4.5 |
-| `fable` | Claude Fable 5 |
-
----
-
-## Config Sync Rule
-
-Any client can send `set_config` at any time. The flow is:
-
-1. The agent receives `set_config { patch }`.
-2. It validates and sanitizes the patch (unknown keys dropped, ranges clamped — see [Validation limits](#validation-limits)).
-3. The sanitized patch is merged into the live config.
-4. The merged config is persisted to `claude-studio.config.json`.
-5. The agent broadcasts `config_state` to **all** connected clients.
-
-This is bidirectional and realtime: both the TUI and the extension see every config change, no matter which client initiated it.
-
-On a valid `set_config`, the agent validates the patch (silently clamping out-of-range numbers and dropping unknown or wrong-typed keys), merges it into the live config, persists to `claude-studio.config.json`, and broadcasts `config_state` to all clients. A `set_config` whose `patch` is not a JSON object is rejected at message-parse time (the sending client receives an `ai_error`). `config_error` is reserved for the rare case where applying an otherwise-parsed config update fails.
-
----
-
-## Reliable Model Switching
-
-Model is a standard config field — there is no `/model` slash command. To switch models:
-
-```json
-{ "type": "set_config", "patch": { "model": "opus" } }
-```
-
-The agent applies `config.model` on **every** `query()` call. This means the model override takes effect even inside a resumed session — it always wins over whatever model the session was originally started with.
-
----
-
-## Validation Limits
-
-These limits are enforced by the server on incoming `ClientMessage` frames. Payloads that exceed them are rejected.
-
-| Field / context | Limit |
-|---|---|
-| `prompt` (in `prompt` and `raw_prompt`) | 50 000 chars |
-| `route` (in `prompt`) | 1 000 chars |
-| Element string fields (`cssSelector`, `tagName`, `id`, `textContent`, `outerHTML`) | 2 000 chars each |
-| `computedStyles.color`, `computedStyles.backgroundColor`, `computedStyles.fontSize` | 200 chars each |
-| List fields (`classList`, `parentChain`, `attributes`, `enabledPlugins`, `enabledSkills`) | 50 entries max |
-| `StudioConfig.maxTurns` | Clamped to 1–100 |
-| `StudioConfig.maxBudgetUsd` | Clamped to 0–1 000 (USD) |
-| Global max payload | 1 MB |
+See `src/validation.ts`: text 200k chars, page text 400k, screenshot data URL 12 MB, 12 attachments per message, session ids must be UUIDs.

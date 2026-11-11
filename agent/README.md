@@ -1,54 +1,42 @@
 # claude-studio
 
-The local agent for **Claude Studio** — a visual AI coding assistant. Pick an
-element in your browser, describe a change in plain English, and Claude Code
-edits your source files. The agent runs Claude Code locally, exposes a
-WebSocket server, and pairs with the [Claude Studio browser extension](https://chromewebstore.google.com/detail/claude-studio/bpcmnngncojfbddicenjebaglkdplodk).
+The local agent daemon for **Claude Studio**, a browser side panel that is a full chat client for Claude Code running in one project dir. The daemon runs Claude Code (Agent SDK) with your normal setup (CLAUDE.md, memory, MCP servers, skills, plugins, hooks) and serves it to the side panel over a localhost WebSocket.
 
 ## Usage
 
-In your project directory:
-
 ```sh
-pnpx claude-studio
+claude-studio --project /path/to/project
 ```
 
-An interactive terminal UI starts and prints the WebSocket URL (default
-`ws://127.0.0.1:7281`). Paste that URL into the extension's side panel to
-connect.
-
-### Options
-
 ```
--p, --port <n>     WebSocket port (default 7281, or $PORT)
-    --host <h>     bind host (default 127.0.0.1, or $BIND_HOST)
-    --no-tui       headless mode (print URL, log to stderr)
--v, --version      print version
--h, --help         show this help
+--project <dir>         project dir Claude Code runs in (default: cwd)
+-p, --port <n>          port (default 7281, or $PORT)
+--host <h>              bind host (default 127.0.0.1, loopback only)
+--unsafe-bind           allow a non-loopback --host
+--allow-origin <o>      extra allowed WebSocket Origin (repeatable), also
+                        $CLAUDE_STUDIO_ALLOWED_ORIGINS (comma-separated)
+-v, --version           print version
+-h, --help              show this help
 ```
 
-## Prerequisites
+Environment: `CLAUDE_STUDIO_ALLOW_NO_ORIGIN=1` admits connections without an Origin header (local test scripts only). `CLAUDE_STUDIO_CONFIG=<file>` overrides the config path (default `~/.claude-studio/config.json`).
 
-- **Node ≥ 20**
-- **Claude Code** installed and authenticated
+Logs are timestamped lines on stdout/stderr, so it runs fine under a macOS LaunchAgent. SIGINT/SIGTERM close live sessions, deny pending permission prompts and stop the server.
 
 ## How it works
 
-Config lives in the agent and is the single source of truth — model,
-permissions, turn and budget caps, plugins, and skills. Change it from the TUI
-or the extension and the update broadcasts to every connected client over the
-WebSocket in real time. Model switching is applied on every turn, so it never
-drifts.
+- Each conversation is a real Claude Code session (UUID minted by the panel). One live Claude Code process per active conversation, fed in streaming input mode; messages sent mid-turn are queued like in the terminal. Idle processes stop after 20 minutes and resume on the next message.
+- Panel disconnects never stop a session. Reopening a conversation returns its history from the transcript on disk, plus any pending permission prompts.
+- Only the Claude Studio extension origin and loopback Host headers are accepted.
+- `GET /health` returns `{status, version, projectDir, live}`.
 
-The full message contract is documented in the
-[`protocol/`](https://github.com/alexey-max-fedorov/claude-studio/tree/master/protocol)
-package.
+The message contract is in the [`protocol/`](../protocol/README.md) package (v3).
+
+## Prerequisites
+
+- Node 20 or newer
+- Claude Code authenticated on this machine
 
 ## License
 
-Elastic-2.0 — see [LICENSE](./LICENSE).
-
----
-
-Part of the [Claude Studio](https://github.com/alexey-max-fedorov/claude-studio)
-project.
+Elastic-2.0, see [LICENSE](./LICENSE).

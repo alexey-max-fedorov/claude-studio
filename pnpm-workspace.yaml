@@ -3,6 +3,7 @@ packages:
   - "agent"
   - "extension"
   - "website"
+  - "e2e"
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true

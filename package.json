@@ -7,7 +7,9 @@
     "test": "pnpm -r test",
     "dev:agent": "pnpm --filter claude-studio dev",
     "dev:ext": "pnpm --filter @claude-studio/extension dev",
-    "build:extension-zip": "bash scripts/build-extension-zip.sh"
+    "build:extension-zip": "bash scripts/build-extension-zip.sh",
+    "e2e": "pnpm --filter e2e start",
+    "e2e:selftest": "pnpm --filter e2e selftest"
   },
   "engines": {
     "node": ">=20"

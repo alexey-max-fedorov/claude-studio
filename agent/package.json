@@ -1,31 +1,41 @@
 {
   "name": "claude-studio",
-  "version": "2.1.0",
-  "description": "Visual AI coding assistant — agent server with interactive TUI",
+  "version": "3.0.0",
+  "description": "Claude Studio agent: localhost daemon that runs Claude Code in one project dir for the browser side panel",
   "type": "module",
-  "bin": { "claude-studio": "dist/cli.js" },
+  "bin": {
+    "claude-studio": "dist/cli.js"
+  },
   "main": "dist/cli.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "license": "Elastic-2.0",
-  "keywords": ["claude", "ai", "visual-editing", "browser-extension", "agent"],
-  "publishConfig": { "access": "public" },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "browser-extension",
+    "side-panel",
+    "agent"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "dev": "tsx watch src/cli.tsx",
+    "dev": "tsx watch src/cli.ts",
     "start": "node dist/cli.js",
     "test": "vitest run"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.2.90",
-    "ink": "^5.0.0",
-    "react": "^18.0.0",
+    "@anthropic-ai/claude-agent-sdk": "0.3.322",
     "ws": "^8.0.0"
   },
   "devDependencies": {
     "@claude-studio/protocol": "workspace:*",
     "@types/node": "^22.0.0",
-    "@types/react": "^18.0.0",
     "@types/ws": "^8.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",

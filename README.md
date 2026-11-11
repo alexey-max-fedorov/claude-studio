@@ -2,7 +2,7 @@
 
 # Claude Studio
 
-Claude Studio is a visual AI coding assistant: select an element in your browser, describe a change, and Claude Code edits your source files in real time. It consists of exactly two components — a **browser extension** and an **agent** you run locally via `pnpx claude-studio` — connected over a WebSocket protocol documented in [`protocol/README.md`](protocol/README.md).
+Claude Studio is a browser side panel that works as a full chat client for Claude Code running in one project dir, so you can talk to that project from the browser the same way you would in the terminal. Page info, selected text, page text, a screenshot or a picked element can be attached to any message. It consists of a **browser extension** (the side panel) and an **agent daemon** that runs Claude Code locally, connected over a localhost WebSocket protocol documented in [`protocol/README.md`](protocol/README.md) (protocol v3).
 
 ---
 
@@ -10,48 +10,43 @@ Claude Studio is a visual AI coding assistant: select an element in your browser
 
 | Component | What it does |
 |---|---|
-| **Extension** (`extension/`) | Plasmo Chrome extension. Lets you pick DOM elements, type prompts, and see streaming Claude responses in the Agent tab. |
-| **Agent** (`agent/`) | Node.js process (`claude-studio` npm package). Runs Claude Code locally, exposes a WebSocket server, and manages config. Start it with `pnpx claude-studio`. |
-
-They communicate over a JSON-over-WebSocket protocol — see [`protocol/README.md`](protocol/README.md) for the full message reference.
+| **Extension** (`extension/`) | Plasmo Chrome/Brave extension. Side panel chat: conversations, streaming replies, tool calls, permission prompts, browser context attachments. |
+| **Agent** (`agent/`) | `claude-studio` daemon. Runs Claude Code (Agent SDK) in one project dir with your full Claude Code setup (CLAUDE.md, memory, MCP servers, skills, plugins, hooks), serves it on `ws://127.0.0.1:7281`, and keeps conversations alive while the panel is closed. |
 
 ---
 
 ## Quick start
 
 ```sh
-# 1. In your project directory, start the agent
-pnpx claude-studio
+# 1. Build
+pnpm install
+pnpm -r build
 
-# The TUI prints a ws:// URL, e.g.:
-#   WebSocket listening on ws://127.0.0.1:3456
+# 2. Run the agent daemon for your project (logs go to stdout/stderr)
+node agent/dist/cli.js --project /path/to/your/project
+#   Claude Studio agent 3.0.0 listening on ws://127.0.0.1:7281
 
-# 2. Load the extension in Chrome
-#    chrome://extensions → Enable Developer mode → Load unpacked
-#    Select: extension/build/chrome-mv3-prod
-#    (or install from the Chrome Web Store when available)
-
-# 3. In the extension popup, paste the ws:// URL and connect
+# 3. Load the extension
+#    brave://extensions (or chrome://extensions), enable Developer mode,
+#    Load unpacked: extension/build/chrome-mv3-prod
+#    then open the side panel.
 ```
 
----
+Daemon options: `--project <dir>` (default cwd), `--port <n>` (default 7281 or `$PORT`), `--host <h>` (default 127.0.0.1), `--allow-origin <origin>` (repeatable, or `$CLAUDE_STUDIO_ALLOWED_ORIGINS`). Run `claude-studio --help` for the full list.
 
-## The TUI
+For an always-on setup on macOS, `PROJECT_DIR=/path/to/your/project scripts/install-launchagent.sh` builds everything and installs a LaunchAgent (optional `LABEL`, `PORT`). The daemon needs no TTY and shuts down cleanly on SIGTERM.
 
-The agent runs an interactive terminal UI:
+### Security
 
-- Always shows the active `ws://` URL so you can paste it into the extension
-- Arrow keys to navigate config fields; edit inline
-- Reflects streaming output, tool calls, and cost in real time
-- The **Agent tab** in the extension mirrors the TUI — any config change (model, max turns, etc.) syncs to all connected clients instantly
+The daemon drives Claude Code with the full toolset, including Bash, so it only accepts WebSocket connections whose `Origin` is the Claude Studio extension (`chrome-extension://geiimncmpakilhfdnkmcbgabpchhllol` plus any `--allow-origin`) and whose `Host` is a loopback name. Other web pages cannot connect. Config lives in `~/.claude-studio/config.json`, outside the project.
 
 ---
 
 ## Prerequisites
 
 - **Node ≥ 20**
-- **Claude Code CLI** installed and authenticated (`claude --version` should work)
-- **Chrome** (Chromium-based browsers)
+- **Claude Code** authenticated on this machine (the Agent SDK uses your normal Claude Code login)
+- **Brave or Chrome** (Chromium-based browsers with the side panel API)
 
 ---
 
@@ -67,10 +62,10 @@ pnpm -r build
 # Run all tests
 pnpm -r test
 
-# Dev mode — agent (hot-reload)
+# Dev mode: agent (hot-reload)
 pnpm dev:agent
 
-# Dev mode — extension (Plasmo watch)
+# Dev mode: extension (Plasmo watch)
 pnpm dev:ext
 ```
 
@@ -87,12 +82,12 @@ pnpm build:extension-zip
 
 ```
 claude-studio/
-├── agent/       — claude-studio npm package (WebSocket server + Claude agent)
-├── extension/   — Plasmo Chrome extension
-├── protocol/    — shared TypeScript types + protocol documentation
-├── website/     — marketing/docs site (Next.js)
-├── scripts/     — build helpers (build-extension-zip.sh)
-└── package.json — pnpm workspace root
+├── agent/       : claude-studio daemon (WebSocket server + Claude Code sessions)
+├── extension/   : Plasmo side panel extension
+├── protocol/    : shared TypeScript types + protocol documentation (v3)
+├── website/     : marketing/docs site (Next.js)
+├── scripts/     : build helpers (build-extension-zip.sh)
+└── package.json : pnpm workspace root
 ```
 
 ---

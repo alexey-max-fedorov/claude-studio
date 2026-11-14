@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
-    "test": "pnpm -r test && node --test scripts/render-launchagent.test.mjs scripts/bump-version.test.mjs scripts/watch-extension.test.mjs scripts/privacy-disclosure.test.mjs",
+    "test": "pnpm --filter @claude-studio/protocol build && pnpm -r test && node --test scripts/render-launchagent.test.mjs scripts/bump-version.test.mjs scripts/watch-extension.test.mjs scripts/privacy-disclosure.test.mjs",
     "dev:agent": "pnpm --filter claude-studio dev",
     "dev:ext": "pnpm --filter @claude-studio/extension dev",
     "build:extension-zip": "bash scripts/build-extension-zip.sh",

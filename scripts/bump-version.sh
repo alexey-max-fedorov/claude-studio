@@ -12,11 +12,21 @@ if [[ -z "$arg" ]]; then
   exit 1
 fi
 
-CURRENT="$(node -e "console.log(require('$ROOT/protocol/package.json').version)")"
+VERSIONS=()
+for p in "${PACKAGES[@]}"; do
+  VERSIONS+=("$(node -e "console.log(require(process.argv[1]).version)" "$ROOT/$p/package.json")")
+done
+CURRENT="${VERSIONS[0]}"
 
 if [[ "$arg" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   NEW="$arg"
 elif [[ "$arg" =~ ^(patch|minor|major)$ ]]; then
+  for version in "${VERSIONS[@]}"; do
+    if [[ "$version" != "$CURRENT" ]]; then
+      echo "Package versions differ (${VERSIONS[*]}). Use an explicit X.Y.Z to align them." >&2
+      exit 1
+    fi
+  done
   NEW="$(node -e "const [a,b,c]='$CURRENT'.split('.').map(Number); const k='$arg'; console.log(k==='major'?\`\${a+1}.0.0\`:k==='minor'?\`\${a}.\${b+1}.0\`:\`\${a}.\${b}.\${c+1}\`)")"
 else
   echo "invalid version: $arg (expected X.Y.Z or patch|minor|major)" >&2

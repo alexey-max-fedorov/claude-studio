@@ -106,7 +106,7 @@ export function userEntryToItems(id: string, content: unknown, ts: number): Chat
   if (attachments.length === 0 && texts.length === 1) {
     const shape = classifyInjected(texts[0])
     if (shape?.kind === "skip") return []
-    if (shape?.kind === "system") return [{ kind: "system", text: shape.text, ts }]
+    if (shape?.kind === "system") return [{ kind: "system", id, text: shape.text, ts }]
     if (shape?.kind === "user") return [{ kind: "user", id, text: shape.text, attachments: [], ts }]
   }
   let text = texts.join("\n")
@@ -131,7 +131,7 @@ export function sessionMessagesToItems(messages: readonly any[], localOutputs: R
 
     if (m.type === "system") {
       const out = localOutputs.get(String(m.uuid ?? ""))
-      if (out) items.push({ kind: "system", text: out, ts })
+      if (out) items.push({ kind: "system", id: String(m.uuid ?? ""), text: out, ts })
       continue
     }
 
@@ -157,7 +157,7 @@ export function sessionMessagesToItems(messages: readonly any[], localOutputs: R
     }
     if (parent) continue
     if (m.isCompactSummary === true) {
-      items.push({ kind: "system", text: "Earlier conversation was compacted.", ts })
+      items.push({ kind: "system", id: String(m.uuid ?? ""), text: "Earlier conversation was compacted.", ts })
       continue
     }
     if (m.is_meta === true || m.isMeta === true) continue
@@ -166,7 +166,7 @@ export function sessionMessagesToItems(messages: readonly any[], localOutputs: R
   return items
 }
 
-/** Dedupe key for items that carry a stable id (null for result/system/error). */
+/** Dedupe key shared by disk history and the live buffer. */
 export function itemKey(item: ChatItem): string | null {
   switch (item.kind) {
     case "user":
@@ -177,42 +177,68 @@ export function itemKey(item: ChatItem): string | null {
     case "tool_result":
       return `tool_result:${item.toolUseId}`
     default:
-      return null
+      return item.id ? `${item.kind}:${item.id}` : null
   }
 }
 
-/**
- * Disk history plus what a live process emitted that the transcript does not
- * show yet (a brand-new session mid-turn has no transcript at all), then the
- * blocks still streaming as partial assistant/thinking items, so the client
- * keeps appending deltas to them. Buffered items without a stable id
- * (result/system/error) are not merged, since their place in the order is unknown.
- */
+/** Disk history plus queued input, volatile items, and blocks still streaming. */
 export function mergeLiveHistory(
   disk: ChatItem[],
   buffered: readonly ChatItem[],
   inFlight: readonly { id: string; kind: "text" | "thinking"; text: string }[],
   now: number = Date.now(),
+  pendingUserIds: ReadonlySet<string> = new Set(),
 ): ChatItem[] {
   const out = [...disk]
-  const seen = new Set(disk.map(itemKey).filter((k): k is string => k !== null))
-  // Only the tail after the last buffered item the transcript already has is
-  // newer than the transcript. Anything earlier that is "missing" was stored
-  // in another shape (slash commands, compaction), so appending it would put
-  // it out of order.
-  let start = 0
-  for (let i = buffered.length - 1; i >= 0; i--) {
-    const k = itemKey(buffered[i])
-    if (k !== null && seen.has(k)) {
-      start = i + 1
-      break
+  const byKey = new Map(disk.flatMap((item) => {
+    const key = itemKey(item)
+    return key ? [[key, item] as const] : []
+  }))
+  const matches = buffered.map((item) => byKey.get(itemKey(item) ?? ""))
+  const matchedSystems = new Set<ChatItem>(matches.filter((item): item is ChatItem => item?.kind === "system"))
+  const systemAliases = new Map<ChatItem, ChatItem>()
+  const systemText = (text: string) => text.replace(ANSI_RE, "").replace(/<\/?local-command-(stdout|stderr)>/g, "").trim()
+  // Older CLIs persist slash output with a different UUID and stripped formatting.
+  for (let i = 0; i < buffered.length; i++) {
+    const item = buffered[i]
+    if (item.kind !== "system" || !item.id || matches[i]) continue
+    let from = 0
+    let to = disk.length
+    for (let j = i - 1; j >= 0; j--) {
+      if (matches[j]) { from = disk.indexOf(matches[j]!) + 1; break }
+    }
+    for (let j = i + 1; j < buffered.length; j++) {
+      if (matches[j]) { to = disk.indexOf(matches[j]!); break }
+    }
+    const match = disk.slice(from, to).find((candidate) =>
+      candidate.kind === "system" && !matchedSystems.has(candidate) && systemText(candidate.text) === systemText(item.text),
+    )
+    if (match?.kind === "system") {
+      matches[i] = match
+      matchedSystems.add(match)
+      systemAliases.set(match, { ...match, id: item.id })
     }
   }
-  for (const item of buffered.slice(start)) {
-    const k = itemKey(item)
-    if (k === null || seen.has(k)) continue
-    seen.add(k)
-    out.push(item)
+  let lastMatch = -1
+  for (let i = 0; i < matches.length; i++) if (matches[i]) lastMatch = i
+  const firstMatch = matches.find((item) => item !== undefined)
+  let cursor = firstMatch ? out.indexOf(firstMatch) : out.length
+  const seen = new Set(byKey.keys())
+  for (let i = 0; i < buffered.length; i++) {
+    const item = buffered[i]
+    const key = itemKey(item)
+    const match = matches[i]
+    if (match) {
+      if (key) seen.add(key)
+      cursor = out.indexOf(match) + 1
+      continue
+    }
+    const volatile = item.kind === "result" || item.kind === "error" || item.kind === "system"
+    const queued = item.kind === "user" && pendingUserIds.has(item.id)
+    // Missing older ordinary items may have been rewritten by slash commands or compaction.
+    if (!key || seen.has(key) || (i < lastMatch && !volatile && !queued)) continue
+    seen.add(key)
+    out.splice(cursor++, 0, item)
   }
   for (const b of inFlight) {
     const kind = b.kind === "text" ? "assistant" : "thinking"
@@ -220,5 +246,5 @@ export function mergeLiveHistory(
     if (!b.text || seen.has(`${kind}:${b.id}`)) continue
     out.push({ kind, id: b.id, text: b.text, ts: now })
   }
-  return out
+  return out.map((item) => systemAliases.get(item) ?? item)
 }

@@ -104,6 +104,10 @@ export function parseClientMessage(raw: string): ClientMessage {
       optInt(msg.offset, "offset", 0, 100_000)
       break
     case "open_session":
+      if (msg.requestId !== undefined) uuid(msg.requestId, "requestId")
+      if (msg.followResets !== undefined && typeof msg.followResets !== "boolean") bad("followResets must be boolean")
+      uuid(msg.sessionId)
+      break
     case "interrupt":
     case "close_session":
       uuid(msg.sessionId)
@@ -141,7 +145,7 @@ function optCap(val: unknown, max: number, integer: boolean): number | null | un
   if (typeof val !== "number" || !Number.isFinite(val)) return undefined
   if (val <= 0) return null
   const v = Math.min(max, val)
-  return integer ? Math.round(v) : v
+  return integer ? Math.max(1, Math.round(v)) : v
 }
 
 /** Sanitized partial config: only known, client-settable keys with valid values. projectDir is never client-settable. */

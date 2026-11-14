@@ -58,6 +58,10 @@ const GOOD: ServerMessage[] = [
   { type: "event", sessionId: sid, event: { kind: "item", item: { kind: "result", ts, isError: true, errorText: "x", durationMs: 1, turns: 0, costUsd: 0, usage } } },
   { type: "error", error: "bad", sessionId: sid },
   { type: "error", error: "bad" },
+  { type: "live_sessions", sessions: [{ sessionId: sid, running: true, pending: ["r1"] }] },
+  { type: "session_reset", previousSessionId: sid, sessionId: randomUUID() },
+  { type: "session_history", sessionId: sid, requestId: "history-1", sequence: 10, items: [], running: false, pending: [] },
+  { type: "event", sessionId: sid, sequence: 11, event: { kind: "status", state: "idle" } },
 ]
 
 const BAD: [string, unknown][] = [
@@ -74,6 +78,12 @@ const BAD: [string, unknown][] = [
   ["session_history pending wrong kind", { ...GOOD[5], pending: [{ ...permReq, kind: "status" }] }],
   ["user item attachments not array", { type: "event", sessionId: sid, event: { kind: "item", item: { kind: "user", id: "u", text: "x", attachments: null, ts } } }],
   ["text_delta text number", { type: "event", sessionId: sid, event: { kind: "text_delta", id: "a", text: 5 } }],
+  ["live_sessions invalid UUID", { type: "live_sessions", sessions: [{ sessionId: "bad", running: false, pending: [] }] }],
+  ["live_sessions non-string pending id", { type: "live_sessions", sessions: [{ sessionId: sid, running: true, pending: [1] }] }],
+  ["session_reset missing previous id", { type: "session_reset", sessionId: sid }],
+  ["history invalid sequence", { type: "session_history", sessionId: sid, sequence: -1, items: [], running: false, pending: [] }],
+  ["history invalid request id", { type: "session_history", sessionId: sid, requestId: 1, items: [], running: false, pending: [] }],
+  ["event fractional sequence", { type: "event", sessionId: sid, sequence: 1.5, event: { kind: "status", state: "idle" } }],
 ]
 
 async function main(): Promise<void> {

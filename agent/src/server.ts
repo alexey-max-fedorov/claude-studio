@@ -44,7 +44,8 @@ export function startServer(opts: ServerOptions): Promise<StartedServer> {
     version,
     idleMs: opts.idleMs,
     sink: {
-      event: (sessionId, event) => connections.toSession(sessionId, { type: "event", sessionId, event }),
+      event: (sessionId, event, sequence) => connections.toSession(sessionId, { type: "event", sessionId, event, sequence }),
+      reset: (previousId, nextId) => connections.migrateSession(previousId, nextId),
       capabilitiesChanged: () => connections.broadcast(configState()),
     },
   })
@@ -159,9 +160,13 @@ export function startServer(opts: ServerOptions): Promise<StartedServer> {
       case "ping":
         connections.send(clientId, { type: "pong" })
         return
-      case "get_state":
+      case "get_state": {
         connections.send(clientId, configState())
+        const sessions = manager.liveSessions()
+        for (const s of sessions) connections.subscribe(clientId, s.sessionId)
+        connections.send(clientId, { type: "live_sessions", sessions })
         return
+      }
       case "set_config": {
         const applied = config.update(msg.patch)
         if (Object.keys(applied).length === 0) {
@@ -174,25 +179,30 @@ export function startServer(opts: ServerOptions): Promise<StartedServer> {
         await sendSessionList(clientId, msg.limit ?? 40, msg.offset ?? 0)
         return
       case "open_session": {
-        connections.subscribe(clientId, msg.sessionId)
-        const h = await manager.history(msg.sessionId)
-        connections.send(clientId, { type: "session_history", sessionId: msg.sessionId, items: h.items, running: h.running, pending: h.pending })
+        const sessionId = msg.followResets ? connections.resolveSession(clientId, msg.sessionId) : msg.sessionId
+        if (msg.followResets) connections.subscribe(clientId, sessionId)
+        else connections.selectSession(clientId, sessionId)
+        const h = await manager.history(sessionId)
+        connections.subscribe(clientId, h.sessionId)
+        connections.send(clientId, { type: "session_history", ...h, ...(msg.requestId ? { requestId: msg.requestId } : {}) })
         return
       }
-      case "send":
-        connections.subscribe(clientId, msg.sessionId)
-        manager.send(msg.sessionId, msg.text, msg.attachments)
+      case "send": {
+        const sessionId = connections.resolveSession(clientId, msg.sessionId)
+        connections.subscribe(clientId, sessionId)
+        manager.send(sessionId, msg.text, msg.attachments)
         return
+      }
       case "interrupt":
-        await manager.interrupt(msg.sessionId)
+        await manager.interrupt(connections.resolveSession(clientId, msg.sessionId))
         return
       case "permission_response":
-        if (!manager.respondPermission(msg)) {
+        if (!manager.respondPermission({ ...msg, sessionId: connections.resolveSession(clientId, msg.sessionId) })) {
           connections.send(clientId, { type: "error", error: "That permission request is no longer pending.", sessionId: msg.sessionId })
         }
         return
       case "close_session":
-        manager.close(msg.sessionId)
+        manager.close(connections.resolveSession(clientId, msg.sessionId))
         return
       case "rename_session":
         await manager.rename(msg.sessionId, msg.title)

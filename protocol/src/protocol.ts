@@ -10,7 +10,7 @@ import type { StudioConfig, Usage, ModelOption, SlashCommand, PermissionMode } f
  *     The CLIENT mints the UUID for a new conversation; the agent passes it as
  *     options.sessionId, or as options.resume when that session already exists on disk.
  *   - every conversation event carries its sessionId; a client receives events for
- *     sessions it has opened (open_session) or sent to (send).
+ *     sessions it has opened (open_session), sent to (send), or recovered (get_state).
  *   - transcripts on disk (terminal sessions included) can be listed and resumed.
  */
 
@@ -46,6 +46,7 @@ export type ChatItem =
   /** Turn summary. */
   | {
       kind: "result"
+      id?: string
       ts: number
       isError: boolean
       errorText?: string
@@ -54,8 +55,8 @@ export type ChatItem =
       costUsd: number
       usage: Usage
     }
-  | { kind: "error"; text: string; ts: number }
-  | { kind: "system"; text: string; ts: number }
+  | { kind: "error"; id?: string; text: string; ts: number }
+  | { kind: "system"; id?: string; text: string; ts: number }
 
 /** Live-only events (not persisted in history). */
 export type LiveEvent =
@@ -87,6 +88,12 @@ export interface SessionSummary {
   running: boolean
 }
 
+export interface LiveSessionState {
+  sessionId: string
+  running: boolean
+  pending: string[]
+}
+
 // ---------------------------------------------------------------------------
 // Client -> Server
 // ---------------------------------------------------------------------------
@@ -96,7 +103,7 @@ export type ClientMessage =
   | { type: "set_config"; patch: Partial<StudioConfig> }
   | { type: "list_sessions"; limit?: number; offset?: number }
   /** Subscribe to a session and receive its history (session_history) plus any live state. */
-  | { type: "open_session"; sessionId: string }
+  | { type: "open_session"; sessionId: string; requestId?: string; followResets?: boolean }
   /** Send a user message. Creates the session if sessionId is new. Queued if a turn is running. */
   | { type: "send"; sessionId: string; text: string; attachments: Attachment[] }
   | { type: "interrupt"; sessionId: string }
@@ -131,13 +138,18 @@ export type ServerMessage =
     }
   | { type: "config_error"; error: string }
   | { type: "session_list"; sessions: SessionSummary[]; offset: number; hasMore: boolean }
+  | { type: "live_sessions"; sessions: LiveSessionState[] }
+  | { type: "session_reset"; previousSessionId: string; sessionId: string }
   | {
       type: "session_history"
       sessionId: string
+      requestId?: string
+      /** Events through this sequence are included in the snapshot. */
+      sequence?: number
       items: ChatItem[]
       running: boolean
       /** Pending permission requests (re-sent so a reopened panel can answer them). */
       pending: Extract<LiveEvent, { kind: "permission_request" }>[]
     }
-  | { type: "event"; sessionId: string; event: LiveEvent }
+  | { type: "event"; sessionId: string; event: LiveEvent; sequence?: number }
   | { type: "error"; error: string; sessionId?: string }

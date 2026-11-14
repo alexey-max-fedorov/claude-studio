@@ -47,7 +47,7 @@ export function CTA() {
             </a>
           </div>
           <p className="text-[#555] text-xs mt-5 tracking-wide">
-            Open source. No analytics. No telemetry.
+            Open source. You choose the browser context to share.
           </p>
         </ScrollReveal>
       </div>

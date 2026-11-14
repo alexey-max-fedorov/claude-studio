@@ -6,6 +6,7 @@ interface Client {
   id: string
   ws: WebSocket
   sessions: Set<string>
+  aliases: Map<string, string>
 }
 
 /** Connected clients plus which sessions each one is subscribed to. */
@@ -14,7 +15,7 @@ export class ConnectionManager {
 
   add(ws: WebSocket): string {
     const id = randomUUID()
-    this.clients.set(id, { id, ws, sessions: new Set() })
+    this.clients.set(id, { id, ws, sessions: new Set(), aliases: new Map() })
     return id
   }
 
@@ -24,6 +25,26 @@ export class ConnectionManager {
 
   subscribe(clientId: string, sessionId: string): void {
     this.clients.get(clientId)?.sessions.add(sessionId)
+  }
+
+  migrateSession(previousId: string, nextId: string): void {
+    for (const c of this.clients.values()) {
+      if (c.sessions.delete(previousId)) {
+        for (const [id, target] of c.aliases) if (target === previousId) c.aliases.set(id, nextId)
+        c.aliases.set(previousId, nextId)
+        c.sessions.add(nextId)
+        this.send(c.id, { type: "session_reset", previousSessionId: previousId, sessionId: nextId })
+      }
+    }
+  }
+
+  resolveSession(clientId: string, sessionId: string): string {
+    return this.clients.get(clientId)?.aliases.get(sessionId) ?? sessionId
+  }
+
+  selectSession(clientId: string, sessionId: string): void {
+    this.clients.get(clientId)?.aliases.delete(sessionId)
+    this.subscribe(clientId, sessionId)
   }
 
   send(clientId: string, msg: ServerMessage): void {

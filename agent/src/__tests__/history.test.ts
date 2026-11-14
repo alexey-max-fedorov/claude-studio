@@ -108,12 +108,12 @@ describe("sessionMessagesToItems", () => {
     )
     expect(items).toEqual([
       { kind: "user", id: "c1", text: "/model opus", attachments: [], ts },
-      { kind: "system", text: "Set model to opus", ts },
+      { kind: "system", id: "c2", text: "Set model to opus", ts },
       { kind: "user", id: "c3", text: "/usage", attachments: [], ts },
-      { kind: "system", text: "Current week: 17% used", ts },
+      { kind: "system", id: "sys1", text: "Current week: 17% used", ts },
       { kind: "user", id: "b1", text: "!ls", attachments: [], ts },
-      { kind: "system", text: "a.txt", ts },
-      { kind: "system", text: "Interrupted by the user.", ts },
+      { kind: "system", id: "b2", text: "a.txt", ts },
+      { kind: "system", id: "i1", text: "Interrupted by the user.", ts },
     ])
   })
 
@@ -131,7 +131,7 @@ describe("sessionMessagesToItems", () => {
 
   it("renders a compact summary as a system item", () => {
     const items = sessionMessagesToItems([user("c", "This session is being continued...", { is_meta: true, isCompactSummary: true })])
-    expect(items).toEqual([{ kind: "system", text: "Earlier conversation was compacted.", ts }])
+    expect(items).toEqual([{ kind: "system", id: "c", text: "Earlier conversation was compacted.", ts }])
   })
 
   it("keeps subagent tool_use (with parent) but drops subagent text", () => {
@@ -199,6 +199,30 @@ describe("mergeLiveHistory", () => {
     const u2 = { kind: "user" as const, id: "u2", text: "next", attachments: [], ts: 6 }
     const a2 = { kind: "assistant" as const, id: "m2:0", text: "ok", ts: 7 }
     expect(mergeLiveHistory([diskCmd, u2], [liveCmd, u2, a2], [])).toEqual([diskCmd, u2, a2])
+  })
+
+  it("keeps identified volatile items between disk anchors, not at the end of a later turn", () => {
+    const summary = { ...res, id: "turn-1", costUsd: 0.25 }
+    const warning = { kind: "system" as const, id: "warning", text: "Retrying", ts: 5 }
+    const error = { kind: "error" as const, id: "error", text: "Stopped", ts: 6 }
+    const next = { ...u, id: "u2", text: "next", ts: 7 }
+    expect(mergeLiveHistory([u, a, next], [u, a, warning, summary, error, next], [])).toEqual([u, a, warning, summary, error, next])
+  })
+
+  it("keeps pending user echoes before a later disk anchor without reviving rewritten completed commands", () => {
+    const queued = { ...u, id: "queued", text: "follow-up" }
+    const rewritten = { ...u, id: "old-command", text: "/cost" }
+    expect(mergeLiveHistory([u, a], [rewritten, u, queued, a], [], 9, new Set([queued.id]))).toEqual([u, queued, a])
+  })
+
+  it("dedupes repeated persisted system outputs one-to-one within their disk anchors", () => {
+    const output = { kind: "system" as const, id: "disk-output", text: "Usage", ts: 2 }
+    const next = { ...u, id: "u2", text: "next", ts: 3 }
+    const live = { ...output, id: "live-output" }
+    const second = { ...output, id: "second-output" }
+    expect(mergeLiveHistory([u, output, next], [u, live, next, second], [])).toEqual([u, live, next, second])
+    expect(mergeLiveHistory([u, output], [u, live, second], [])).toEqual([u, live, second])
+    expect(mergeLiveHistory([u, output], [u, live, live], [])).toEqual([u, live])
   })
 
   it("does not duplicate a partial block that is already final", () => {

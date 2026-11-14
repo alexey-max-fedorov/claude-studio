@@ -7,7 +7,7 @@ The WebSocket contract between the Claude Studio agent daemon and the browser si
 One agent daemon runs Claude Code (Agent SDK) in a single project dir. The side panel is a chat client for that project:
 
 - A conversation is a real Claude Code session keyed by a UUID `sessionId`. The **client mints** the UUID for a new conversation. On the first `send` the agent resumes it if a transcript exists on disk, otherwise starts a new session with that id.
-- Every conversation event carries its `sessionId`. A client receives events for sessions it has opened (`open_session`) or sent to (`send`).
+- Every conversation event carries its `sessionId`. A client receives events for sessions it has opened (`open_session`), sent to (`send`), or recovered through `get_state`.
 - Transcripts on disk, including terminal sessions in the same project, can be listed and resumed.
 - Closing the panel does not stop anything. A live Claude Code process stays up until 20 minutes idle, `close_session`, or the daemon stops.
 
@@ -35,10 +35,10 @@ On connect the server sends `hello { serverVersion, protocol, projectDir }`, the
 | `type` | Fields | Notes |
 |---|---|---|
 | `ping` | | replies `pong` |
-| `get_state` | | replies `config_state` |
+| `get_state` | | replies `config_state` and `live_sessions`; subscribes to all currently live sessions |
 | `set_config` | `patch: Partial<StudioConfig>` | sanitized by `validateConfigPatch`; success broadcasts `config_state` to all clients, nothing valid replies `config_error` |
 | `list_sessions` | `limit?` (default 40), `offset?` | replies `session_list` |
-| `open_session` | `sessionId` | subscribes, replies `session_history` (see below) |
+| `open_session` | `sessionId, requestId?, followResets?` | subscribes, replies `session_history` (see below) |
 | `send` | `sessionId, text, attachments` | subscribes; starts or resumes the session; queued if a turn is running |
 | `interrupt` | `sessionId` | stops the running turn (Esc in the terminal) |
 | `permission_response` | `sessionId, requestId, behavior, always?, message?, updatedInput?` | first answer wins; a late answer gets `error` |
@@ -56,8 +56,10 @@ Every inbound frame goes through `parseClientMessage`; failures reply `error`.
 | `config_state` | `config, models, commands, permissionModes` (sent on connect and on every config change. At boot the daemon reads the real model and slash command lists from Claude Code without a model call, about 2 s; until then `models` is a static fallback and `commands` is empty, and a fresh `config_state` is broadcast when they arrive) |
 | `config_error` | `error` |
 | `session_list` | `sessions: SessionSummary[], offset, hasMore` |
-| `session_history` | `sessionId, items: ChatItem[], running, pending` (pending permission requests to re-show) |
-| `event` | `sessionId, event: LiveEvent` |
+| `session_history` | `sessionId, requestId?, sequence?, items: ChatItem[], running, pending` (pending permission requests to re-show) |
+| `live_sessions` | `sessions: {sessionId, running, pending: string[]}[]` (pending request IDs) |
+| `session_reset` | `previousSessionId, sessionId` (migrate subscriptions and current conversation to the new ID) |
+| `event` | `sessionId, event: LiveEvent, sequence?` |
 | `error` | `error, sessionId?` |
 
 ## LiveEvent
@@ -82,10 +84,15 @@ Live events and `session_history` use the same ids, so clients should **upsert b
 - `result`: `costUsd` is the cost of this turn. For a session resumed from outside this daemon (for example a terminal session) the prior total is unknown, so the first result after resuming reports 0. `errorText` is set when the turn stopped early ("Interrupted by the user.", max turns, budget cap, API error).
 - `system`: compaction, API retries, interrupts, local slash-command output. In history a slash command shows as a `user` item (`/model opus`) followed by a `system` item with its output; `!cmd` shell entries likewise. History does not include subagent tool calls (they live in separate transcripts); live events do.
 - `error`: the Claude Code process failed.
+- `result`, `error`, and `system` may carry a stable `id` for upserting live-only rows across history snapshots. The daemon retains these rows in bounded in-memory buffers; daemon restart or cache eviction can discard information absent from the saved transcript.
 
 Empty thinking blocks (models that hide thinking) are not sent.
 
-`session_history` for a live session merges the transcript on disk with what the current turn emitted that the transcript does not have yet (so a brand-new session reopened mid-turn still shows the user message), deduped by id, appending only items newer than the last one already on disk. Between turns history is the transcript alone. Blocks still streaming are included as `assistant` / `thinking` items holding the text so far, with their block id; keep appending later `text_delta` / `thinking_delta` events to them, and the final item with the same id replaces them.
+`session_history` for a live session merges the transcript on disk with what the current turn emitted that the transcript does not have yet (so a brand-new session reopened mid-turn still shows the user message), deduped by id, appending only items newer than the last one already on disk. Recent completed items remain in a bounded live buffer so a disk snapshot taken before completion can still include the final reply. Blocks still streaming are included as `assistant` / `thinking` items holding the text so far, with their block id; keep appending later `text_delta` / `thinking_delta` events to them, and the final item with the same id replaces them.
+
+The agent sequences live events monotonically for its lifetime. A history response's `sequence` covers the live items and partial blocks included in that snapshot. While history is loading, clients retain incoming events, apply the snapshot, and replay only events with a greater sequence. `requestId` is echoed from `open_session`; clients ignore superseded responses. Both fields are optional for compatibility with earlier v3 agents.
+
+Claude Code can reset a conversation, including through `/clear` or plan exit with fresh context. `session_reset` migrates the live process and its subscribers to the new SDK conversation ID. Clients clear the transcript, preserve drafts and queued sends under the new ID, and request its history. In-flight sends and controls follow per-client reset aliases. Automatic history refreshes set `followResets: true`; an explicit archive selection clears that client's alias for the selected ID. The old transcript remains available in the session list. The subsequent SDK initialization ID is authoritative for the saved transcript; the agent reconciles it if it differs from the announced reset ID.
 
 ## Attachments
 
@@ -115,6 +122,8 @@ Persisted in `~/.claude-studio/config.json` (never in the project). `projectDir`
 | `systemPromptAppend` | `""` | next process start |
 | `maxBudgetUsd` | `null` | next process start |
 | `maxTurns` | `null` | next process start |
+
+`maxBudgetUsd` caps cumulative spending across messages in one live SDK process. A process restart (including after idle eviction) or conversation clear (`/clear`) gives a fresh allowance. `null` means no cap. The pinned SDK has no budget-reset setter.
 
 When a "next process start" field changes, idle live sessions are closed right away (busy ones when their turn ends), and the next `send` resumes them with the new options.
 

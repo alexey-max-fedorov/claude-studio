@@ -18,7 +18,7 @@ import { SettingsDrawer } from "./components/SettingsDrawer"
 import { Transcript } from "./components/Transcript"
 import "./sidepanel.css"
 
-const START_CMD = "npx claude-studio --project /path/to/your/project"
+const START_CMD = "pnpm dlx claude-studio@3 --project /path/to/your/project"
 const MAX_ATTACHMENTS = 12
 const SESSION_PAGE = 30
 const HISTORY_MAX = 50
@@ -91,6 +91,9 @@ export function SidePanel() {
   const [windowId, setWindowId] = useState<number | null>(null)
 
   const connRef = useRef<AgentConnection | null>(null)
+  const historyRequestRef = useRef<string | null>(null)
+  const draftRef = useRef(draft)
+  draftRef.current = draft
   const sessionRef = useRef<string | null>(null)
   const startedRef = useRef(false)
   const windowRef = useRef<number | null>(null)
@@ -104,6 +107,13 @@ export function SidePanel() {
   othersRef.current = others
 
   const send = useCallback((msg: Parameters<AgentConnection["send"]>[0]) => connRef.current?.send(msg) ?? false, [])
+
+  const requestHistory = useCallback((id: string, connection = connRef.current, followResets = true) => {
+    const requestId = newId()
+    historyRequestRef.current = requestId
+    dispatch({ type: "begin_history" })
+    connection?.send({ type: "open_session", sessionId: id, requestId, followResets })
+  }, [])
 
   // ---------------------------------------------------------------------------
   // Drafts: debounced per session, flushed on session switch and when the panel hides.
@@ -163,7 +173,7 @@ export function SidePanel() {
       void loadDraft(id)
       const w = windowRef.current
       void setLocal({ ...windowScoped(KEYS.currentSession, w, id), ...windowScoped(KEYS.sessionStarted, w, started) })
-      if (started) send({ type: "open_session", sessionId: id })
+      if (started) requestHistory(id, connRef.current, false)
       // Local bubbles of still-pending sends for this session come back after the reset.
       for (const p of pendingSends.current.values()) {
         if (p.sessionId !== id) continue
@@ -171,7 +181,7 @@ export function SidePanel() {
         if (p.failed) dispatch({ type: "local_status", nonce: p.nonce, failed: true })
       }
     },
-    [loadDraft, send, flushDrafts],
+    [loadDraft, requestHistory, flushDrafts],
   )
 
   const newChat = useCallback(() => {
@@ -278,7 +288,34 @@ export function SidePanel() {
             return [...prev, ...msg.sessions.filter((s) => !seen.has(s.sessionId))]
           })
           break
+        case "live_sessions":
+          setOthers(Object.fromEntries(msg.sessions.map((s) => [s.sessionId, { running: s.running, pending: s.pending }])))
+          break
+        case "session_reset": {
+          const { previousSessionId: previous, sessionId: next } = msg
+          flushDrafts()
+          for (const p of pendingSends.current.values()) if (p.sessionId === previous) p.sessionId = next
+          setOthers((prev) => {
+            const { [previous]: old, ...rest } = prev
+            return { ...rest, [next]: { running: old?.running ?? true, pending: [] } }
+          })
+          if (sessionRef.current === previous) {
+            sessionRef.current = next
+            startedRef.current = true
+            setSessionId(next)
+            dispatch({ type: "reset", sessionId: next })
+            setRunningSince(null)
+            saveDraftSoon(next, draftRef.current)
+            void setLocal({ ...windowScoped(KEYS.currentSession, windowRef.current, next), ...windowScoped(KEYS.sessionStarted, windowRef.current, true) })
+            for (const p of pendingSends.current.values()) {
+              if (p.sessionId === next) dispatch({ type: "local_user", nonce: p.nonce, text: p.text, attachments: p.attachments.map(summarizeAttachment), ts: p.ts })
+            }
+            requestHistory(next)
+          }
+          break
+        }
         case "session_history": {
+          if (msg.sessionId === sessionRef.current && msg.requestId && msg.requestId !== historyRequestRef.current) break
           trackOther(msg.sessionId, () => ({ running: msg.running, pending: (msg.pending ?? []).map((p) => p.requestId) }))
           // Sends whose echo is already in history are delivered.
           const used = new Set<string>()
@@ -309,7 +346,7 @@ export function SidePanel() {
           } else if (event.kind === "permission_resolved") {
             trackOther(sid, (o) => ({ ...o, pending: o.pending.filter((r) => r !== event.requestId) }))
           }
-          if (sid === sessionRef.current) dispatch({ type: "event", sessionId: sid, event })
+          if (sid === sessionRef.current) dispatch({ type: "event", sessionId: sid, event, sequence: msg.sequence })
           break
         }
         case "error":
@@ -329,7 +366,7 @@ export function SidePanel() {
           break
       }
     },
-    [resolveSend, restoreSends, trackOther],
+    [resolveSend, restoreSends, trackOther, flushDrafts, saveDraftSoon, requestHistory],
   )
 
   // Boot: restore state (per window), then connect.
@@ -372,7 +409,7 @@ export function SidePanel() {
       },
       onOpen: () => {
         c.send({ type: "get_state" })
-        if (sessionRef.current && startedRef.current) c.send({ type: "open_session", sessionId: sessionRef.current })
+        if (sessionRef.current && startedRef.current) requestHistory(sessionRef.current, c)
         if (drawerRef.current === "sessions") c.send({ type: "list_sessions", limit: SESSION_PAGE, offset: 0 })
       },
     })
@@ -382,7 +419,7 @@ export function SidePanel() {
       c.stop()
       if (connRef.current === c) connRef.current = null
     }
-  }, [serverUrl, onMessage, restoreSends])
+  }, [serverUrl, onMessage, restoreSends, requestHistory])
 
   // Running timer
   useEffect(() => {

@@ -3,6 +3,7 @@ import type { Attachment, SlashCommand } from "@claude-studio/protocol"
 import { attachmentLabel, formatBytes, formatCount } from "../lib/format"
 import { Icon } from "./Icons"
 import { ATTACHMENT_ICONS } from "./Transcript"
+import { AttachmentPreview, screenshotSource } from "./AttachmentPreview"
 
 export type CaptureKind = "page" | "selection" | "page_text" | "screenshot" | "element"
 
@@ -52,8 +53,9 @@ export function matchCommands(commands: SlashCommand[], value: string): SlashCom
   return [...starts, ...contains].slice(0, 50)
 }
 
-function Chip({ a, onRemove }: { a: Attachment; onRemove: () => void }) {
+function Chip({ a, onRemove, onPreview }: { a: Attachment; onRemove: () => void; onPreview: () => void }) {
   const label = attachmentLabel(a)
+  const image = useMemo(() => screenshotSource(a), [a])
   let tip = `${a.title || a.url}\n${a.url}`
   if (a.type === "page_text") tip += `\n${formatCount(a.text.length)} chars`
   if (a.type === "screenshot") tip += `\n${formatBytes(Math.round((a.dataUrl.length * 3) / 4))}`
@@ -61,8 +63,10 @@ function Chip({ a, onRemove }: { a: Attachment; onRemove: () => void }) {
   if (a.type === "element") tip = `${a.element.cssSelector}\n${a.url}`
   return (
     <span className="chip" title={tip}>
-      {a.type === "screenshot" ? <img className="chip-thumb" src={a.dataUrl} alt="" /> : <Icon name={ATTACHMENT_ICONS[a.type]} size={11} />}
-      <span className="chip-label">{label}</span>
+      <button type="button" className="chip-preview" aria-label={`Review ${label}`} onClick={onPreview}>
+        {image ? <img className="chip-thumb" src={image} alt="" /> : <Icon name={ATTACHMENT_ICONS[a.type]} size={11} />}
+        <span className="chip-label">{label}</span>
+      </button>
       <button type="button" className="chip-x" aria-label={`Remove ${label}`} onClick={onRemove}>
         <Icon name="x" size={10} />
       </button>
@@ -73,6 +77,13 @@ function Chip({ a, onRemove }: { a: Attachment; onRemove: () => void }) {
 export function Composer(props: Props) {
   const { value, onChange, running, commands } = props
   const ta = useRef<HTMLTextAreaElement>(null)
+  const [preview, setPreview] = useState<Attachment | null>(null)
+  const previousAttachments = useRef<Attachment[]>([])
+  useEffect(() => {
+    const added = props.attachments.filter((a) => a.type === "screenshot" && !previousAttachments.current.includes(a))
+    previousAttachments.current = props.attachments
+    setPreview((current) => added.at(-1) ?? (current && props.attachments.includes(current) ? current : null))
+  }, [props.attachments])
   const [menuIdx, setMenuIdx] = useState(0)
   const [menuClosed, setMenuClosed] = useState(false)
   const [recall, setRecall] = useState(-1)
@@ -170,15 +181,27 @@ export function Composer(props: Props) {
 
   return (
     <div className="composer">
+      {preview && props.attachments.includes(preview) ? (
+        <AttachmentPreview
+          attachment={preview}
+          fallbackFocus={ta.current}
+          onClose={() => setPreview(null)}
+          onRemove={() => {
+            const index = props.attachments.indexOf(preview)
+            if (index >= 0) props.onRemoveAttachment(index)
+            setPreview(null)
+          }}
+        />
+      ) : null}
       {props.attachments.length ? (
         <div className="chips chips-pending">
           {props.attachments.map((a, i) => (
-            <Chip key={i} a={a} onRemove={() => props.onRemoveAttachment(i)} />
+            <Chip key={i} a={a} onRemove={() => props.onRemoveAttachment(i)} onPreview={() => setPreview(a)} />
           ))}
         </div>
       ) : null}
       {props.notice ? (
-        <div className={`notice notice-${props.notice.kind}`}>
+        <div className={`notice notice-${props.notice.kind}`} role={props.notice.kind === "error" ? "alert" : "status"}>
           <span>{props.notice.text}</span>
           <button type="button" className="chip-x" aria-label="Dismiss" onClick={props.onDismissNotice}>
             <Icon name="x" size={10} />

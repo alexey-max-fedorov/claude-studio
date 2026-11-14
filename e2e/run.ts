@@ -15,7 +15,7 @@
  */
 import { spawn, type ChildProcess } from "node:child_process"
 import { randomBytes, randomUUID } from "node:crypto"
-import { existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs"
+import { closeSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs"
 import { homedir, tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -52,17 +52,23 @@ interface Env {
   daemon: ChildProcess | null
 }
 
-const CONFIG_PATH = join(homedir(), ".claude-studio", "config.json")
-let configBackup: { existed: boolean; content: string } | null = null
+let restoreConfig: (() => Promise<void>) | null = null
+let configRestore: Promise<void> | null = null
 let env: Env | null = null
 const allClients: TestClient[] = []
 let cleanedUp = false
 
-function stripEnv(e: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+function scratchEnv(e: NodeJS.ProcessEnv, rootDir: string): NodeJS.ProcessEnv {
   const out = { ...e }
   // The daemon must run with its secure defaults, and must not think it is nested in Claude Code.
   for (const k of ["CLAUDE_STUDIO_ALLOW_NO_ORIGIN", "CLAUDE_STUDIO_ALLOWED_ORIGINS", "PORT", "CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT"]) delete out[k]
+  out.CLAUDE_STUDIO_CONFIG = join(rootDir, "config.json")
   return out
+}
+
+async function restoreExternalConfig(): Promise<void> {
+  if (restoreConfig && !configRestore) configRestore = restoreConfig()
+  await configRestore
 }
 
 async function setupEnv(): Promise<Env> {
@@ -83,21 +89,24 @@ async function setupEnv(): Promise<Env> {
   writeFileSync(join(projectDir, "notes.txt"), `These are the e2e notes.\nToken: ${notesToken}\n`)
   const logPath = join(rootDir, "daemon.log")
 
-  if (existsSync(CONFIG_PATH)) configBackup = { existed: true, content: readFileSync(CONFIG_PATH, "utf8") }
-  else configBackup = { existed: false, content: "" }
-
   const port = process.env.E2E_PORT ? Number(process.env.E2E_PORT) : await freePort()
   const fd = openSync(logPath, "a")
-  const daemon = spawn(process.execPath, [daemonPath, "--project", projectDir, "--port", String(port)], {
-    cwd: projectDir,
-    env: stripEnv(process.env),
-    stdio: ["ignore", fd, fd],
-  })
+  let daemon: ChildProcess
+  try {
+    daemon = spawn(process.execPath, [daemonPath, "--project", projectDir, "--port", String(port)], {
+      cwd: projectDir,
+      env: scratchEnv(process.env, rootDir),
+      stdio: ["ignore", fd, fd],
+    })
+  } finally {
+    closeSync(fd)
+  }
   const e: Env = { url: `ws://127.0.0.1:${port}`, port, projectDir, projectDirReal: realpathSync(projectDir), notesToken, rootDir, logPath, daemon }
   env = e
 
   let exited: string | null = null
   daemon.once("exit", (code, sig) => (exited = `daemon exited (code ${code}, signal ${sig})`))
+  daemon.once("error", (err) => (exited = `daemon could not start: ${err.message}`))
   const deadline = Date.now() + 30_000
   while (Date.now() < deadline) {
     if (exited) throw new Error(`${exited} before /health came up. Log tail:\n${logTail(40)}`)
@@ -120,6 +129,11 @@ function logTail(n: number): string {
 async function cleanup(): Promise<void> {
   if (cleanedUp) return
   cleanedUp = true
+  try {
+    await restoreExternalConfig()
+  } catch (err) {
+    console.error(`warning: could not restore external daemon config: ${(err as Error).message}`)
+  }
   for (const c of allClients) {
     try {
       c.ws.terminate()
@@ -132,14 +146,6 @@ async function cleanup(): Promise<void> {
     d.kill("SIGTERM")
     const done = await Promise.race([new Promise((r) => d.once("exit", () => r(true))), sleep(3000).then(() => false)])
     if (!done) d.kill("SIGKILL")
-  }
-  if (configBackup) {
-    try {
-      if (configBackup.existed) writeFileSync(CONFIG_PATH, configBackup.content)
-      else if (existsSync(CONFIG_PATH)) rmSync(CONFIG_PATH)
-    } catch (e) {
-      console.error(`warning: could not restore ${CONFIG_PATH}: ${(e as Error).message}`)
-    }
   }
   if (env?.rootDir) {
     if (KEEP) {
@@ -694,6 +700,38 @@ const scenarios: Scenario[] = [
       await c.close()
     },
   },
+
+  {
+    id: "k",
+    name: "conversation reset: canonical transcript and resumption after process close",
+    needsScratch: true,
+    async run(t, ctx) {
+      const c = ctx.main
+      const old = randomUUID()
+      await runTurn(t, c, old, "Reply with exactly BEFORE-RESET. Do not use tools.")
+      const from = c.mark()
+      c.send({ type: "send", sessionId: old, text: "/clear", attachments: [] })
+      await c.waitFor((m) => m.type === "session_reset" && m.previousSessionId === old, 15_000, { from, label: "conversation reset" })
+      const idle = await c.waitFor<Extract<ServerMessage, { type: "event" }>>(
+        (m) => m.type === "event" && m.sessionId !== old && m.event.kind === "status" && m.event.state === "idle",
+        15_000, { from, label: "post-reset idle" },
+      )
+      const sid = idle.sessionId
+      const resets = c.messages.slice(from).filter((m): m is Extract<ServerMessage, { type: "session_reset" }> => m.type === "session_reset")
+      t.check(resets.at(-1)?.sessionId === sid, "final reset notification must match the persisted conversation ID")
+      const fresh = await openHistory(c, sid)
+      t.check(!fresh.items.some((item) => "text" in item && item.text.includes("BEFORE-RESET")), "cleared history still contains the old answer")
+      const code = `AFTER-RESET-${randomBytes(4).toString("hex").toUpperCase()}`
+      await runTurn(t, c, sid, `Remember ${code} and reply with only that code. Do not use tools.`)
+      const closing = c.mark()
+      c.send({ type: "close_session", sessionId: sid })
+      c.send({ type: "ping" })
+      await c.waitFor((m) => m.type === "pong", 5000, { from: closing, label: "close acknowledged" })
+      const resumed = await runTurn(t, c, sid, "What exact code did I ask you to remember in the preceding message? Reply only that code. Do not use tools.")
+      t.check(assistantText(resumed.items).includes(code), "process restart failed to resume the post-reset transcript")
+      t.note(`reset notifications: ${resets.length}; canonical transcript resumed`)
+    },
+  },
 ]
 
 // ---------------------------------------------------------------------------
@@ -712,83 +750,90 @@ async function main(): Promise<number> {
   }
   console.log(`daemon: ${e.url}${e.projectDir ? `  project: ${e.projectDir}` : "  (external)"}${e.logPath ? `  log: ${e.logPath}` : ""}\n`)
 
-  let main: TestClient
-  let originalConfig: StudioConfig | null = null
   try {
-    main = await connect(e, "A")
-    const cs = await main.waitFor<ConfigState>((m) => m.type === "config_state", 10_000, { label: "initial config_state" })
-    originalConfig = cs.config
-    await setConfig([main], { model: MODEL, permissionMode: "default" }, "setup")
-  } catch (err) {
-    console.log(`FAIL  setup: main client could not connect/configure: ${(err as Error).message}\n${e.logPath ? logTail(30) : ""}`)
-    return 1
-  }
-  const ctx: Ctx = { env: e, main, sessions: {}, liveAssistantIds: {} }
-
-  for (const s of scenarios) {
-    if (ONLY.size && !ONLY.has(s.id)) continue
-    if (s.needsScratch && !e.projectDir) {
-      console.log(`SKIP  ${s.id} ${s.name} (needs the scratch project; E2E_URL set)`)
-      continue
-    }
-    ran.push(s.id)
-    const t = new T()
-    const t0 = Date.now()
-    let timer: NodeJS.Timeout | undefined
+    let main: TestClient
     try {
-      await Promise.race([
-        s.run(t, ctx),
-        new Promise((_, rej) => (timer = setTimeout(() => rej(new Error(`scenario timed out after ${(s.timeoutMs ?? 150_000) / 1000} s`)), s.timeoutMs ?? 150_000))),
-      ])
+      main = await connect(e, "A")
+      const cs = await main.waitFor<ConfigState>((m) => m.type === "config_state", 10_000, { label: "initial config_state" })
+      if (!e.daemon) {
+        const patch = { model: cs.config.model, permissionMode: cs.config.permissionMode }
+        restoreConfig = async () => {
+          const c = await connect(e, "restore")
+          try {
+            await c.waitFor((m) => m.type === "config_state", 5000, { label: "restore connection" })
+            await setConfig([c], patch, "restore")
+          } finally {
+            await c.close()
+          }
+        }
+      }
+      await setConfig([main], { model: MODEL, permissionMode: "default" }, "setup")
     } catch (err) {
-      if (!(err instanceof Abort)) t.failures.push((err as Error).message)
-    } finally {
-      clearTimeout(timer)
+      console.log(`FAIL  setup: main client could not connect/configure: ${(err as Error).message}\n${e.logPath ? logTail(30) : ""}`)
+      return 1
     }
-    const secs = ((Date.now() - t0) / 1000).toFixed(1)
-    const ok = t.failures.length === 0
-    if (!ok) failed++
-    console.log(`${ok ? "PASS" : "FAIL"}  ${s.id} ${s.name} (${secs}s)`)
-    for (const f of t.failures) console.log(`      x ${f}`)
-    for (const n of t.notes) console.log(`      - ${n}`)
-    if (!ok) for (const tr of t.traces) {
-      const s2 = tr()
-      if (s2) console.log(`      trace:\n${s2}`)
-    }
-    if (!main.open) {
-      console.log("      ! main client socket closed; reconnecting")
+    const ctx: Ctx = { env: e, main, sessions: {}, liveAssistantIds: {} }
+
+    for (const s of scenarios) {
+      if (ONLY.size && !ONLY.has(s.id)) continue
+      if (s.needsScratch && !e.projectDir) {
+        console.log(`SKIP  ${s.id} ${s.name} (needs the scratch project; E2E_URL set)`)
+        continue
+      }
+      ran.push(s.id)
+      const t = new T()
+      const t0 = Date.now()
+      let timer: NodeJS.Timeout | undefined
       try {
-        ctx.main = main = await connect(e, "A'")
-        await main.waitFor((m) => m.type === "config_state", 5000)
+        await Promise.race([
+          s.run(t, ctx),
+          new Promise((_, rej) => (timer = setTimeout(() => rej(new Error(`scenario timed out after ${(s.timeoutMs ?? 150_000) / 1000} s`)), s.timeoutMs ?? 150_000))),
+        ])
       } catch (err) {
-        console.log(`FAIL  could not reconnect main client: ${(err as Error).message}`)
-        return 1
+        if (!(err instanceof Abort)) t.failures.push((err as Error).message)
+      } finally {
+        clearTimeout(timer)
+      }
+      const secs = ((Date.now() - t0) / 1000).toFixed(1)
+      const ok = t.failures.length === 0
+      if (!ok) failed++
+      console.log(`${ok ? "PASS" : "FAIL"}  ${s.id} ${s.name} (${secs}s)`)
+      for (const f of t.failures) console.log(`      x ${f}`)
+      for (const n of t.notes) console.log(`      - ${n}`)
+      if (!ok) for (const tr of t.traces) {
+        const s2 = tr()
+        if (s2) console.log(`      trace:\n${s2}`)
+      }
+      if (!main.open) {
+        console.log("      ! main client socket closed; reconnecting")
+        try {
+          ctx.main = main = await connect(e, "A'")
+          await main.waitFor((m) => m.type === "config_state", 5000)
+        } catch (err) {
+          console.log(`FAIL  could not reconnect main client: ${(err as Error).message}`)
+          return 1
+        }
       }
     }
-  }
 
-  // Shape violations anywhere fail the run.
-  const violations = allClients.flatMap((c) => c.violations.map((v) => `${c.label}: ${v}`))
-  const warnings = [...new Set(allClients.flatMap((c) => c.warnings))]
-  if (violations.length) {
-    failed++
-    console.log(`FAIL  protocol shapes: ${violations.length} violation(s)`)
-    for (const v of violations.slice(0, 20)) console.log(`      x ${v}`)
-  } else {
-    console.log(`PASS  protocol shapes: ${allClients.reduce((n, c) => n + c.messages.length, 0)} messages validated`)
-  }
-  for (const w of warnings.slice(0, 20)) console.log(`      ~ extra key: ${w}`)
-
-  if (!e.daemon && originalConfig) {
-    try {
-      await setConfig([ctx.main], { model: originalConfig.model, permissionMode: originalConfig.permissionMode }, "restore")
-    } catch {
-      console.log("      ! could not restore the external daemon's model/permissionMode")
+    // Shape violations anywhere fail the run.
+    const violations = allClients.flatMap((c) => c.violations.map((v) => `${c.label}: ${v}`))
+    const warnings = [...new Set(allClients.flatMap((c) => c.warnings))]
+    if (violations.length) {
+      failed++
+      console.log(`FAIL  protocol shapes: ${violations.length} violation(s)`)
+      for (const v of violations.slice(0, 20)) console.log(`      x ${v}`)
+    } else {
+      console.log(`PASS  protocol shapes: ${allClients.reduce((n, c) => n + c.messages.length, 0)} messages validated`)
     }
+    for (const w of warnings.slice(0, 20)) console.log(`      ~ extra key: ${w}`)
+
+    if (failed && e.logPath) console.log(`\ndaemon log tail:\n${logTail(25)}`)
+    console.log(`\n${failed ? `${failed} FAILED` : "ALL PASSED"} (${ran.join(",")}) in ${((Date.now() - started) / 1000).toFixed(1)}s`)
+    return failed ? 1 : 0
+  } finally {
+    await restoreExternalConfig()
   }
-  if (failed && e.logPath) console.log(`\ndaemon log tail:\n${logTail(25)}`)
-  console.log(`\n${failed ? `${failed} FAILED` : "ALL PASSED"} (${ran.join(",")}) in ${((Date.now() - started) / 1000).toFixed(1)}s`)
-  return failed ? 1 : 0
 }
 
 const globalTimer = setTimeout(() => {

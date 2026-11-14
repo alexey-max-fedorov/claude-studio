@@ -80,12 +80,16 @@ export interface TranscriptState {
   seq: number
   /** assistant/thinking ids whose final text arrived as a live item; later deltas for them are ignored. */
   finalIds: string[]
+  snapshotSequence: number
+  historyPending: boolean
+  pendingEvents: Extract<TranscriptAction, { type: "event" }>[]
 }
 
 export type TranscriptAction =
   | { type: "reset"; sessionId: string | null; loaded?: boolean }
   | { type: "history"; msg: Extract<ServerMessage, { type: "session_history" }> }
-  | { type: "event"; sessionId: string; event: LiveEvent }
+  | { type: "begin_history" }
+  | { type: "event"; sessionId: string; event: LiveEvent; sequence?: number }
   | { type: "local_user"; nonce: string; text: string; attachments: AttachmentSummary[]; ts: number }
   /** Mark a local bubble failed (no echo) or pending again (retry). */
   | { type: "local_status"; nonce: string; failed: boolean; ts?: number }
@@ -94,7 +98,7 @@ export type TranscriptAction =
   | { type: "local_error"; text: string; ts: number }
 
 export function initialTranscript(sessionId: string | null = null): TranscriptState {
-  return { sessionId, rows: [], status: "idle", permissions: [], loaded: false, seq: 0, finalIds: [] }
+  return { sessionId, rows: [], status: "idle", permissions: [], loaded: false, seq: 0, finalIds: [], snapshotSequence: 0, historyPending: false, pendingEvents: [] }
 }
 
 // ---------------------------------------------------------------------------
@@ -190,13 +194,18 @@ function applyItem(rows: Row[], seq: number, item: ChatItem): { rows: Row[]; seq
       }
     }
     case "result":
-      return {
-        rows: [...finalizeStreaming(rows), { ...item, id: `r${seq}` }],
-        seq: seq + 1,
-      }
     case "error":
-    case "system":
-      return { rows: [...rows, { ...item, id: `r${seq}` }], seq: seq + 1 }
+    case "system": {
+      const next = item.kind === "result" ? finalizeStreaming(rows) : rows
+      const row: Row = { ...item, id: item.id ?? `r${seq}` }
+      const i = item.id ? next.findIndex((r) => r.kind === item.kind && r.id === item.id) : -1
+      if (i >= 0) {
+        const updated = next.slice()
+        updated[i] = row
+        return { rows: updated, seq }
+      }
+      return { rows: [...next, row], seq: item.id ? seq : seq + 1 }
+    }
     default:
       return { rows, seq }
   }
@@ -220,6 +229,9 @@ export function transcriptReducer(state: TranscriptState, action: TranscriptActi
     case "reset":
       return { ...initialTranscript(action.sessionId), loaded: !!action.loaded }
 
+    case "begin_history":
+      return { ...state, snapshotSequence: 0, historyPending: true, pendingEvents: [] }
+
     case "history": {
       const { msg } = action
       if (state.sessionId && msg.sessionId !== state.sessionId) return state
@@ -239,7 +251,7 @@ export function transcriptReducer(state: TranscriptState, action: TranscriptActi
         if (echo) used.add(echo.id)
         else rows.push(r)
       }
-      return {
+      const snapshot: TranscriptState = {
         ...state,
         sessionId: msg.sessionId,
         rows,
@@ -247,11 +259,20 @@ export function transcriptReducer(state: TranscriptState, action: TranscriptActi
         status: msg.running ? "running" : "idle",
         permissions: msg.pending ?? [],
         loaded: true,
+        snapshotSequence: msg.sequence ?? 0,
+        historyPending: false,
+        pendingEvents: [],
       }
+      return state.pendingEvents.reduce((next, event) => transcriptReducer(next, event), snapshot)
     }
 
     case "event": {
       if (state.sessionId && action.sessionId !== state.sessionId) return state
+      if (action.sequence !== undefined && action.sequence <= state.snapshotSequence) return state
+      if (state.historyPending && action.sequence !== undefined) {
+        const next = transcriptReducer({ ...state, historyPending: false }, action)
+        return { ...next, historyPending: true, pendingEvents: [...state.pendingEvents, action] }
+      }
       const ev = action.event
       switch (ev.kind) {
         case "item": {

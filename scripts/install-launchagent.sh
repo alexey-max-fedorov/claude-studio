@@ -31,15 +31,12 @@ mkdir -p "$STATE_DIR" "$HOME/Library/LaunchAgents"
 # launchd starts with a minimal PATH; give Claude Code (hooks, MCP servers) the usual tool dirs.
 AGENT_PATH="$HOME/.local/bin:$(dirname "$NODE"):/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-esc() { printf '%s' "$1" | sed -e 's/[&|\\]/\\&/g'; }
-sed -e "s|__LABEL__|$(esc "$LABEL")|g" \
-    -e "s|__NODE__|$(esc "$NODE")|g" \
-    -e "s|__CLI__|$(esc "$CLI")|g" \
-    -e "s|__PROJECT__|$(esc "$PROJECT_DIR")|g" \
-    -e "s|__PORT__|$(esc "$PORT")|g" \
-    -e "s|__PATH__|$(esc "$AGENT_PATH")|g" \
-    -e "s|__LOG__|$(esc "$LOG")|g" \
-    "$REPO/scripts/launchagent.plist.template" > "$PLIST_DST"
+PLIST_TMP="$(mktemp "$HOME/Library/LaunchAgents/.claude-studio.XXXXXX")"
+trap 'rm -f "$PLIST_TMP"' EXIT
+"$NODE" "$REPO/scripts/render-launchagent.mjs" \
+  "$LABEL" "$NODE" "$CLI" "$PROJECT_DIR" "$PORT" "$AGENT_PATH" "$LOG" > "$PLIST_TMP"
+plutil -lint "$PLIST_TMP" >/dev/null
+mv -f "$PLIST_TMP" "$PLIST_DST"
 
 echo "==> Installing LaunchAgent $LABEL"
 DOMAIN="gui/$(id -u)"

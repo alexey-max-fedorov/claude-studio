@@ -104,7 +104,7 @@ export function resultErrorText(msg: any): string | undefined {
     case "success":
       return msg.is_error === true ? (typeof msg.result === "string" && msg.result) || "The turn ended with an API error." : undefined
     case "error_max_budget_usd":
-      return "Stopped: reached the max budget cap for this turn."
+      return "Stopped: reached the live-process budget cap shared across messages. A process restart or /clear gives a fresh allowance."
     case "error_max_turns":
       return `Stopped: reached the max turns limit${typeof msg.num_turns === "number" ? ` (${msg.num_turns} turns)` : ""}.`
     case "error_max_structured_output_retries":

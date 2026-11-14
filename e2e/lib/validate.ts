@@ -212,6 +212,7 @@ const CHAT_ITEM_CHECKS: { [K in ChatItem["kind"]]: Checker } = {
     extraKeys(o, ["kind", "toolUseId", "text", "isError", "ts"], p, r)
   },
   result: (o, p, r) => {
+    str(o, "id", p, r, { optional: true, nonEmpty: true })
     num(o, "ts", p, r)
     bool(o, "isError", p, r)
     str(o, "errorText", p, r, { optional: true })
@@ -220,17 +221,19 @@ const CHAT_ITEM_CHECKS: { [K in ChatItem["kind"]]: Checker } = {
     num(o, "costUsd", p, r, { min: 0 })
     const u = obj(o, "usage", p, r)
     if (u) checkUsage(u, `${p}.usage`, r)
-    extraKeys(o, ["kind", "ts", "isError", "errorText", "durationMs", "turns", "costUsd", "usage"], p, r)
+    extraKeys(o, ["kind", "id", "ts", "isError", "errorText", "durationMs", "turns", "costUsd", "usage"], p, r)
   },
   error: (o, p, r) => {
+    str(o, "id", p, r, { optional: true, nonEmpty: true })
     str(o, "text", p, r)
     num(o, "ts", p, r)
-    extraKeys(o, ["kind", "text", "ts"], p, r)
+    extraKeys(o, ["kind", "id", "text", "ts"], p, r)
   },
   system: (o, p, r) => {
+    str(o, "id", p, r, { optional: true, nonEmpty: true })
     str(o, "text", p, r)
     num(o, "ts", p, r)
-    extraKeys(o, ["kind", "text", "ts"], p, r)
+    extraKeys(o, ["kind", "id", "text", "ts"], p, r)
   },
 }
 
@@ -330,8 +333,28 @@ const SERVER_MESSAGE_CHECKS: { [K in ServerMessage["type"]]: Checker } = {
     bool(o, "hasMore", p, r)
     extraKeys(o, ["type", "sessions", "offset", "hasMore"], p, r)
   },
+  live_sessions: (o, p, r) => {
+    arr(o, "sessions", p, r)?.forEach((s, i) => {
+      const sp = `${p}.sessions[${i}]`
+      if (!isObj(s)) return void r.errors.push(`${sp} must be an object`)
+      uuid(s, "sessionId", sp, r)
+      bool(s, "running", sp, r)
+      arr(s, "pending", sp, r)?.forEach((id, j) => {
+        if (typeof id !== "string") r.errors.push(`${sp}.pending[${j}] must be a string`)
+      })
+      extraKeys(s, ["sessionId", "running", "pending"], sp, r)
+    })
+    extraKeys(o, ["type", "sessions"], p, r)
+  },
+  session_reset: (o, p, r) => {
+    uuid(o, "previousSessionId", p, r)
+    uuid(o, "sessionId", p, r)
+    extraKeys(o, ["type", "previousSessionId", "sessionId"], p, r)
+  },
   session_history: (o, p, r) => {
     uuid(o, "sessionId", p, r)
+    str(o, "requestId", p, r, { optional: true })
+    num(o, "sequence", p, r, { optional: true, int: true, min: 0 })
     arr(o, "items", p, r)?.forEach((it, i) => checkChatItem(it, `${p}.items[${i}]`, r))
     bool(o, "running", p, r)
     arr(o, "pending", p, r)?.forEach((ev, i) => {
@@ -340,12 +363,13 @@ const SERVER_MESSAGE_CHECKS: { [K in ServerMessage["type"]]: Checker } = {
       if (ev.kind !== "permission_request") r.errors.push(`${ep}.kind must be "permission_request", got ${JSON.stringify(ev.kind)}`)
       checkPermissionRequest(ev, ep, r)
     })
-    extraKeys(o, ["type", "sessionId", "items", "running", "pending"], p, r)
+    extraKeys(o, ["type", "sessionId", "requestId", "sequence", "items", "running", "pending"], p, r)
   },
   event: (o, p, r) => {
     uuid(o, "sessionId", p, r)
+    num(o, "sequence", p, r, { optional: true, int: true, min: 0 })
     checkLiveEvent(req(o, "event", p, r), `${p}.event`, r)
-    extraKeys(o, ["type", "sessionId", "event"], p, r)
+    extraKeys(o, ["type", "sessionId", "sequence", "event"], p, r)
   },
   error: (o, p, r) => {
     str(o, "error", p, r, { nonEmpty: true })

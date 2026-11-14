@@ -102,10 +102,9 @@ describe("ConversationManager", () => {
     ])
     release()
     await until(() => t.kinds().includes("status:idle"))
-    // #8: the buffer is dropped at the result (the transcript has the turn by
-    // then), so history is the transcript alone, which is empty in this fake
     const h2 = await t.mgr.history(SID)
-    expect(h2).toEqual({ items: [], running: false, pending: [] })
+    expect(h2).toMatchObject({ sessionId: SID, running: false, pending: [], sequence: expect.any(Number) })
+    expect(h2.items).toContainEqual(expect.objectContaining({ kind: "assistant", text: "Half" }))
   })
 
   it("#8 caps the live buffer by bytes while a turn is running", async () => {

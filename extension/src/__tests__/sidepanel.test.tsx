@@ -260,7 +260,7 @@ describe("SidePanel", () => {
   it("restores the per-window session on reopen", async () => {
     const sid = "11111111-1111-4111-8111-111111111111"
     const m = await mount({ local: { "currentSessionId:1": sid, "currentSessionStarted:1": true, currentSessionId: "22222222-2222-4222-8222-222222222222" } })
-    expect(m.ws.sent).toContainEqual({ type: "open_session", sessionId: sid })
+    expect(m.ws.sent).toContainEqual(expect.objectContaining({ type: "open_session", sessionId: sid, requestId: expect.any(String) }))
   })
 
   it("surfaces another chat waiting for approval and switches to it", async () => {
@@ -270,10 +270,63 @@ describe("SidePanel", () => {
     expect(m.container.querySelector(".badge")?.textContent).toBe("1")
     const banner = m.container.querySelector(".waiting") as HTMLButtonElement
     expect(banner.textContent).toMatch(/Another chat is waiting for approval/)
-    act(() => banner.click())
-    expect(m.ws.sent).toContainEqual({ type: "open_session", sessionId: other })
+    await act(async () => banner.click())
+    expect(m.ws.sent).toContainEqual(expect.objectContaining({ type: "open_session", sessionId: other, requestId: expect.any(String) }))
     expect(m.container.querySelector(".waiting")).toBeNull()
     act(() => m.ws.push({ type: "event", sessionId: other, event: { kind: "permission_resolved", requestId: "x1", behavior: "allow" } }))
     expect(m.container.querySelector(".badge")).toBeNull()
   })
+
+  it("migrates reset identity, clears the transcript, and preserves the current draft", async () => {
+    const m = await mount()
+    const old = sendText(m, "/clear").sessionId
+    act(() => m.ws.push({ type: "event", sessionId: old, sequence: 1, event: { kind: "item", item: { kind: "user", id: "u-clear", text: "/clear", attachments: [], ts: Date.now() } } }))
+    typeInto(m.ta, "my next thought")
+    const next = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+    act(() => m.ws.push({ type: "session_reset", previousSessionId: old, sessionId: next }))
+    expect(m.container.querySelector(".msg-user")).toBeNull()
+    expect(m.ta.value).toBe("my next thought")
+    expect(m.chrome.local["currentSessionId:1"]).toBe(next)
+    expect(m.ws.sent.at(-1)).toMatchObject({ type: "open_session", sessionId: next, requestId: expect.any(String) })
+    expect(sendText(m, "continue").sessionId).toBe(next)
+  })
+
+  it("ignores superseded history responses for the same conversation", async () => {
+    const sid = "11111111-1111-4111-8111-111111111111"
+    const m = await mount({ local: { "currentSessionId:1": sid, "currentSessionStarted:1": true } })
+    const current = m.ws.sent.filter((x) => x.type === "open_session").at(-1)
+    act(() => m.ws.push({ type: "session_history", sessionId: sid, requestId: current.requestId, sequence: 1, running: false, pending: [], items: [{ kind: "assistant", id: "answer", text: "latest answer", ts: 1 }] }))
+    act(() => m.ws.push({ type: "session_history", sessionId: sid, requestId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", sequence: 0, running: false, pending: [], items: [] }))
+    expect(m.container.textContent).toContain("latest answer")
+  })
+
+  it("restores another running chat's approval state after reconnect and panel reopen", async () => {
+    const m = await mount()
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
+    const other = "33333333-3333-4333-8333-333333333333"
+    act(() => m.ws.drop())
+    act(() => void vi.advanceTimersByTime(500))
+    const reconnected = FakeWS.last!
+    act(() => reconnected.open())
+    expect(reconnected.sent).toContainEqual({ type: "get_state" })
+    act(() => reconnected.push({ type: "live_sessions", sessions: [{ sessionId: other, running: true, pending: ["approval"] }] }))
+    expect(m.container.querySelector(".waiting")?.textContent).toContain("Another chat is waiting for approval")
+    act(() => reconnected.push({ type: "live_sessions", sessions: [] }))
+    expect(m.container.querySelector(".waiting")).toBeNull()
+    vi.useRealTimers()
+    const reopened = await mount()
+    act(() => reopened.ws.push({ type: "live_sessions", sessions: [{ sessionId: other, running: true, pending: ["approval"] }] }))
+    expect(reopened.container.querySelector(".waiting")).not.toBeNull()
+  })
+
+
+  it("offers the protocol-compatible pnpm command when the agent is down", async () => {
+    const m = await mount()
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] })
+    act(() => m.ws.drop())
+    act(() => void vi.advanceTimersByTime(500))
+    act(() => FakeWS.last!.drop())
+    expect(m.container.querySelector(".banner-cmd code")?.textContent).toBe("pnpm dlx claude-studio@3 --project /path/to/your/project")
+  })
+
 })

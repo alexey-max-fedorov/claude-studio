@@ -4,14 +4,16 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
-    "test": "pnpm -r test",
+    "test": "pnpm -r test && node --test scripts/render-launchagent.test.mjs scripts/bump-version.test.mjs scripts/watch-extension.test.mjs scripts/privacy-disclosure.test.mjs",
     "dev:agent": "pnpm --filter claude-studio dev",
     "dev:ext": "pnpm --filter @claude-studio/extension dev",
     "build:extension-zip": "bash scripts/build-extension-zip.sh",
     "e2e": "pnpm --filter e2e start",
-    "e2e:selftest": "pnpm --filter e2e selftest"
+    "e2e:selftest": "pnpm --filter e2e selftest",
+    "pack:agent": "pnpm --dir agent pack --pack-destination ../dist",
+    "verify:package": "node scripts/verify-agent-package.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.9.0"
   }
 }

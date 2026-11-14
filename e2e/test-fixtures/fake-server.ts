@@ -55,7 +55,7 @@ export function startFakeServer(): Promise<FakeServer> {
       cb(true)
     },
   })
-  const send = (ws: WebSocket, m: ServerMessage | Record<string, unknown>) => ws.send(JSON.stringify(m))
+  const send = (ws: WebSocket, m: unknown) => ws.send(JSON.stringify(m))
   wss.on("connection", (ws) => {
     send(ws, { type: "hello", serverVersion: "0.0.0-fake", protocol: 3, projectDir: "/tmp/fake" })
     send(ws, CONFIG_STATE)

@@ -100,10 +100,11 @@ export function SettingsDrawer(p: Props) {
             />
           </label>
           <label className="field">
-            <span className="field-k">Budget per turn, USD</span>
+            <span className="field-k">Live-process budget, USD</span>
             <input
               className="input mono"
               inputMode="decimal"
+              aria-describedby="budget-help"
               disabled={!p.connected}
               placeholder="no cap"
               value={budget}
@@ -111,6 +112,9 @@ export function SettingsDrawer(p: Props) {
               onBlur={() => numOrNull(budget) !== (p.config?.maxBudgetUsd ?? null) && p.onConfig({ maxBudgetUsd: numOrNull(budget) })}
             />
           </label>
+        </div>
+        <div id="budget-help" className="field-hint">
+          Shared across messages in one live Claude Code process, not the saved conversation. Fresh allowance after process restart, idle eviction, or conversation clear (/clear).
         </div>
 
         <div className="field-sep">Shortcuts</div>

@@ -32,8 +32,8 @@ export const EFFORT_LEVELS: EffortLevel[] = ["", "low", "medium", "high", "xhigh
 /**
  * Agent-wide settings. Held by the agent's ConfigStore, persisted to
  * ~/.claude-studio/config.json (never inside the project), broadcast as config_state.
- * Applies to the NEXT turn of every conversation (live sessions get setModel /
- * setPermissionMode pushed immediately where the SDK allows it).
+ * Process-start settings apply on the next SDK process launch; live sessions get
+ * setModel / setPermissionMode pushed immediately where the SDK allows it.
  */
 export interface StudioConfig {
   /** Absolute project dir Claude Code runs in (cwd). Set by the agent at boot; read-only for clients. */
@@ -44,7 +44,10 @@ export interface StudioConfig {
   permissionMode: PermissionMode
   /** Extra text appended to the claude_code system prompt preset. */
   systemPromptAppend: string
-  /** Optional USD cap per turn; null = no cap. */
+  /**
+   * Optional cumulative USD cap across messages in one live SDK process; null = no cap.
+   * Process restart (including after idle eviction) or /clear gives a fresh allowance.
+   */
   maxBudgetUsd: number | null
   /** Optional max agentic turns per prompt; null = no cap. */
   maxTurns: number | null

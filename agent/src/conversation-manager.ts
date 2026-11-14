@@ -16,6 +16,7 @@ import type {
   ChatItem,
   ClientMessage,
   LiveEvent,
+  LiveSessionState,
   ModelOption,
   SessionSummary,
   SlashCommand,
@@ -58,7 +59,8 @@ export interface SdkApi {
 
 export interface ConversationSink {
   /** Deliver a live event to every client subscribed to sessionId. */
-  event(sessionId: string, event: LiveEvent): void
+  event(sessionId: string, event: LiveEvent, sequence: number): void
+  reset?(previousId: string, nextId: string): void
   /** Model / command lists changed (broadcast config_state). */
   capabilitiesChanged(): void
 }
@@ -88,10 +90,12 @@ class LiveSession {
   idleTimer: NodeJS.Timeout | null = null
   /** Interrupt asked for before the process could take it (launching / before init). */
   interruptRequested = false
-  /** Items emitted in the current turn(s), until the transcript has them (see mergeLiveHistory). */
+  /** Retained after completion because an in-flight disk snapshot may predate the result. */
   buffer: { item: ChatItem; bytes: number }[] = []
   bufferBytes = 0
-  constructor(readonly id: string) {}
+  /** Pending input identities within the bounded buffer, in send order. */
+  pendingUserIds = new Set<string>()
+  constructor(public id: string) {}
 }
 
 /** Query options for one Claude Code process. Pure. */
@@ -143,6 +147,8 @@ export interface ManagerOptions {
 
 export class ConversationManager {
   private live = new Map<string, LiveSession>()
+  private historyBuffers = new Map<string, LiveSession["buffer"]>()
+  private sequence = 0
   /** Last cumulative cost per session, kept across process restarts (see StreamMapper). */
   private costTotals = new Map<string, number>()
   private cachedModels: ModelOption[] | null = null
@@ -160,17 +166,26 @@ export class ConversationManager {
 
   private emit(id: string, event: LiveEvent): void {
     if (event.kind === "item") {
+      const item = event.item
+      if ((item.kind === "result" || item.kind === "error" || item.kind === "system") && !item.id) {
+        event = { kind: "item", item: { ...item, id: `live:${randomUUID()}` } }
+      }
       const s = this.live.get(id)
       if (s) {
         const bytes = JSON.stringify(event.item).length
         s.buffer.push({ item: event.item, bytes })
         s.bufferBytes += bytes
         while (s.buffer.length > 1 && (s.buffer.length > LIVE_BUFFER_MAX || s.bufferBytes > LIVE_BUFFER_MAX_BYTES)) {
-          s.bufferBytes -= s.buffer.shift()!.bytes
+          // Queued input may not be on disk yet; evict completed output first.
+          const evict = s.buffer.findIndex((entry, i) => i < s.buffer.length - 1 &&
+            (entry.item.kind !== "user" || !s.pendingUserIds.has(entry.item.id)))
+          const [removed] = s.buffer.splice(evict < 0 ? 0 : evict, 1)
+          s.bufferBytes -= removed.bytes
+          if (removed.item.kind === "user") s.pendingUserIds.delete(removed.item.id)
         }
       }
     }
-    this.opts.sink.event(id, event)
+    this.opts.sink.event(id, event, ++this.sequence)
   }
 
   private setState(s: LiveSession, state: LiveSession["state"]): void {
@@ -198,6 +213,10 @@ export class ConversationManager {
     return this.cachedModels ?? FALLBACK_MODELS
   }
 
+  liveSessions(): LiveSessionState[] {
+    return [...this.live.values()].map((s) => ({ sessionId: s.id, running: s.pendingTurns > 0, pending: [...s.pending.keys()] }))
+  }
+
   commands(): SlashCommand[] {
     return this.cachedCommands
   }
@@ -219,12 +238,16 @@ export class ConversationManager {
     let s = this.live.get(sessionId)
     if (!s) {
       s = new LiveSession(sessionId)
+      s.buffer = this.historyBuffers.get(sessionId)?.slice() ?? []
+      s.bufferBytes = s.buffer.reduce((bytes, e) => bytes + e.bytes, 0)
+      this.historyBuffers.delete(sessionId)
       this.live.set(sessionId, s)
       this.emit(sessionId, { kind: "status", state: "starting" })
       void this.launch(s)
     }
     s.queue.push(msg)
     s.pendingTurns++
+    s.pendingUserIds.add(uuid)
     this.emit(sessionId, {
       kind: "item",
       item: { kind: "user", id: uuid, text, attachments: summaries, ts: Date.now() },
@@ -281,7 +304,13 @@ export class ConversationManager {
   }
 
   private handleMessage(s: LiveSession, msg: any): void {
+    if (msg?.type === "conversation_reset") {
+      this.resetSession(s, msg.new_conversation_id)
+      return
+    }
     if (msg?.type === "system" && msg.subtype === "init") {
+      // After /clear, the init frame identifies the persisted transcript; the reset ID can differ.
+      this.resetSession(s, msg.session_id)
       this.requestCapabilities(s)
       if (s.pendingTurns > 0) this.setState(s, "running")
       if (s.interruptRequested && s.q) {
@@ -291,20 +320,41 @@ export class ConversationManager {
         s.q.interrupt().catch((err) => log.warn("SESSION", `interrupt ${s.id}: ${errText(err)}`))
       }
     }
-    for (const ev of s.mapper.map(msg)) this.emit(s.id, ev)
+    for (const ev of s.mapper.map(msg)) {
+      if (ev.kind === "item" && (ev.item.kind === "result" || ev.item.kind === "system") && typeof msg.uuid === "string") {
+        ev.item.id = msg.uuid
+      }
+      this.emit(s.id, ev)
+    }
     if (msg?.type === "result") {
       s.interruptRequested = false
       const total = s.mapper.totalCost
       if (total !== null) this.costTotals.set(s.id, total)
       s.pendingTurns = typeof msg.queued_turn_count === "number" ? Math.max(0, msg.queued_turn_count) : 0
-      // The transcript has this turn now; keep only user items of still-queued sends.
-      s.buffer = s.pendingTurns > 0 ? s.buffer.filter((e) => e.item.kind === "user").slice(-s.pendingTurns) : []
-      s.bufferBytes = s.buffer.reduce((n, e) => n + e.bytes, 0)
+      s.pendingUserIds = new Set(s.pendingTurns > 0 ? [...s.pendingUserIds].slice(-s.pendingTurns) : [])
       if (s.pendingTurns === 0) {
         this.setState(s, "idle")
         if (s.stale && s.pending.size === 0) this.close(s.id, "options changed")
       }
     }
+  }
+
+  private resetSession(s: LiveSession, nextId: unknown): void {
+    if (typeof nextId !== "string" || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(nextId) || nextId === s.id) return
+    if (this.live.has(nextId)) throw new Error("Claude Code reset to an already live conversation")
+    const previousId = s.id
+    this.denyAll(s, "Conversation reset.")
+    this.live.delete(previousId)
+    s.id = nextId
+    const queued = Math.max(0, s.pendingTurns - 1)
+    s.buffer = queued ? s.buffer.filter((e) => e.item.kind === "user").slice(-queued) : []
+    s.pendingUserIds = new Set(s.buffer.flatMap((e) => e.item.kind === "user" ? [e.item.id] : []))
+    s.interruptRequested = false
+    s.bufferBytes = s.buffer.reduce((bytes, e) => bytes + e.bytes, 0)
+    s.mapper = new StreamMapper(Date.now, 0)
+    this.costTotals.delete(previousId)
+    this.live.set(nextId, s)
+    this.opts.sink.reset?.(previousId, nextId)
   }
 
   private setCapabilities(models: ModelInfo[], commands: SdkSlashCommand[]): void {
@@ -402,13 +452,35 @@ export class ConversationManager {
     s.idleTimer = null
     this.denyAll(s, "Session closed.")
     s.queue.end()
-    if (this.live.get(s.id) === s) this.live.delete(s.id)
+    if (this.live.get(s.id) === s) {
+      this.live.delete(s.id)
+      this.rememberBuffer(s)
+    }
     s.pendingTurns = 0
     if (s.state !== "idle") {
       s.state = "idle"
       this.emit(s.id, { kind: "status", state: "idle" })
     }
     if (!wasClosed) log.info("SESSION", `closed ${s.id} (${reason})`)
+  }
+
+  private rememberBuffer(s: LiveSession): void {
+    if (s.buffer.length === 0) return
+    this.historyBuffers.delete(s.id)
+    this.historyBuffers.set(s.id, s.buffer)
+    let count = 0
+    let bytes = 0
+    for (const buffer of this.historyBuffers.values()) {
+      count += buffer.length
+      bytes += buffer.reduce((total, e) => total + e.bytes, 0)
+    }
+    // Retired processes share one buffer budget, including sessions closed after an error.
+    for (const [id, buffer] of this.historyBuffers) {
+      if (count <= LIVE_BUFFER_MAX && bytes <= LIVE_BUFFER_MAX_BYTES) break
+      this.historyBuffers.delete(id)
+      count -= buffer.length
+      bytes -= buffer.reduce((total, e) => total + e.bytes, 0)
+    }
   }
 
   /** Stop the live process for a session (history stays on disk). */
@@ -511,7 +583,8 @@ export class ConversationManager {
    * History for open_session: transcript on disk merged with what the live
    * process emitted that is not on disk yet, plus partial streaming blocks.
    */
-  async history(sessionId: string): Promise<{ items: ChatItem[]; running: boolean; pending: PermissionRequestEvent[] }> {
+  async history(sessionId: string): Promise<{ sessionId: string; sequence: number; items: ChatItem[]; running: boolean; pending: PermissionRequestEvent[] }> {
+    const startedSession = this.live.get(sessionId)
     let items: ChatItem[] = []
     try {
       const [messages, outputs] = await Promise.all([
@@ -522,16 +595,20 @@ export class ConversationManager {
     } catch (err) {
       log.warn("SESSION", `history ${sessionId}: ${errText(err)}`)
     }
-    const s = this.live.get(sessionId)
-    if (!s) return { items, running: false, pending: [] }
+    if (startedSession && startedSession.id !== sessionId) return this.history(startedSession.id)
+    const s = this.live.get(sessionId) ?? startedSession
     return {
+      sessionId,
+      sequence: this.sequence,
       items: mergeLiveHistory(
         items,
-        s.buffer.map((e) => e.item),
-        s.mapper.inFlight(),
+        [...(startedSession && startedSession !== s ? startedSession.buffer : []), ...(s?.buffer ?? this.historyBuffers.get(sessionId) ?? [])].map((e) => e.item),
+        s?.mapper.inFlight() ?? [],
+        Date.now(),
+        s?.pendingUserIds,
       ),
-      running: s.pendingTurns > 0,
-      pending: [...s.pending.values()].map((p) => p.event),
+      running: (s?.pendingTurns ?? 0) > 0,
+      pending: s ? [...s.pending.values()].map((p) => p.event) : [],
     }
   }
 

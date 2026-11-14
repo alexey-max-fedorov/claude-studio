@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Rendered by scripts/install-launchagent.sh. Placeholders: __LABEL__ __NODE__ __CLI__ __PROJECT__ __PORT__ __PATH__ __LOG__ -->
+<!-- Rendered by scripts/render-launchagent.mjs. -->
 <plist version="1.0"><dict>
   <key>Label</key><string>__LABEL__</string>
   <key>ProgramArguments</key><array>

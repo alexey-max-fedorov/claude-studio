@@ -34,6 +34,7 @@ export const MSG = {
   noText: "This page has no readable text",
   loading: "The page is still loading or showed an error. Try again in a moment.",
   rate: "Too many screenshots at once. Wait a second and try again.",
+  changed: "The tab changed during capture. Return to the page and capture it again.",
   generic: "Couldn't read this page. Try reloading it.",
 } as const
 
@@ -287,50 +288,84 @@ export async function shrinkDataUrl(
   }
 }
 
+async function fromStableTab(
+  kind: Exclude<CaptureKind, "page">,
+  windowId: number,
+  read: (tab: chrome.tabs.Tab) => Promise<Attachment>,
+): Promise<Attachment> {
+  let source: chrome.tabs.Tab | undefined
+  let changed = false
+  const navigated = new Set<number>()
+  const activated: Parameters<typeof chrome.tabs.onActivated.addListener>[0] = (info) => {
+    if (info.windowId === windowId) changed = true
+  }
+  const updated: Parameters<typeof chrome.tabs.onUpdated.addListener>[0] = (id, info) => {
+    if (info.url !== undefined || info.status === "loading" || info.discarded === true) navigated.add(id)
+  }
+  const removed: Parameters<typeof chrome.tabs.onRemoved.addListener>[0] = (id) => { navigated.add(id) }
+  const replaced: Parameters<typeof chrome.tabs.onReplaced.addListener>[0] = (_added, removed) => { navigated.add(removed) }
+  const assertSource = (current: chrome.tabs.Tab) => {
+    if (changed || !source || navigated.has(source.id!) || current.id !== source.id || current.url !== source.url ||
+      current.status === "loading" || (current.pendingUrl && current.pendingUrl !== source.url)) throw new CaptureError(MSG.changed)
+  }
+
+  // Subscribe before the first async lookup so switching away and back cannot hide a different capture source.
+  chrome.tabs.onActivated.addListener(activated)
+  chrome.tabs.onUpdated.addListener(updated)
+  chrome.tabs.onRemoved.addListener(removed)
+  chrome.tabs.onReplaced.addListener(replaced)
+  try {
+    source = await getActiveTab(windowId)
+    if (source.status === "loading" || (source.pendingUrl && source.pendingUrl !== source.url)) throw new CaptureError(MSG.loading)
+    await assertCapturable(source, kind)
+    assertSource(await getActiveTab(windowId))
+    const attachment = await read(source)
+    assertSource(await getActiveTab(windowId))
+    return attachment
+  } finally {
+    chrome.tabs.onActivated.removeListener(activated)
+    chrome.tabs.onUpdated.removeListener(updated)
+    chrome.tabs.onRemoved.removeListener(removed)
+    chrome.tabs.onReplaced.removeListener(replaced)
+  }
+}
+
 /** Capture browser context from the active tab of `windowId`. Throws CaptureError with a friendly message. */
 export async function captureAttachment(kind: CaptureKind, windowId: number): Promise<Attachment> {
   try {
-    const tab = await getActiveTab(windowId)
-    const { url, title } = clampMeta(tab.url || tab.pendingUrl, tab.title)
-    await assertCapturable(tab, kind)
-    const tabId = tab.id!
-
-    switch (kind) {
-      case "page":
-        return { type: "page", url, title }
-
-      case "selection": {
-        const results = await runInTab(tabId, readSelectionInPage, true)
-        const text = pickSelection(results)
-        if (!text.trim()) throw new CaptureError(MSG.noSelection)
-        return { type: "selection", url, title, text: clampText(text.trim(), MAX_SELECTION) }
-      }
-
-      case "page_text": {
-        const results = await runInTab(tabId, readPageTextInPage, false)
-        const main = results.find((r) => r.frameId === 0) || results[0]
-        const text = normalizePageText(main?.result || "")
-        if (!text) throw new CaptureError(MSG.noText)
-        return { type: "page_text", url, title, text }
-      }
-
-      case "screenshot": {
-        let dataUrl: string
-        try {
-          dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: "jpeg", quality: 80 })
-        } catch (e) {
-          throw new CaptureError(friendlyError(e))
-        }
-        if (!dataUrl) throw new CaptureError(MSG.generic)
-        if (dataUrl.length > SCREENSHOT_MAX_BYTES) dataUrl = await shrinkDataUrl(dataUrl)
-        return { type: "screenshot", url, title, dataUrl }
-      }
+    if (kind === "page") {
+      const tab = await getActiveTab(windowId)
+      await assertCapturable(tab, kind)
+      return { type: "page", ...clampMeta(tab.url || tab.pendingUrl, tab.title) }
     }
+    return await fromStableTab(kind, windowId, async (tab) => {
+      const meta = clampMeta(tab.url, tab.title)
+      switch (kind) {
+        case "selection": {
+          const results = await runInTab(tab.id!, readSelectionInPage, true)
+          const text = pickSelection(results)
+          if (!text.trim()) throw new CaptureError(MSG.noSelection)
+          return { type: "selection", ...meta, text: clampText(text.trim(), MAX_SELECTION) }
+        }
+        case "page_text": {
+          const results = await runInTab(tab.id!, readPageTextInPage, false)
+          const main = results.find((r) => r.frameId === 0) || results[0]
+          const text = normalizePageText(main?.result || "")
+          if (!text) throw new CaptureError(MSG.noText)
+          return { type: "page_text", ...meta, text }
+        }
+        case "screenshot": {
+          let dataUrl = await chrome.tabs.captureVisibleTab(windowId, { format: "jpeg", quality: 80 })
+          if (!dataUrl) throw new CaptureError(MSG.generic)
+          if (dataUrl.length > SCREENSHOT_MAX_BYTES) dataUrl = await shrinkDataUrl(dataUrl)
+          return { type: "screenshot", ...meta, dataUrl }
+        }
+      }
+    })
   } catch (e) {
     if (e instanceof CaptureError) throw e
     throw new CaptureError(friendlyError(e))
   }
-  throw new CaptureError(MSG.generic)
 }
 
 /** Message the panel sends to the background to start or stop the element picker. */

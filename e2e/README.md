@@ -8,10 +8,11 @@ End-to-end tests for the Claude Studio daemon (protocol v3). They talk to the re
 pnpm --filter claude-studio build   # the suite runs agent/dist/cli.js
 pnpm e2e                            # from the repo root
 pnpm e2e:selftest                   # client + validator only, no daemon, no API calls
+pnpm --filter e2e test              # no-model config isolation and restoration regressions
 pnpm --filter e2e typecheck
 ```
 
-By default the suite creates a throwaway project under the OS temp dir (README.md + notes.txt), spawns `node agent/dist/cli.js --project <it> --port <free port>` with the secure defaults (no `CLAUDE_STUDIO_ALLOW_NO_ORIGIN`), runs every scenario, then kills the daemon, deletes the scratch dir and its Claude Code transcripts, and restores `~/.claude-studio/config.json` to what it was before the run.
+By default the suite creates a throwaway project under the OS temp dir (README.md + notes.txt) and gives the daemon its own config file inside that scratch directory. It spawns `node agent/dist/cli.js --project <it> --port <free port>` with secure defaults, runs every scenario, then kills the daemon and deletes the scratch directory and its Claude Code transcripts. The developer's configured settings files remain untouched.
 
 Each scenario prints `PASS` or `FAIL` with its time, failed checks (`x`), notes (`-`), and on failure a trace of the messages that client saw. The process exits non-zero on any failure. Global timeout: 6 minutes.
 
@@ -29,6 +30,7 @@ Each scenario prints `PASS` or `FAIL` with its time, failed checks (`x`), notes 
 | h | disconnect mid-turn, reconnect, turn still completes and the session stays live |
 | i | interrupt after the first delta: idle quickly, no more deltas |
 | j | malformed messages get `error` replies and the socket stays open |
+| k | `/clear` migrates to the canonical transcript ID; fresh history and remembered context survive process close/resumption |
 
 Every server message is checked against the protocol shapes (`lib/validate.ts`). Unknown types or kinds and missing fields fail the run; extra keys are listed as warnings.
 

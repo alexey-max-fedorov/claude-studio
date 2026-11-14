@@ -88,6 +88,21 @@ describe("StreamMapper", () => {
     expect(r2.item.errorText).toContain("max turns")
   })
 
+  it("reports the budget cap as shared across messages in the live process", () => {
+    const m = new StreamMapper(() => 5)
+    m.map({ type: "result", subtype: "success", total_cost_usd: 0.5 })
+    const out = m.map({ type: "result", subtype: "error_max_budget_usd", is_error: true, total_cost_usd: 1, errors: [] })
+    expect(out[0]).toMatchObject({
+      kind: "item",
+      item: {
+        kind: "result",
+        isError: true,
+        costUsd: 0.5,
+        errorText: "Stopped: reached the live-process budget cap shared across messages. A process restart or /clear gives a fresh allowance.",
+      },
+    })
+  })
+
   it("reports an interrupt plainly and hides CLI diagnostics", () => {
     const m = new StreamMapper(() => 5)
     const plain = m.map({ type: "result", subtype: "error_during_execution", errors: ["[ede_diagnostic] result_type=user"] })[0] as any

@@ -15,6 +15,18 @@ Claude Studio is a browser side panel that works as a full chat client for Claud
 
 ---
 
+## Published agent
+
+The revised side panel uses protocol v3 and requires `claude-studio` 3.x. Once that release is published, run the agent from the project you want to work on:
+
+```sh
+pnpm dlx claude-studio@3
+# Or choose a project explicitly:
+pnpm dlx claude-studio@3 --project /path/to/your/project
+```
+
+See [agent/README.md](agent/README.md) for authentication, compatibility, and package-release instructions. `pnpm pack:agent` builds a publishable tarball; `pnpm verify:package` tests a fresh packed installation without model requests.
+
 ## Quick start
 
 ```sh
@@ -44,7 +56,7 @@ The daemon drives Claude Code with the full toolset, including Bash, so it only 
 
 ## Prerequisites
 
-- **Node ≥ 20**
+- **Node ≥ 20.9** for source builds (the published agent supports Node ≥ 20)
 - **Claude Code** authenticated on this machine (the Agent SDK uses your normal Claude Code login)
 - **Brave or Chrome** (Chromium-based browsers with the side panel API)
 
@@ -65,9 +77,11 @@ pnpm -r test
 # Dev mode: agent (hot-reload)
 pnpm dev:agent
 
-# Dev mode: extension (Plasmo watch)
+# Dev mode: extension (local watch-build, no development server)
 pnpm dev:ext
 ```
+
+The extension watcher rebuilds `extension/build/chrome-mv3-dev` with production bundling and opens no development HTTP/WebSocket ports. Load that folder unpacked, then click **Reload** in `chrome://extensions` after a successful build. Reload affected pages to refresh content scripts. Network hot reload is disabled.
 
 Build the extension zip for distribution:
 

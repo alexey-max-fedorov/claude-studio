@@ -4,6 +4,8 @@ import { act, render } from "./render"
 import { AskQuestionCard, PermissionCard, buildAnswers, parseQuestions } from "../components/PermissionCard"
 import { matchCommands } from "../components/Composer"
 import { backoffDelay } from "../lib/connection"
+import { DEFAULT_CONFIG } from "@claude-studio/protocol"
+import { SettingsDrawer } from "../components/SettingsDrawer"
 
 const questions = {
   questions: [
@@ -18,6 +20,39 @@ function click(el: Element | null) {
     ;(el as HTMLElement).click()
   })
 }
+
+describe("SettingsDrawer budget", () => {
+  it.each([null, 2])("shows live-process scope and preserves maxBudgetUsd with initial value %s", (maxBudgetUsd) => {
+    const onConfig = vi.fn()
+    const r = render(
+      <SettingsDrawer
+        serverUrl="ws://127.0.0.1:7281"
+        onServerUrl={vi.fn()}
+        config={{ ...DEFAULT_CONFIG, maxBudgetUsd }}
+        connected={true}
+        serverVersion="3.0.0"
+        onConfig={onConfig}
+        onClose={vi.fn()}
+      />,
+    )
+    const label = Array.from(r.container.querySelectorAll("label")).find((el) => el.querySelector(".field-k")?.textContent === "Live-process budget, USD")!
+    expect(label).toBeDefined()
+    const input = label.querySelector("input")!
+    expect(input.value).toBe(maxBudgetUsd?.toString() ?? "")
+    expect(input.placeholder).toBe("no cap")
+    const help = r.container.querySelector(`#${input.getAttribute("aria-describedby")}`)!
+    expect(help.textContent).toBe("Shared across messages in one live Claude Code process, not the saved conversation. Fresh allowance after process restart, idle eviction, or conversation clear (/clear).")
+    expect(help.className).toBe("field-hint")
+    expect(label.closest(".field-pair")?.nextElementSibling).toBe(help)
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "3")
+      input.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    act(() => void input.dispatchEvent(new FocusEvent("focusout", { bubbles: true })))
+    expect(onConfig).toHaveBeenLastCalledWith({ maxBudgetUsd: 3 })
+    r.unmount()
+  })
+})
 
 describe("AskUserQuestion", () => {
   it("builds answers keyed by question text", () => {

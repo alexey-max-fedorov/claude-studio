@@ -115,9 +115,9 @@ describe("server", () => {
 
     other.ws.send(JSON.stringify({ type: "open_session", sessionId: SID }))
     await until(() => other.msgs.some((m) => m.type === "session_history"))
-    // the turn finished, so history comes from the transcript only (empty in this fake)
     const hist = other.msgs.find((m) => m.type === "session_history")
-    expect(hist).toEqual({ type: "session_history", sessionId: SID, items: [], running: false, pending: [] })
+    expect(hist).toMatchObject({ type: "session_history", sessionId: SID, running: false, pending: [], sequence: expect.any(Number) })
+    expect(hist.items).toContainEqual(expect.objectContaining({ kind: "assistant", text: "PONG" }))
 
     ws.send(JSON.stringify({ type: "rename_session", sessionId: SID, title: "New name" }))
     await until(() => msgs.some((m) => m.type === "session_list"))
@@ -129,4 +129,92 @@ describe("server", () => {
     await new Promise((r) => setTimeout(r, 20))
     expect(server.manager.isLive(SID)).toBe(true)
   })
+
+  it("recovers background subscriptions before a chat asks for permission after reconnect", async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => { release = resolve })
+    const fake = makeFakeSdk(async function* (message, options) {
+      await gate
+      await options.canUseTool!("Bash", { command: "echo fixture" }, { signal: new AbortController().signal, toolUseID: "tool-1" })
+      yield* textTurn("approved")(message, options)
+    })
+    sdk.query = fake.sdk.query
+    const first = await connect({ Origin: DEFAULT_EXTENSION_ORIGIN })
+    first.ws.send(JSON.stringify({ type: "send", sessionId: SID, text: "long task", attachments: [] }))
+    await until(() => fake.queries[0]?.received.length === 1)
+    first.ws.close()
+    const second = await connect({ Origin: DEFAULT_EXTENSION_ORIGIN })
+    second.ws.send(JSON.stringify({ type: "get_state" }))
+    await until(() => second.msgs.some((m) => m.type === "live_sessions"))
+    expect(second.msgs.find((m) => m.type === "live_sessions").sessions).toEqual([{ sessionId: SID, running: true, pending: [] }])
+    release()
+    await until(() => second.msgs.some((m) => m.type === "event" && m.event.kind === "permission_request"))
+    const pending = second.msgs.find((m) => m.type === "event" && m.event.kind === "permission_request")
+    const reopened = await connect({ Origin: DEFAULT_EXTENSION_ORIGIN })
+    reopened.ws.send(JSON.stringify({ type: "get_state" }))
+    await until(() => reopened.msgs.some((m) => m.type === "live_sessions"))
+    expect(reopened.msgs.find((m) => m.type === "live_sessions").sessions[0].pending).toEqual([pending.event.requestId])
+    second.ws.send(JSON.stringify({ type: "permission_response", sessionId: SID, requestId: pending.event.requestId, behavior: "allow" }))
+    await until(() => reopened.msgs.some((m) => m.type === "event" && m.event.kind === "permission_resolved"))
+    second.ws.close()
+    reopened.ws.close()
+  })
+
+  it("migrates subscribed clients after a reset and correlates history responses", async () => {
+    const next = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+    const fake = makeFakeSdk(async function* (message, options) {
+      yield { type: "conversation_reset", new_conversation_id: next }
+      yield* textTurn("new transcript")(message, options)
+    })
+    sdk.query = fake.sdk.query
+    const client = await connect({ Origin: DEFAULT_EXTENSION_ORIGIN })
+    client.ws.send(JSON.stringify({ type: "send", sessionId: SID, text: "/clear", attachments: [] }))
+    await until(() => client.msgs.some((m) => m.type === "event" && m.sessionId === next && m.event.kind === "status" && m.event.state === "idle"))
+    expect(client.msgs).toContainEqual({ type: "session_reset", previousSessionId: SID, sessionId: next })
+    const requestId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+    client.ws.send(JSON.stringify({ type: "open_session", sessionId: next, requestId }))
+    await until(() => client.msgs.some((m) => m.type === "session_history"))
+    expect(client.msgs.find((m) => m.type === "session_history")).toMatchObject({ sessionId: next, requestId, sequence: expect.any(Number) })
+    client.ws.close()
+  })
+
+
+  it("routes stale frames through repeated resets until the client explicitly opens the archive", async () => {
+    const announced = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
+    const persisted = "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff"
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => { release = resolve })
+    let turns = 0
+    const fake = makeFakeSdk(async function* (message, options) {
+      if (turns++ === 0) {
+        yield { type: "conversation_reset", new_conversation_id: announced }
+        yield { type: "system", subtype: "init", session_id: persisted }
+        await gate
+      }
+      yield* textTurn("reply", `message-${turns}`)(message, options)
+    }, new Set([SID]))
+    sdk.query = fake.sdk.query
+    sdk.getSessionInfo = fake.sdk.getSessionInfo
+    const client = await connect({ Origin: DEFAULT_EXTENSION_ORIGIN })
+    client.ws.pause()
+    client.ws.send(JSON.stringify({ type: "send", sessionId: SID, text: "/clear", attachments: [] }))
+    await until(() => server.manager.isLive(persisted))
+    expect(client.msgs.some((m) => m.type === "session_reset")).toBe(false)
+    client.ws.send(JSON.stringify({ type: "send", sessionId: SID, text: "in-flight follow-up", attachments: [] }))
+    client.ws.send(JSON.stringify({ type: "open_session", sessionId: announced, followResets: true }))
+    client.ws.send(JSON.stringify({ type: "send", sessionId: announced, text: "intermediate-ID follow-up", attachments: [] }))
+    client.ws.send(JSON.stringify({ type: "interrupt", sessionId: SID }))
+    await until(() => fake.queries[0].interrupt.mock.calls.length === 1)
+    expect(server.manager.liveCount).toBe(1)
+    expect(fake.queries).toHaveLength(1)
+    client.ws.resume()
+    release()
+    await until(() => fake.queries[0].received.length === 3)
+    client.ws.send(JSON.stringify({ type: "open_session", sessionId: SID }))
+    client.ws.send(JSON.stringify({ type: "send", sessionId: SID, text: "explicit archive continuation", attachments: [] }))
+    await until(() => fake.queries.length === 2)
+    expect(fake.queries[1].options.resume).toBe(SID)
+    client.ws.close()
+  })
+
 })

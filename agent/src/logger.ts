@@ -1,47 +1,30 @@
-import { EventEmitter } from "node:events"
+/*
+ * Plain timestamped logging for a headless daemon. stdout gets info lines,
+ * stderr gets errors; a LaunchAgent captures both into its log files.
+ */
 
-export interface LogEntry {
-  time: number
-  level: "info" | "event" | "error" | "success" | "dim"
-  tag: string
-  msg: string
+type Level = "info" | "warn" | "error"
+
+let quiet = false
+
+/** Silence all output (used by tests). */
+export function setQuiet(q: boolean): void {
+  quiet = q
 }
 
-const MAX = 200
-
-class LogBuffer extends EventEmitter {
-  private buf: LogEntry[] = []
-  push(entry: LogEntry): void {
-    this.buf.push(entry)
-    if (this.buf.length > MAX) this.buf.shift()
-    this.emit("entry", entry)
-  }
-  entries(): LogEntry[] {
-    return this.buf.slice()
-  }
-  clear(): void {
-    this.buf = []
-  }
-}
-
-export const logBuffer = new LogBuffer()
-
-const COLORS: Record<LogEntry["level"], string> = {
-  info: "\x1b[36m", event: "\x1b[35m", error: "\x1b[31m", success: "\x1b[32m", dim: "\x1b[90m",
-}
-const RESET = "\x1b[0m"
-
-function emit(level: LogEntry["level"], tag: string, msg: string): void {
-  const entry: LogEntry = { time: Date.now(), level, tag, msg }
-  logBuffer.push(entry)
-  // stderr keeps stdout free for the Ink TUI
-  process.stderr.write(`${COLORS[level]}[${tag}]${RESET} ${msg}\n`)
+function emit(level: Level, tag: string, msg: string): void {
+  if (quiet) return
+  const line = `${new Date().toISOString()} ${level.toUpperCase().padEnd(5)} [${tag}] ${msg}\n`
+  if (level === "error") process.stderr.write(line)
+  else process.stdout.write(line)
 }
 
 export const log = {
   info: (tag: string, msg: string) => emit("info", tag, msg),
-  event: (tag: string, msg: string) => emit("event", tag, msg),
+  warn: (tag: string, msg: string) => emit("warn", tag, msg),
   error: (tag: string, msg: string) => emit("error", tag, msg),
-  success: (tag: string, msg: string) => emit("success", tag, msg),
-  dim: (tag: string, msg: string) => emit("dim", tag, msg),
+}
+
+export function errText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
 }

@@ -34,7 +34,7 @@ FEATURES
 - Reasoning Effort Control: Dial the effort tier from low up to max, plus Claude Studio's "ultracode" top tier, per model.
 - Plugins & Skills: Toggle any Claude Code plugin or skill discovered in your project on or off from the Agent tab.
 - Synced Config: The terminal UI and the extension share one source of truth. Change the model, max turns, budget, or permission mode in either place and it syncs to all connected clients instantly.
-- Guardrails: Set max turns and a per-session USD budget. Pick a permission mode (accept edits, plan, or full bypass) and choose whether Bash is allowed.
+- Guardrails: Set max turns and a live-process USD budget shared across messages, not the saved conversation. Process restart, idle eviction, or conversation clear (/clear) gives a fresh allowance. Pick a permission mode (accept edits, plan, or full bypass) and choose whether Bash is allowed.
 - Cost Tracking: See token usage and cost per turn in the session info bar.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -51,13 +51,13 @@ REQUIREMENTS
 - Claude Code CLI, installed and authenticated ("claude --version" should work)
 - A Chromium-based browser (Chrome, Edge, Brave, Arc)
 
-Claude Studio talks only to localhost. The extension connects to the agent on your machine over a local WebSocket — your code never leaves your computer.
+By default, the extension connects to the agent on your machine over a local WebSocket. Claude Code can send prompts, browser context, source code, and tool results to your model provider and configured integrations.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 PRIVACY
 
-No analytics. No telemetry. No external servers. The extension communicates only with the local agent on 127.0.0.1, and the agent runs Claude Code in your own project. All editing happens on your machine. See PRIVACY.md in the repository for the full policy.
+Browser capture is user-triggered, and attachments stay pending in the browser until you send them. The extension stores settings, drafts, and sent-message recall locally; Claude Code stores durable transcripts on the agent machine. New chats and conversation clears do not erase those transcripts. The extension and agent do not add a separate analytics service; normal Claude Code and SDK telemetry settings still apply. The website uses Vercel Analytics. See PRIVACY.md in the repository for storage, permissions, and third-party processing details.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -73,7 +73,7 @@ Do I need Claude Code to use it?
 Yes. Claude Studio runs the Claude Code CLI locally, so you need it installed and authenticated. It uses your existing Claude Code account.
 
 Does Claude Studio send my code anywhere?
-No. The extension only talks to the local agent over a localhost WebSocket (default ws://localhost:7281). Your source files stay on your machine; only Claude Code's normal model calls leave, exactly as they would in the terminal.
+The extension sends messages and attachments to the agent URL you configure, defaulting to ws://127.0.0.1:7281. Claude Code processes them using your user, project, and local settings, including configured MCP servers, skills, plugins, and hooks. Model calls and tool integrations can send code or other context to external services under your setup and those services' policies.
 
 Which AI models can I use?
 Claude Sonnet 4.6, Claude Opus 4.8, Claude Haiku 4.5, and Claude Fable 5 — switchable from a dropdown, with a reasoning-effort dial per model.

@@ -2,40 +2,62 @@
   "name": "@claude-studio/extension",
   "displayName": "Claude Studio",
   "version": "2.1.0",
-  "description": "Visual AI coding assistant. Pick any element in your browser, describe a change, and Claude Code edits your real source files.",
+  "description": "Side panel chat for Claude Code in your project. Attach the page, a selection, a screenshot or an element.",
   "scripts": {
-    "dev": "plasmo dev",
+    "dev": "node ../scripts/watch-extension.mjs",
     "build": "plasmo build",
     "test": "vitest run"
   },
   "dependencies": {
     "@claude-studio/protocol": "workspace:*",
-    "plasmo": "^0.90.0",
-    "@plasmohq/messaging": "^0.7.0",
-    "@plasmohq/storage": "^1.15.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "plasmo": "^0.90.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/chrome": "latest",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "typescript": "^5.0.0",
-    "tailwindcss": "^3.0.0",
-    "postcss": "^8.0.0",
-    "autoprefixer": "^10.0.0",
-    "vitest": "^3.0.0",
-    "jsdom": "^25.0.0"
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "autoprefixer": "^10.6.2",
+    "jsdom": "^25.0.1",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
   },
   "manifest": {
-    "permissions": ["activeTab", "storage", "sidePanel"],
-    "host_permissions": ["<all_urls>"],
-    "commands": {
-      "toggle-picker": {
-        "suggested_key": { "default": "Ctrl+Shift+E", "mac": "Command+Shift+E" },
-        "description": "Toggle element picker"
-      }
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsWP5ISuLMr5KZ5RIesa5jce2ONBmjKi55pYzcgjsNY8csXPzPNEcRdwTOXDZ8aTECscE9s+OON6B4YPgvp0Hr9nj74Buvpt7v2AQx2MZKJTnlorwLVjvsAi3EHVT2TOqWet3YcEFwNbBLKolh6wIsBfg3lYswD9bZmKZFBDY7Pm1QF6mb0bqkCTI1KkRT1ygmV27+iNYi4Nq65O01jnuutbKOmI6WCDGNtZCMZfBak+EP6dQfx55m06THaTf3BdopoyE9SJG0iTQ5U2fgL1OEws/6LZMebTQZsLMMYIUadAddOhcGpirwgd7PDNPc1baoI3T9aBOZ6+ZSHf8GLiOVwIDAQAB",
+    "permissions": [
+      "sidePanel",
+      "storage",
+      "activeTab",
+      "tabs",
+      "scripting",
+      "contextMenus"
+    ],
+    "host_permissions": [
+      "<all_urls>"
+    ],
+    "action": {
+      "default_title": "Open Claude panel"
     },
-    "side_panel": { "default_path": "sidepanel.html" }
+    "side_panel": {
+      "default_path": "sidepanel.html"
+    },
+    "commands": {
+      "_execute_action": {
+        "suggested_key": {
+          "default": "Alt+Shift+C"
+        },
+        "description": "Open Claude panel"
+      },
+      "toggle-picker": {
+        "suggested_key": {
+          "default": "Ctrl+Shift+E",
+          "mac": "Command+Shift+E"
+        },
+        "description": "Pick an element for Claude"
+      }
+    }
   }
 }

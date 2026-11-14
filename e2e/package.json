@@ -1,0 +1,19 @@
+{
+  "name": "e2e",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end tests for the Claude Studio daemon (protocol v3)",
+  "scripts": {
+    "start": "tsx run.ts",
+    "selftest": "tsx test-fixtures/selftest.ts",
+    "test": "tsx --test test-fixtures/environment.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "ws": "^8.22.2"
+  }
+}

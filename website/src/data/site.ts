@@ -36,7 +36,7 @@ export const siteConfig = {
   ],
   metrics: [
     { value: "Open Source", label: "Free Forever" },
-    { value: "Privacy-First", label: "No Telemetry" },
+    { value: "User-Triggered", label: "Browser Capture" },
     { value: "Any Framework", label: "React · Vue · Svelte · HTML" },
     { value: "Local", label: "Runs On Your Machine" },
   ],

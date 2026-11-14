@@ -3,6 +3,7 @@ packages:
   - "agent"
   - "extension"
   - "website"
+  - "e2e"
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true
@@ -10,3 +11,13 @@ allowBuilds:
   lmdb: true
   msgpackr-extract: true
   sharp: true
+
+# Patch independent build libraries while keeping Parcel's pinned package cohort intact.
+overrides:
+  'postcss@>=8.0.0 <8.5.23': 8.5.32
+  'msgpackr@>=1.0.0 <1.10.1': 1.12.1
+  'browserslist@>=4.0.0 <4.28.7': 4.29.5
+  'plasmo@0.90.5>fflate': 0.8.3
+  'plasmo@0.90.5>sharp': 0.35.5
+  # htmlnano expects SVGO 3; the separate Parcel SVG optimizer keeps its SVGO 2 dependency.
+  '@parcel/optimizer-htmlnano@2.9.3>svgo': 3.3.5

@@ -1,4 +1,4 @@
-/** Token usage for a single completed turn. */
+/** Token usage for a completed turn. */
 export interface Usage {
   input_tokens: number
   output_tokens: number
@@ -6,107 +6,59 @@ export interface Usage {
   cache_creation_input_tokens: number
 }
 
-/** A model the agent can run. `id` is a Claude model alias or full id. */
-export interface ModelInfo {
-  id: string
-  name: string
-}
-
-/** A Claude Code plugin discovered on disk. */
-export interface PluginInfo {
-  name: string
+/** A model the agent can run, as reported live by the Agent SDK (supportedModels()). */
+export interface ModelOption {
+  /** Value passed as options.model ("" means the Claude Code default). */
+  value: string
+  displayName: string
   description: string
-  path: string
 }
 
-/** A Claude Code skill discovered on disk. */
-export interface SkillInfo {
-  name: string
-  description: string
-  source: string
-}
-
-/** A slash command the agent exposes. */
+/** A slash command the session exposes (supportedCommands()). */
 export interface SlashCommand {
   name: string
   description: string
   argumentHint: string
 }
 
-export type PermissionMode = "default" | "acceptEdits" | "plan" | "bypassPermissions"
+/** Mirrors the Agent SDK PermissionMode. */
+export type PermissionMode = "default" | "acceptEdits" | "plan" | "bypassPermissions" | "auto" | "dontAsk"
+export const PERMISSION_MODES: PermissionMode[] = ["default", "acceptEdits", "plan", "auto", "bypassPermissions", "dontAsk"]
+
+/** Mirrors the Agent SDK EffortLevel. "" means "let Claude Code pick". */
+export type EffortLevel = "" | "low" | "medium" | "high" | "xhigh" | "max"
+export const EFFORT_LEVELS: EffortLevel[] = ["", "low", "medium", "high", "xhigh", "max"]
 
 /**
- * Reasoning-effort tier. The first five map directly to the SDK's `effort`
- * option; "ultracode" is Claude Studio's branded top tier (above the SDK
- * ceiling — see the agent's effort mapping).
- */
-export type EffortLevel = "low" | "medium" | "high" | "xhigh" | "max" | "ultracode"
-
-/** All effort tiers, ordered weakest → strongest. */
-export const EFFORT_LEVELS: EffortLevel[] = ["low", "medium", "high", "xhigh", "max", "ultracode"]
-
-/**
- * Effort tiers a given model exposes. Empty array = no effort control (Haiku).
- * Unknown models get the full ladder (safe superset; the agent clamps anyway).
- */
-export function effortLevelsForModel(modelId: string): EffortLevel[] {
-  const id = modelId.toLowerCase()
-  if (id.includes("haiku")) return []
-  if (id.includes("sonnet")) return ["low", "medium", "high", "max", "ultracode"]
-  // opus, fable, and anything unrecognized → full ladder
-  return ["low", "medium", "high", "xhigh", "max", "ultracode"]
-}
-
-/**
- * The single source of truth for agent behavior. Held by the agent's ConfigStore,
- * persisted to claude-studio.config.json, broadcast to all clients as `config_state`.
+ * Agent-wide settings. Held by the agent's ConfigStore, persisted to
+ * ~/.claude-studio/config.json (never inside the project), broadcast as config_state.
+ * Process-start settings apply on the next SDK process launch; live sessions get
+ * setModel / setPermissionMode pushed immediately where the SDK allows it.
  */
 export interface StudioConfig {
-  /** Claude model alias ("sonnet"|"opus"|"haiku"|"fable") or full model id. */
-  model: string
-  /** Reasoning-effort tier; clamped per-model by the agent. */
-  effort: EffortLevel
-  /** Absolute working directory Claude Code operates in (display/info). */
+  /** Absolute project dir Claude Code runs in (cwd). Set by the agent at boot; read-only for clients. */
   projectDir: string
-  /** Max agentic turns per prompt. */
-  maxTurns: number
-  /** Max spend (USD) per session. */
-  maxBudgetUsd: number
-  /** SDK permission mode. */
+  /** Model alias/id; "" = Claude Code default from user settings. */
+  model: string
+  effort: EffortLevel
   permissionMode: PermissionMode
-  /** Convenience toggle: when true, "Bash" is added to the allowed tools. */
-  allowBash: boolean
-  /** Extra instructions appended to the agent's system prompt. */
+  /** Extra text appended to the claude_code system prompt preset. */
   systemPromptAppend: string
-  /** Include framework route→file hints in element-edit prompts. */
-  routeHints: boolean
-  /** Names of discovered plugins that are enabled. */
-  enabledPlugins: string[]
-  /** Names of discovered skills that are enabled. */
-  enabledSkills: string[]
+  /**
+   * Optional cumulative USD cap across messages in one live SDK process; null = no cap.
+   * Process restart (including after idle eviction) or /clear gives a fresh allowance.
+   */
+  maxBudgetUsd: number | null
+  /** Optional max agentic turns per prompt; null = no cap. */
+  maxTurns: number | null
 }
-
-/** Base tools always available to the agent (Bash is added when allowBash). */
-export const BASE_ALLOWED_TOOLS = ["Read", "Edit", "MultiEdit", "Glob", "Grep"] as const
 
 export const DEFAULT_CONFIG: StudioConfig = {
-  model: "sonnet",
-  effort: "high",
   projectDir: "",
-  maxTurns: 20,
-  maxBudgetUsd: 2,
+  model: "",
+  effort: "",
   permissionMode: "acceptEdits",
-  allowBash: false,
   systemPromptAppend: "",
-  routeHints: true,
-  enabledPlugins: [],
-  enabledSkills: [],
+  maxBudgetUsd: null,
+  maxTurns: null,
 }
-
-/** Curated default model list, refined at runtime by discovery. */
-export const KNOWN_MODELS: ModelInfo[] = [
-  { id: "sonnet", name: "Claude Sonnet 4.6" },
-  { id: "opus", name: "Claude Opus 4.8" },
-  { id: "haiku", name: "Claude Haiku 4.5" },
-  { id: "fable", name: "Claude Fable 5" },
-]

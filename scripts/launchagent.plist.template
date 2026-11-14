@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Rendered by scripts/render-launchagent.mjs. -->
+<plist version="1.0"><dict>
+  <key>Label</key><string>__LABEL__</string>
+  <key>ProgramArguments</key><array>
+    <string>__NODE__</string>
+    <string>__CLI__</string>
+    <string>--project</string><string>__PROJECT__</string>
+    <string>--port</string><string>__PORT__</string>
+  </array>
+  <key>WorkingDirectory</key><string>__PROJECT__</string>
+  <key>EnvironmentVariables</key><dict>
+    <key>PATH</key><string>__PATH__</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>10</integer>
+  <key>StandardOutPath</key><string>__LOG__</string>
+  <key>StandardErrorPath</key><string>__LOG__</string>
+</dict></plist>

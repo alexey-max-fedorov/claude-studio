@@ -1,7 +1,7 @@
 {
   "name": "@claude-studio/extension",
   "displayName": "Claude Studio",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Side panel chat for Claude Code in your project. Attach the page, a selection, a screenshot or an element.",
   "scripts": {
     "dev": "node ../scripts/watch-extension.mjs",

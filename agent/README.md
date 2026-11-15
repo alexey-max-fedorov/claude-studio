@@ -96,7 +96,7 @@ Publish the matching extension ZIP and verified agent tarball through GitHub Rel
 
 ```sh
 npm login --registry=https://registry.npmjs.org/
-npm publish dist/claude-studio-3.1.0.tgz --tag latest --access public --registry=https://registry.npmjs.org/
+npm publish ./dist/claude-studio-3.1.0.tgz --tag latest --access public --registry=https://registry.npmjs.org/
 ```
 
 Use pnpm for installation, builds, tests, and packing. npm handles the interactive passkey approval for publishing. The package defaults to `next` when no release tag is supplied; stable releases explicitly select `latest`.

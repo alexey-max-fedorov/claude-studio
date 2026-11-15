@@ -123,6 +123,43 @@ describe("SidePanel", () => {
     m.unmount()
   })
 
+  it("places all session selectors beneath the message box", async () => {
+    const m = await mount()
+    const controls = m.container.querySelector(".composer-controls")!
+    expect(m.container.querySelector("header select")).toBeNull()
+    expect(controls.querySelectorAll("select")).toHaveLength(3)
+    expect(controls.getAttribute("aria-label")).toBe("Session settings")
+    expect(m.container.querySelector(".composer .box")?.nextElementSibling).toBe(controls)
+    expect(m.ta.compareDocumentPosition(controls) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    m.unmount()
+  })
+
+  it("updates composer selectors from client and server state without losing the draft", async () => {
+    const m = await mount()
+    act(() => m.ws.push({ ...CONFIG, models: [...CONFIG.models, { value: "sonnet", displayName: "Sonnet", description: "" }] }))
+    typeInto(m.ta, "Keep this draft")
+    const select = (label: string) => m.container.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`)!
+    for (const [label, key, value] of [["Model", "model", "sonnet"], ["Effort", "effort", "high"], ["Permission mode", "permissionMode", "bypassPermissions"]]) {
+      act(() => {
+        select(label).value = value
+        select(label).dispatchEvent(new Event("change", { bubbles: true }))
+      })
+      expect(m.ws.sent.at(-1)).toEqual({ type: "set_config", patch: { [key]: value } })
+      expect(select(label).value).toBe(value)
+      expect(m.ta.value).toBe("Keep this draft")
+    }
+    expect(m.container.querySelector(".composer-controls .pill-danger")).not.toBeNull()
+    act(() => m.ws.push({ ...CONFIG, config: { ...CONFIG.config, model: "custom-model", effort: "low", permissionMode: "default" } }))
+    expect(select("Model").value).toBe("custom-model")
+    expect(select("Effort").value).toBe("low")
+    expect(select("Permission mode").value).toBe("default")
+    expect(m.container.querySelector(".composer-controls .pill-danger")).toBeNull()
+    expect(m.ta.value).toBe("Keep this draft")
+    act(() => m.ws.drop())
+    expect(Array.from(m.container.querySelectorAll<HTMLSelectElement>(".composer-controls select")).every((element) => element.disabled)).toBe(true)
+    m.unmount()
+  })
+
   beforeEach(() => {
     ;(globalThis as any).WebSocket = FakeWS
     capture.startPicker.mockReset().mockResolvedValue(true)

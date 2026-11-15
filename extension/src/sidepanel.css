@@ -273,10 +273,10 @@ button:disabled {
   color: var(--accent);
 }
 
-.hdr-controls {
+.composer-controls {
   display: flex;
   gap: 5px;
-  margin-top: 6px;
+  margin-top: 8px;
   min-width: 0;
 }
 

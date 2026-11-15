@@ -11,6 +11,7 @@ import { initialTranscript, isEchoOf, transcriptReducer, type PermissionRequest,
 import { Composer, type CaptureKind, type Notice } from "./components/Composer"
 import { CopyButton } from "./components/CopyButton"
 import { Header } from "./components/Header"
+import { SessionControls } from "./components/SessionControls"
 import { Icon } from "./components/Icons"
 import type { PermissionReply } from "./components/PermissionCard"
 import { SessionsDrawer } from "./components/SessionsDrawer"
@@ -690,11 +691,8 @@ export function SidePanel() {
       <Header
         project={project}
         conn={conn}
-        config={config}
-        models={models}
-        modes={modes}
+        projectDir={projectDir}
         running={running}
-        onConfig={onConfig}
         onNew={newChat}
         onSessions={toggleSessions}
         onSettings={() => setDrawer((d) => (d === "settings" ? null : "settings"))}
@@ -797,6 +795,7 @@ export function SidePanel() {
         notice={notice}
         onDismissNotice={() => setNotice(null)}
         placeholder={running ? "Queue a follow-up" : `Message ${project || brand.name}`}
+        controls={<SessionControls config={config} connected={conn === "open"} models={models} modes={modes} onConfig={onConfig} />}
       />
     </div>
   )

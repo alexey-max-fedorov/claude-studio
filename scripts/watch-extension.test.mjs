@@ -44,7 +44,7 @@ function harness(run, options = {}) {
 }
 
 test("input filter includes source trees, assets, package and build configuration", () => {
-  for (const path of [null, "extension/src/sidepanel.tsx", "extension\\src\\new file.ts", "extension/assets/icon.png", "protocol/src/protocol.ts", "protocol/package.json", "protocol/tsconfig.json", "extension/package.json", "extension/.env", "extension/.env.production.local", "extension/.parcelrc", "extension/postcss.config.js", "extension/tailwind.config.cjs", "extension/tsconfig.json", "extension/.babelrc.json", "tsconfig.base.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".npmrc", "package.json"]) {
+  for (const path of [null, "extension/src/sidepanel.tsx", "extension\\src\\new file.ts", "extension/assets/icon.png", "protocol/src/protocol.ts", "protocol/package.json", "protocol/tsconfig.json", "extension/package.json", "extension/.env", "extension/.env.production.local", "extension/.parcelrc", "extension/postcss.config.js", "extension/tailwind.config.cjs", "extension/tsconfig.json", "extension/.babelrc.json", "tsconfig.base.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".npmrc", "package.json", "brand.json"]) {
     assert.equal(isBuildInput(path), true, String(path))
   }
   for (const path of ["extension/build/chrome-mv3-dev/manifest.json", "extension/.plasmo/sidepanel.tsx", "extension/node_modules/pkg/index.js", "protocol/dist/index.js", "extension/src/node_modules/pkg.ts", "agent/src/server.ts", "README.md", "extension/README.md", "website/package.json", "../extension/src/sidepanel.tsx", "/extension/src/file.ts"]) {
@@ -263,6 +263,10 @@ test("native recursive filesystem events observe nested inputs but ignore genera
     const initial = changes
     writeFileSync(join(directory, "extension/src/nested/new file.ts"), "export const changed = true")
     await until(() => changes > initial)
+    await delay(30)
+    const beforeBrand = changes
+    writeFileSync(join(directory, "brand.json"), JSON.stringify({ name: "Metatron" }))
+    await until(() => changes > beforeBrand)
     await delay(30)
     const previous = changes
     mkdirSync(join(directory, "extension/build"))

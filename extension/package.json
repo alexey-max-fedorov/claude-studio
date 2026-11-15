@@ -1,7 +1,7 @@
 {
   "name": "@claude-studio/extension",
   "displayName": "Metatron",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Local Claude Code CLI in your browser.",
   "scripts": {
     "dev": "node ../scripts/watch-extension.mjs",

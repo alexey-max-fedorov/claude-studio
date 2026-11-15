@@ -47,7 +47,7 @@ export function Hero() {
       <div className="page-width hero-bottom">
         <span>Chrome & Brave</span>
         <a href="#features">Explore the features <ArrowDown size={14} aria-hidden="true" /></a>
-        <span>Release v3.0.0</span>
+        <span>{siteConfig.releaseLabel}</span>
       </div>
     </section>
   )

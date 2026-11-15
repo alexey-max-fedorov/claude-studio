@@ -1,7 +1,9 @@
 import brand from "../../../brand.json"
+import packageInfo from "../../package.json"
 
+const { version } = packageInfo
 const GITHUB_URL = "https://github.com/alexey-max-fedorov/claude-studio"
-const RELEASE_URL = `${GITHUB_URL}/releases/tag/v3.0.0`
+const RELEASE_URL = `${GITHUB_URL}/releases/tag/v${version}`
 
 export const siteConfig = {
   name: brand.name,
@@ -9,7 +11,8 @@ export const siteConfig = {
   description: brand.headline,
   github: GITHUB_URL,
   release: RELEASE_URL,
-  extensionZip: `${GITHUB_URL}/releases/download/v3.0.0/claude-studio-extension-3.0.0.zip`,
+  releaseLabel: `Release v${version}`,
+  extensionZip: `${GITHUB_URL}/releases/download/v${version}/claude-studio-extension-${version}.zip`,
   docs: `${GITHUB_URL}/blob/master/agent/README.md`,
   nav: [
     { label: "Features", href: "#features" },
@@ -20,7 +23,7 @@ export const siteConfig = {
   footerLinks: [
     { label: "Features", href: "#features" },
     { label: "Installation", href: "#how-it-works" },
-    { label: "Release v3.0.0", href: RELEASE_URL },
+    { label: `Release v${version}`, href: RELEASE_URL },
     {
       label: "Privacy policy",
       href: `${GITHUB_URL}/blob/master/PRIVACY.md`,
@@ -93,7 +96,7 @@ export const siteConfig = {
       step: 3,
       title: "Load the browser extension",
       description:
-        "Download and extract the v3.0.0 extension ZIP. Open chrome://extensions or brave://extensions, enable Developer mode, choose Load unpacked, and select the extracted folder containing manifest.json.",
+        `Download and extract the v${version} extension ZIP. Open chrome://extensions or brave://extensions, enable Developer mode, choose Load unpacked, and select the extracted folder containing manifest.json.`,
       code: null,
     },
     {

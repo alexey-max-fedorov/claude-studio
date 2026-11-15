@@ -6,7 +6,7 @@ export function CTA() {
     <section className="download-section" aria-labelledby="download-heading">
       <div className="page-width download-grid">
         <div>
-          <p className="eyebrow">Release v3.0.0</p>
+          <p className="eyebrow">{siteConfig.releaseLabel}</p>
           <h2 id="download-heading">Download Metatron</h2>
           <p>Browser extension for Chrome and Brave. Requires the local v3 daemon.</p>
         </div>

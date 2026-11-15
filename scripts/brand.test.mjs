@@ -52,6 +52,22 @@ test("extension and website expose the approved palette and typography", () => {
   }
 })
 
+test("release downloads and labels follow the aligned package version", () => {
+  const version = json("agent/package.json").version
+  for (const name of ["protocol", "extension", "website"]) assert.equal(json(`${name}/package.json`).version, version)
+  const site = read("website/src/data/site.ts")
+  assert.match(site, /import packageInfo from "\.\.\/\.\.\/package\.json"/)
+  assert.match(site, /const \{ version \} = packageInfo/)
+  assert.ok(site.includes("/releases/tag/v${version}"))
+  assert.ok(site.includes("/releases/download/v${version}/claude-studio-extension-${version}.zip"))
+  assert.ok(site.includes("releaseLabel: `Release v${version}`"))
+  for (const name of ["Hero", "HowItWorks", "CTA"]) {
+    const source = read(`website/src/components/sections/${name}.tsx`)
+    assert.match(source, /siteConfig\.releaseLabel/)
+    assert.doesNotMatch(source, /Release v\d+\.\d+\.\d+/)
+  }
+})
+
 test("the supplied raster identity is sized for the extension and shared with the website", () => {
   for (const [path, size] of [["extension/assets/icon.png", 512], ["extension/assets/icon-128.png", 128], ["website/public/icon.png", 512]]) {
     const png = readFileSync(join(root, path))

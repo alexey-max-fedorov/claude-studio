@@ -29,7 +29,7 @@ export function HowItWorks() {
             rel="noopener noreferrer"
             className="text-link"
           >
-            Release v3.0.0 <ArrowUpRight size={14} aria-hidden="true" />
+            {siteConfig.releaseLabel} <ArrowUpRight size={14} aria-hidden="true" />
           </a>
           <p className="installation-note">
             Manual installation via Developer mode. Not a Chrome Web Store install.

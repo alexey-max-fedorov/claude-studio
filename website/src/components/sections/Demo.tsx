@@ -1,71 +1,57 @@
+import Image from "next/image"
+import { Check, Code2, FileText, MousePointerClick } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/ScrollReveal"
 
 export function Demo() {
   return (
-    <section
-      className="py-24 lg:py-32 px-4 sm:px-6 lg:px-8 bg-[#000]"
-      aria-label="Demo"
-    >
-      <div className="max-w-7xl mx-auto">
+    <section id="demo" className="section demo-section" aria-labelledby="demo-heading">
+      <div className="page-width">
+        <div className="section-heading">
+          <p className="eyebrow">03 / Conversation</p>
+          <h2 id="demo-heading">Panel preview</h2>
+        </div>
         <ScrollReveal>
-          <div className="text-center mb-12">
-            <p className="text-[#c9a84c] text-xs font-semibold tracking-[0.25em] uppercase mb-3">
-              See It In Action
-            </p>
-            <h2
-              className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white leading-tight"
-              style={{ fontFamily: "var(--font-playfair-display), Georgia, serif" }}
-            >
-              From prompt to production
-            </h2>
-          </div>
-        </ScrollReveal>
-
-        <ScrollReveal delay={0.2}>
-          <div className="max-w-3xl mx-auto">
-            {/* Terminal window */}
-            <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.5)]">
-              {/* Title bar */}
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-[#1a1a1a]">
-                <div className="flex gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                  <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                  <div className="w-3 h-3 rounded-full bg-[#28c840]" />
+          <figure className="demo-figure" aria-label="Illustrative Metatron side-panel conversation">
+            <div className="demo-window">
+              <div className="demo-titlebar">
+                <div className="demo-identity">
+                  <Image src="/icon.png" alt="" width={30} height={30} />
+                  <span>Metatron</span>
                 </div>
-                <span className="text-[#666] text-xs font-mono ml-2">claude-studio</span>
+                <span className="demo-status"><span /> Local daemon</span>
               </div>
-
-              {/* Terminal content */}
-              <div className="px-5 py-5 font-mono text-sm leading-7 space-y-1">
-                <p>
-                  <span className="text-[#666]">$</span>{" "}
-                  <span className="text-[#c9a84c]">pnpx claude-studio</span>
-                </p>
-                <p className="text-[#a0a0a0]">
-                  Claude Studio 2.0 &middot; WebSocket: ws://localhost:7281
-                </p>
-                <p className="text-[#333]">&nbsp;</p>
-                <p className="text-[#a0a0a0]">
-                  <span className="text-[#666]">[ext]</span> Element selected:{" "}
-                  <span className="text-white">button.cta-primary</span>
-                </p>
-                <p className="text-[#a0a0a0]">
-                  <span className="text-[#666]">[you]</span>{" "}
-                  <span className="text-white">&quot;Make this button rounded with a gold border&quot;</span>
-                </p>
-                <p className="text-[#333]">&nbsp;</p>
-                <p className="text-[#666]">
-                  Reading src/components/Button.tsx...
-                </p>
-                <p className="text-[#c9a84c]">
-                  Editing src/components/Button.tsx:12-15
-                </p>
-                <p className="text-green-500">
-                  Done. 1 file changed.
-                </p>
+              <div className="demo-body">
+                <aside className="demo-context" aria-label="Example attached browser context">
+                  <p className="demo-label">Project</p>
+                  <p className="demo-project">~/projects/my-site</p>
+                  <div className="demo-divider" />
+                  <p className="demo-label">Attached context</p>
+                  <div className="demo-attachment"><MousePointerClick size={16} aria-hidden="true" /><span>button.primary</span></div>
+                  <p className="demo-context-note">Picked element<br />Selector, HTML & styles</p>
+                </aside>
+                <div className="demo-conversation">
+                  <div className="demo-message demo-user">
+                    <p className="demo-label">You</p>
+                    <p>Give this button a midnight background and an ivory label. Keep the focus state accessible.</p>
+                  </div>
+                  <div className="demo-message">
+                    <p className="demo-label">Metatron</p>
+                    <p>I&apos;ll check the component and its existing styles before making the change.</p>
+                  </div>
+                  <div className="demo-tool"><FileText size={16} aria-hidden="true" /><span>Read</span><code>src/components/Button.tsx</code><Check size={14} aria-hidden="true" /></div>
+                  <div className="demo-tool"><Code2 size={16} aria-hidden="true" /><span>Edit</span><code>src/components/Button.tsx</code><Check size={14} aria-hidden="true" /></div>
+                  <div className="demo-message demo-result">
+                    <p className="demo-label">Metatron</p>
+                    <p>Updated the button colors and kept the visible keyboard focus ring.</p>
+                  </div>
+                </div>
               </div>
+              <div className="demo-footer"><span>Claude Code session</span><span>Browser context attached by you</span></div>
             </div>
-          </div>
+            <figcaption>
+              Illustrative conversation, not a live session. Tool output and permission requests depend on your project and settings.
+            </figcaption>
+          </figure>
         </ScrollReveal>
       </div>
     </section>

@@ -2,7 +2,7 @@ import type { ElementSelection } from "./element-selection.js"
 import type { StudioConfig, Usage, ModelOption, SlashCommand, PermissionMode } from "./config.js"
 
 /*
- * Claude Studio protocol v3.
+ * Metatron protocol v3.
  *
  * One agent daemon runs Claude Code (Agent SDK) in a single project dir.
  * The browser side panel is a chat client for that project:

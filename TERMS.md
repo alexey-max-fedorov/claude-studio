@@ -1,14 +1,14 @@
-# Claude Studio Terms of Service
+# Metatron Terms of Service
 
-**Last updated:** April 4, 2026
+**Last updated:** November 14, 2026
 
 ## Acceptance of Terms
 
-By installing, accessing, or using Claude Studio, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use Claude Studio.
+By installing, accessing, or using Metatron, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use Metatron.
 
 ## Description of Service
 
-Claude Studio is an open-source browser extension and local development tool that provides an interface for interacting with web pages and AI services. The software is provided free of charge under the terms of its open-source license.
+Metatron is an open-source browser extension and local development tool that provides an interface for interacting with web pages and AI services. The software is provided free of charge under the terms of its open-source license.
 
 ## User Responsibilities
 
@@ -22,7 +22,7 @@ You are solely responsible for:
 
 ## Disclaimer of Warranties
 
-CLAUDE STUDIO IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
+METATRON IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
 
 - **Merchantability:** No warranty that the software is suitable for commercial use
 - **Fitness for a particular purpose:** No warranty that the software will meet your specific needs
@@ -40,14 +40,14 @@ TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE PROJECT MAINTAINERS, CONTRIBUTORS, A
 - **Indirect damages:** Consequential, incidental, special, or punitive damages
 - **Security incidents:** Data breaches, unauthorized access, or privacy violations
 - **Service disruptions:** Downtime, interruptions, or errors
-- **Third-party actions:** Actions by services you configure Claude Studio to connect to
+- **Third-party actions:** Actions by services you configure Metatron to connect to
 - **Configuration errors:** Damages arising from misconfiguration or improper use
 
 This limitation applies regardless of the legal theory (contract, tort, negligence, strict liability, or otherwise) and even if the maintainers have been advised of the possibility of such damages.
 
 ## No Guarantee of Localhost Operation
 
-While Claude Studio is designed to work with a localhost server by default, **there is no guarantee that data will remain local.** You can configure the server URL to point to any network location, including remote servers. The maintainers:
+While Metatron is designed to work with a localhost server by default, **there is no guarantee that data will remain local.** You can configure the server URL to point to any network location, including remote servers. The maintainers:
 
 - Do not control where you send your data
 - Are not responsible for monitoring your configuration
@@ -56,7 +56,7 @@ While Claude Studio is designed to work with a localhost server by default, **th
 
 ## Third-Party Services
 
-Claude Studio may interact with third-party services (such as Anthropic's Claude API). Use of such services is subject to their respective terms of service and privacy policies. The maintainers:
+Metatron may interact with third-party services (such as Anthropic's Claude API). Use of such services is subject to their respective terms of service and privacy policies. The maintainers:
 
 - Do not control third-party services
 - Are not responsible for third-party service availability, security, or practices
@@ -66,7 +66,7 @@ Claude Studio may interact with third-party services (such as Anthropic's Claude
 
 You agree to indemnify, defend, and hold harmless the project maintainers, contributors, and copyright holders from any claims, damages, losses, liabilities, and expenses (including legal fees) arising from:
 
-- Your use or misuse of Claude Studio
+- Your use or misuse of Metatron
 - Your violation of these terms
 - Your violation of any third-party rights
 - Your violation of applicable laws or regulations
@@ -74,11 +74,11 @@ You agree to indemnify, defend, and hold harmless the project maintainers, contr
 
 ## Modifications
 
-These terms may be updated at any time. Continued use of Claude Studio after changes constitutes acceptance of the modified terms. You are responsible for reviewing these terms periodically.
+These terms may be updated at any time. Continued use of Metatron after changes constitutes acceptance of the modified terms. You are responsible for reviewing these terms periodically.
 
 ## Open Source License
 
-Claude Studio is open-source software. Additional terms may apply under the project's software license (see LICENSE file in the repository). In case of conflict between this Terms of Service and the software license, the software license governs code use, modification, and distribution.
+Metatron is open-source software. Additional terms may apply under the project's software license (see LICENSE file in the repository). In case of conflict between this Terms of Service and the software license, the software license governs code use, modification, and distribution.
 
 ## Governing Law
 
@@ -94,7 +94,7 @@ The maintainers are under no obligation to provide support, maintenance, updates
 
 ## Termination
 
-You may stop using Claude Studio at any time by uninstalling the extension. These terms survive termination where applicable (including disclaimers, limitations of liability, and indemnification).
+You may stop using Metatron at any time by uninstalling the extension. These terms survive termination where applicable (including disclaimers, limitations of liability, and indemnification).
 
 ## Contact
 
@@ -102,4 +102,4 @@ For questions about these terms, open an issue at https://github.com/alexey-max-
 
 ---
 
-**BY USING CLAUDE STUDIO, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE.**
+**BY USING METATRON, YOU ACKNOWLEDGE THAT YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS OF SERVICE.**

@@ -1,6 +1,10 @@
-# claude-studio
+# Metatron daemon
 
-The local agent daemon for **Claude Studio**. It runs Claude Code in a chosen project directory and connects to the browser side panel over a localhost WebSocket. Project instructions, memory, MCP servers, skills, plugins, hooks, and saved sessions use your normal Claude Code setup.
+Local Claude Code CLI in your browser.
+
+The npm package and CLI command remain `claude-studio`.
+
+The local agent daemon for **Metatron**. It runs Claude Code in a chosen project directory and connects to the browser side panel over a localhost WebSocket. Project instructions, memory, MCP servers, skills, plugins, hooks, and saved sessions use your normal Claude Code setup.
 
 ## Install and run
 
@@ -27,7 +31,7 @@ The SDK supplies the platform-specific Claude Code runtime. Keep optional depend
 
 Authenticate using your existing Claude Code installation (`claude auth login`), or configure your supported API-provider environment before starting the daemon. Authentication stays on your machine. This package does not expose a separate login command.
 
-Then open the Claude Studio extension side panel. The daemon listens on `ws://127.0.0.1:7281` by default. Keep it running while using the panel; Ctrl+C stops it cleanly.
+Then open the Metatron extension side panel. The daemon listens on `ws://127.0.0.1:7281` by default. Keep it running while using the panel; Ctrl+C stops it cleanly.
 
 ## Compatibility and upgrades
 
@@ -75,24 +79,29 @@ From the repository root:
 pnpm install --frozen-lockfile
 pnpm test
 pnpm pack:agent
-pnpm verify:package dist/claude-studio-3.0.0.tgz
+pnpm verify:package dist/claude-studio-3.1.0.tgz
 ```
 
 Packing automatically rebuilds the protocol dependency and agent. The verification command installs the tarball in a disposable, production-only pnpm consumer with strict peers and automatic peer installation disabled. It checks package contents, the installed executable, protocol compatibility, native SDK initialization, project-skill loading, Origin rejection, and shutdown. It uses isolated settings and makes no model requests.
 
-After reviewing and committing the release changes on your publishing branch, publish the verified tarball with pnpm:
+After merging the reviewed release changes and verifying the final artifacts, create and verify a signed release tag on the release commit:
 
 ```sh
-pnpm publish dist/claude-studio-3.0.0.tgz --tag next --access public
+git tag -s v3.1.0 -m "Metatron 3.1.0"
+git tag -v v3.1.0
+git push origin v3.1.0
 ```
 
-The initial v3 rollout defaults to `next` so existing `latest` users keep the 2.x agent until the matching extension is ready. The explicit `claude-studio@3` commands above select v3 independently of the default tag. When the revised extension rollout is ready, promote the same version:
+Publish the matching extension ZIP and verified agent tarball through GitHub Releases. For the stable npm release, authenticate in your terminal and publish the same tarball:
 
 ```sh
-pnpm dist-tag add claude-studio@3.0.0 latest
+npm login --registry=https://registry.npmjs.org/
+npm publish dist/claude-studio-3.1.0.tgz --tag latest --access public --registry=https://registry.npmjs.org/
 ```
 
-Keep pnpm's normal git/release checks enabled. Publish only `claude-studio`; the protocol is bundled into its executable. The platform-specific SDK dependencies remain external so installation selects the runtime for the consumer's machine.
+Use pnpm for installation, builds, tests, and packing. npm handles the interactive passkey approval for publishing. The package defaults to `next` when no release tag is supplied; stable releases explicitly select `latest`.
+
+Publish only `claude-studio`; the protocol is bundled into its executable. The platform-specific SDK dependencies remain external so installation selects the runtime for the consumer's machine.
 
 ## License
 

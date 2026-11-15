@@ -1,5 +1,5 @@
 /*
- * End-to-end suite for the Claude Studio daemon (protocol v3).
+ * End-to-end suite for the Metatron daemon (protocol v3).
  *
  * Default: spawns `node agent/dist/cli.js --project <scratch> --port <free>`
  * against a throwaway project under os.tmpdir(), runs every scenario with
@@ -85,7 +85,7 @@ async function setupEnv(): Promise<Env> {
   const rootDir = mkdtempSync(join(tmpdir(), "claude-studio-e2e-"))
   const projectDir = join(rootDir, "project")
   mkdirSync(projectDir)
-  writeFileSync(join(projectDir, "README.md"), "# E2E scratch project\n\nThrowaway project for the Claude Studio end-to-end suite.\n")
+  writeFileSync(join(projectDir, "README.md"), "# E2E scratch project\n\nThrowaway project for the Metatron end-to-end suite.\n")
   writeFileSync(join(projectDir, "notes.txt"), `These are the e2e notes.\nToken: ${notesToken}\n`)
   const logPath = join(rootDir, "daemon.log")
 

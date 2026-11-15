@@ -3,6 +3,8 @@ import type { StudioConfig } from "@claude-studio/protocol"
 import { isValidAgentUrl } from "../lib/connection"
 import { DEFAULT_SERVER_URL } from "../lib/storage"
 import { Icon } from "./Icons"
+import cormorantLicense from "url:../../assets/fonts/cormorantgaramond-OFL.txt"
+import montserratLicense from "url:../../assets/fonts/montserrat-OFL.txt"
 
 interface Props {
   serverUrl: string
@@ -131,6 +133,10 @@ export function SettingsDrawer(p: Props) {
           <dd>Stop the running turn</dd>
         </dl>
         <div className="field-hint">Change shortcuts at brave://extensions/shortcuts</div>
+        <div className="field-hint">
+          Font licenses: <a href={cormorantLicense} target="_blank" rel="noopener noreferrer">Cormorant Garamond</a>
+          {" · "}<a href={montserratLicense} target="_blank" rel="noopener noreferrer">Montserrat</a>
+        </div>
       </div>
     </div>
   )

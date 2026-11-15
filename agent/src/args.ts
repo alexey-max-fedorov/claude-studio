@@ -13,7 +13,10 @@ export interface CliArgs {
   version: boolean
 }
 
-export const HELP = `claude-studio: Claude Code daemon for the Claude Studio browser side panel
+export const HELP = `Metatron
+Local Claude Code CLI in your browser.
+
+The local daemon is installed and run as claude-studio.
 
 Runs Claude Code (Agent SDK) in ONE project dir and serves it over a
 localhost WebSocket to the side panel extension.

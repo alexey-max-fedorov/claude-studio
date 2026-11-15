@@ -15,7 +15,7 @@ export function isBuildInput(filename) {
   const path = parts.join("/")
   if (trees.some((tree) => path === tree || path.startsWith(`${tree}/`))) return true
   const name = parts.at(-1)
-  if (parts.length === 1) return ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".npmrc", ".pnpmfile.cjs"].includes(name) || config.test(name)
+  if (parts.length === 1) return ["brand.json", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".npmrc", ".pnpmfile.cjs"].includes(name) || config.test(name)
   if (parts.length !== 2 || !["extension", "protocol"].includes(parts[0])) return false
   return name === "package.json" || config.test(name) || (parts[0] === "extension" && /^\.env(?:\.|$)/.test(name))
 }

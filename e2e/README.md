@@ -1,6 +1,6 @@
-# e2e
+# Metatron end-to-end tests
 
-End-to-end tests for the Claude Studio daemon (protocol v3). They talk to the real daemon over its WebSocket and run real Claude Code turns with model `haiku`, so a run costs a few cents and needs Claude Code to be logged in.
+End-to-end tests for the Metatron daemon (protocol v3). They talk to the real daemon over its WebSocket and run real Claude Code turns with model `haiku`, so a run costs a few cents and needs Claude Code to be logged in.
 
 ## Run
 

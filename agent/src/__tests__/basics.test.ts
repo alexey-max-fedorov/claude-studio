@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { parseArgs } from "../args.js"
+import { HELP, parseArgs } from "../args.js"
 import { AsyncQueue } from "../async-queue.js"
 import { ConfigStore } from "../config-store.js"
 import { setQuiet } from "../logger.js"
@@ -40,6 +40,16 @@ describe("security", () => {
 })
 
 describe("parseArgs", () => {
+  it("brands help as Metatron while preserving CLI and configuration identifiers", () => {
+    expect(HELP).toContain("Metatron\nLocal Claude Code CLI in your browser.")
+    expect(HELP).toContain("  claude-studio [options]")
+    expect(HELP).toContain("CLAUDE_STUDIO_CONFIG=<file>")
+    expect(HELP).toContain("CLAUDE_STUDIO_ALLOWED_ORIGINS")
+    expect(HELP).toContain("~/.claude-studio/config.json")
+    expect(HELP).toContain(DEFAULT_EXTENSION_ORIGIN)
+    expect(HELP).not.toContain("Claude Studio")
+  })
+
   it("defaults", () => {
     const a = parseArgs([], {}, dir)
     expect(a).toMatchObject({ projectDir: dir, port: 7281, host: "127.0.0.1", allowNoOrigin: false })

@@ -1,12 +1,12 @@
-# Claude Studio Privacy Policy
+# Metatron Privacy Policy
 
-**Last updated:** November 11, 2026
+**Last updated:** November 14, 2026
 
 This policy describes the protocol-v3 implementation in this repository. Earlier releases can have different browser-storage and chat-history behavior.
 
 ## How It Works
 
-Claude Studio is a browser side panel connected to a Claude Code daemon. By default, the extension connects to `ws://127.0.0.1:7281` on your machine. You can change the server URL; data is sent to the server you configure. The daemon binds to loopback by default and requires an explicit unsafe-bind option for non-loopback access.
+Metatron is a browser side panel connected to a Claude Code daemon. By default, the extension connects to `ws://127.0.0.1:7281` on your machine. You can change the server URL; data is sent to the server you configure. The daemon binds to loopback by default and requires an explicit unsafe-bind option for non-loopback access.
 
 Running the daemon locally does not mean all data stays on your machine. Claude Code sends context to the model provider and may use other services through your configured tools and integrations.
 
@@ -22,7 +22,7 @@ The picker content script is registered for `<all_urls>` and stays idle until ac
 ## Storage and Retention
 
 - **Browser storage:** The extension uses `chrome.storage.local`, not sync storage, for the server URL, selected session identifiers, drafts, and sent-message recall. This recall is not the full conversation transcript. Attachments queued by the background can remain in `chrome.storage.session` until the panel retrieves them; the panel holds pending attachments in memory.
-- **Conversation history:** Durable Claude Code transcripts are stored on the daemon machine through the Claude Agent SDK. They can contain sent text, browser context, images, model responses, and tool inputs and results. Claude Studio lists and resumes persisted sessions for the selected project, including sessions created in terminal clients. Other clients connected to the same daemon can access project sessions.
+- **Conversation history:** Durable Claude Code transcripts are stored on the daemon machine through the Claude Agent SDK. They can contain sent text, browser context, images, model responses, and tool inputs and results. Metatron lists and resumes persisted sessions for the selected project, including sessions created in terminal clients. Other clients connected to the same daemon can access project sessions.
 - **Agent settings:** Settings are stored by default in `~/.claude-studio/config.json`, outside the project. The project directory is selected when the daemon starts, using `--project` or the current directory. It is read-only in the panel and is not saved in that settings file.
 - **Diagnostics:** Project paths appear in connection/configuration messages and the daemon's health response. Logs can contain paths, session identifiers, errors, and Claude Code diagnostic output. Logs are written to the terminal or captured by your service setup. Treat these and tool results as potentially sensitive when sharing them.
 
@@ -32,11 +32,11 @@ Use browser extension-data controls to remove browser-stored data. Manage or rem
 
 ## Third-Party Services and Telemetry
 
-Claude Studio loads your Claude Code user, project, and local settings. Your setup can include MCP servers, skills, plugins, hooks, and other tools or providers that process data locally or remotely under their own terms and privacy policies. Review that setup before sending confidential information. Anthropic's privacy policy is available at https://www.anthropic.com/privacy.
+Metatron loads your Claude Code user, project, and local settings. Your setup can include MCP servers, skills, plugins, hooks, and other tools or providers that process data locally or remotely under their own terms and privacy policies. Review that setup before sending confidential information. Anthropic's privacy policy is available at https://www.anthropic.com/privacy.
 
 The extension and daemon do not add a separate analytics or telemetry reporting service for project maintainers. This does not disable or replace Claude Code or SDK telemetry settings; normal vendor settings and policies apply.
 
-The Claude Studio website uses Vercel Analytics to measure website usage and loads fonts from Google Fonts. These third-party website services are separate from the extension and daemon.
+The Metatron website uses Vercel Analytics to measure website usage. The website and extension bundle their fonts locally, with no browser requests to Google Fonts. Website analytics is separate from the extension and daemon.
 
 If you configure a remote daemon or other service, that operator's practices also govern the data it receives. You are responsible for understanding where your configuration sends data.
 
@@ -52,14 +52,14 @@ If you configure a remote daemon or other service, that operator's practices als
 
 ## Disclaimer
 
-CLAUDE STUDIO IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. THE PROJECT MAINTAINERS MAKE NO REPRESENTATIONS OR WARRANTIES REGARDING DATA PRIVACY, SECURITY, OR TRANSMISSION. YOU ARE SOLELY RESPONSIBLE FOR:
+METATRON IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. THE PROJECT MAINTAINERS MAKE NO REPRESENTATIONS OR WARRANTIES REGARDING DATA PRIVACY, SECURITY, OR TRANSMISSION. YOU ARE SOLELY RESPONSIBLE FOR:
 
 - Configuring the extension securely
 - Understanding where your data is sent
 - Complying with applicable privacy laws and regulations
 - Protecting sensitive information in your usage of the tool
 
-The maintainers are not liable for any data breaches, privacy violations, or other damages arising from your use of Claude Studio.
+The maintainers are not liable for any data breaches, privacy violations, or other damages arising from your use of Metatron.
 
 ## Contact
 

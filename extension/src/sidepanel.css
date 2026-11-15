@@ -1,55 +1,78 @@
-/* Claude Studio side panel. One accent, system fonts, follows light/dark. No remote assets. */
+/* Metatron side panel. Brand fonts are bundled locally for offline use. */
+
+@font-face {
+  font-family: "Cormorant Garamond";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/cormorant-garamond-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("../assets/fonts/montserrat-latin.woff2") format("woff2");
+}
 
 :root {
-  --bg: #f5f4f0;
-  --surface: #ffffff;
-  --fill: #ebe9e3;
-  --fill-2: #e3e0d8;
-  --ink: #1c1b18;
-  --ink-2: #45423b;
-  --muted: #77736a;
-  --line: #e0ddd5;
-  --line-2: #cbc7bc;
-  --accent: #c2501d;
-  --accent-ink: #ffffff;
-  --accent-soft: rgba(194, 80, 29, 0.09);
-  --accent-line: rgba(194, 80, 29, 0.45);
-  --danger: #b4232b;
-  --danger-soft: rgba(180, 35, 43, 0.08);
-  --danger-strong: #b4232b;
-  --ok: #2c7a47;
-  --warn: #9a6a12;
-  --del: rgba(180, 35, 43, 0.09);
-  --add: rgba(44, 122, 71, 0.1);
-  --shadow: 0 6px 24px rgba(30, 25, 15, 0.12), 0 1px 3px rgba(30, 25, 15, 0.08);
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
-  --mono: ui-monospace, "SF Mono", SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+  --color-midnight: #19354B;
+  --color-slate: #536A82;
+  --color-atmosphere: #91A8BD;
+  --color-ivory: #F5F0E8;
+  --color-stone: #D9D2C9;
+  --color-champagne: #E7D2B8;
+  --bg: var(--color-ivory);
+  --surface: var(--color-ivory);
+  --fill: #eae7e2;
+  --fill-2: var(--color-stone);
+  --ink: var(--color-midnight);
+  --ink-2: #40566b;
+  --muted: #53677b;
+  --line: var(--color-stone);
+  --line-2: #aaa9a7;
+  --accent: var(--color-slate);
+  --accent-ink: var(--color-ivory);
+  --accent-soft: rgba(83, 106, 130, 0.09);
+  --accent-line: rgba(83, 106, 130, 0.65);
+  --danger: #a32c37;
+  --danger-soft: rgba(163, 44, 55, 0.08);
+  --danger-strong: #a32c37;
+  --ok: #38704e;
+  --warn: #856122;
+  --del: rgba(163, 44, 55, 0.09);
+  --add: rgba(56, 112, 78, 0.1);
+  --shadow: 0 6px 24px rgba(25, 53, 75, 0.12), 0 1px 3px rgba(25, 53, 75, 0.08);
+  --font: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --display: "Cormorant Garamond", Georgia, serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #131312;
-    --surface: #1b1b19;
-    --fill: #232320;
-    --fill-2: #2b2b28;
-    --ink: #ebe9e2;
-    --ink-2: #c4c1b7;
-    --muted: #8b877d;
-    --line: #2a2926;
-    --line-2: #3b3935;
-    --accent: #e7773f;
-    --accent-ink: #1b0e06;
-    --accent-soft: rgba(231, 119, 63, 0.12);
-    --accent-line: rgba(231, 119, 63, 0.5);
-    --danger: #f06b70;
-    --danger-soft: rgba(240, 107, 112, 0.1);
-    --danger-strong: #b8333a;
-    --ok: #63c483;
-    --warn: #d9a548;
-    --del: rgba(240, 107, 112, 0.12);
-    --add: rgba(99, 196, 131, 0.12);
-    --shadow: 0 8px 28px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --bg: var(--color-midnight);
+    --surface: #203e55;
+    --fill: #29485f;
+    --fill-2: #36556c;
+    --ink: var(--color-ivory);
+    --ink-2: #d2dce4;
+    --muted: #b2c3d1;
+    --line: #3d576d;
+    --line-2: var(--color-slate);
+    --accent: var(--color-atmosphere);
+    --accent-ink: var(--color-midnight);
+    --accent-soft: rgba(145, 168, 189, 0.12);
+    --accent-line: rgba(145, 168, 189, 0.7);
+    --danger: #e59b9f;
+    --danger-soft: rgba(229, 155, 159, 0.1);
+    --danger-strong: #a32c37;
+    --ok: #a3c4ad;
+    --warn: var(--color-champagne);
+    --del: rgba(229, 155, 159, 0.12);
+    --add: rgba(163, 196, 173, 0.12);
+    --shadow: 0 8px 28px rgba(10, 26, 38, 0.4), 0 1px 3px rgba(10, 26, 38, 0.3);
     color-scheme: dark;
   }
 }
@@ -143,9 +166,26 @@ button:disabled {
 
 .hdr {
   flex: none;
-  padding: 7px 8px 7px 12px;
+  padding: 10px 8px 9px 12px;
   border-bottom: 1px solid var(--line);
   background: var(--bg);
+}
+
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.brand-logo {
+  display: block;
+  border-radius: 5px;
+}
+
+.brand-name {
+  font: 400 26px/1 var(--display);
+  letter-spacing: 0.01em;
 }
 
 .hdr-top {
@@ -165,7 +205,7 @@ button:disabled {
 
 .proj-name {
   font-family: var(--mono);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 13px;
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -233,10 +273,10 @@ button:disabled {
   color: var(--accent);
 }
 
-.hdr-controls {
+.composer-controls {
   display: flex;
   gap: 5px;
-  margin-top: 6px;
+  margin-top: 8px;
   min-width: 0;
 }
 
@@ -480,7 +520,7 @@ button:disabled {
 .md h6 {
   margin: 14px 0 6px;
   line-height: 1.3;
-  font-weight: 650;
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 .md h1 {
@@ -539,7 +579,7 @@ button:disabled {
   text-decoration-color: currentColor;
 }
 .md strong {
-  font-weight: 650;
+  font-weight: 500;
 }
 .md blockquote {
   margin: 0 0 8px;
@@ -620,9 +660,14 @@ button:disabled {
   border-bottom: 0;
 }
 .md-table th {
-  font-weight: 600;
+  font-weight: 500;
   background: var(--fill);
   white-space: nowrap;
+}
+.md-table th a,
+.md-table th .md-path {
+  color: var(--ink);
+  text-decoration-color: currentColor;
 }
 .md-table td + td,
 .md-table th + th {
@@ -743,7 +788,7 @@ button:disabled {
 }
 .tool-name {
   flex: none;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink-2);
   max-width: 45%;
   overflow: hidden;
@@ -989,12 +1034,20 @@ button:disabled {
   padding: 24px 4px 40px;
 }
 .empty-mark {
-  font: 600 22px/1.1 var(--mono);
-  letter-spacing: -0.03em;
+  margin: 8px 0 0;
+  font: 400 40px/1.1 var(--display);
+  letter-spacing: -0.02em;
 }
-.empty-mark .caret {
-  width: 10px;
-  margin-left: 3px;
+.empty-logo {
+  display: block;
+  border-radius: 12px;
+}
+.empty-headline {
+  margin: 12px 0 0;
+  max-width: 32ch;
+  font-size: 14px;
+  line-height: 1.6;
+  font-weight: 500;
 }
 .empty-sub {
   margin-top: 6px;
@@ -1048,7 +1101,7 @@ kbd {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font: 600 9.5px var(--mono);
+  font: 500 9.5px var(--mono);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--accent);
@@ -1062,7 +1115,7 @@ kbd {
 }
 .perm-title {
   margin: 4px 0 6px;
-  font-weight: 600;
+  font-weight: 500;
   overflow-wrap: anywhere;
 }
 .perm-pre {
@@ -1133,7 +1186,7 @@ kbd {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-ink);
-  font-weight: 600;
+  font-weight: 500;
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--accent);
@@ -1170,7 +1223,7 @@ kbd {
   width: 100%;
   padding: 0;
   margin: 2px 0 6px;
-  font-weight: 600;
+  font-weight: 500;
 }
 .ask-text + * {
   clear: both;
@@ -1260,7 +1313,7 @@ kbd {
   z-index: 1;
 }
 .drawer-title {
-  font-weight: 650;
+  font-weight: 500;
 }
 .drawer-sub {
   flex: 1;
@@ -1382,8 +1435,10 @@ kbd {
   min-width: 0;
 }
 .field-k {
-  font-size: 11.5px;
-  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+  font-size: 10px;
+  font-weight: 500;
   color: var(--ink-2);
 }
 .field-row {
@@ -1403,7 +1458,7 @@ kbd {
   margin-top: 8px;
   padding-top: 10px;
   border-top: 1px solid var(--line);
-  font: 600 9.5px var(--mono);
+  font: 500 9.5px var(--mono);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
@@ -1709,7 +1764,7 @@ kbd {
   border-radius: 7px;
   background: var(--accent);
   color: var(--accent-ink);
-  font: 600 9.5px/14px var(--mono);
+  font: 500 9.5px/14px var(--mono);
   text-align: center;
 }
 
@@ -1739,7 +1794,7 @@ kbd {
 }
 .waiting-go {
   flex: none;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--accent);
 }
 .waiting:hover .waiting-go {
@@ -1747,7 +1802,7 @@ kbd {
 }
 .sess-waiting {
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 

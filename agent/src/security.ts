@@ -3,7 +3,7 @@
  * the full toolset (Bash included), so only our own extension may connect.
  */
 
-/** Pinned ID of the Claude Studio side panel extension. */
+/** Pinned ID of the Metatron side panel extension. */
 export const DEFAULT_EXTENSION_ORIGIN = "chrome-extension://geiimncmpakilhfdnkmcbgabpchhllol"
 
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]", "::1"])

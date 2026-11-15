@@ -38,6 +38,7 @@ interface Props {
   notice: Notice | null
   onDismissNotice: () => void
   placeholder: string
+  controls?: React.ReactNode
 }
 
 function cmdName(c: SlashCommand): string {
@@ -285,6 +286,7 @@ export function Composer(props: Props) {
           </div>
         </div>
       </div>
+      {props.controls}
     </div>
   )
 }

@@ -1,110 +1,109 @@
-const CHROME_WEB_STORE_URL =
-  "https://chromewebstore.google.com/detail/claude-studio/bpcmnngncojfbddicenjebaglkdplodk"
+import brand from "../../../brand.json"
+import packageInfo from "../../package.json"
+
+const { version } = packageInfo
+const GITHUB_URL = "https://github.com/alexey-max-fedorov/claude-studio"
+const RELEASE_URL = `${GITHUB_URL}/releases/tag/v${version}`
 
 export const siteConfig = {
-  name: "Claude Studio",
-  tagline: "Visual AI coding assistant for the web",
-  description:
-    "Select an element on your live page, describe the change in plain English, and Claude Code edits your source — in any framework. A browser extension and a local agent, talking over WebSocket.",
-  github: "https://github.com/alexey-max-fedorov/claude-studio",
-  chromeWebStore: CHROME_WEB_STORE_URL,
+  name: brand.name,
+  tagline: brand.headline,
+  description: brand.headline,
+  github: GITHUB_URL,
+  release: RELEASE_URL,
+  releaseLabel: `Release v${version}`,
+  extensionZip: `${GITHUB_URL}/releases/download/v${version}/claude-studio-extension-${version}.zip`,
+  docs: `${GITHUB_URL}/blob/master/agent/README.md`,
   nav: [
     { label: "Features", href: "#features" },
-    { label: "How It Works", href: "#how-it-works" },
-    {
-      label: "GitHub",
-      href: "https://github.com/alexey-max-fedorov/claude-studio",
-      external: true,
-    },
-    {
-      label: "Add to Chrome",
-      href: CHROME_WEB_STORE_URL,
-      external: true,
-    },
+    { label: "Installation", href: "#how-it-works" },
+    { label: "Preview", href: "#demo" },
+    { label: "GitHub", href: GITHUB_URL, external: true },
   ],
   footerLinks: [
     { label: "Features", href: "#features" },
-    { label: "How It Works", href: "#how-it-works" },
+    { label: "Installation", href: "#how-it-works" },
+    { label: `Release v${version}`, href: RELEASE_URL },
     {
-      label: "Privacy Policy",
-      href: "https://github.com/alexey-max-fedorov/claude-studio/blob/master/PRIVACY.md",
+      label: "Privacy policy",
+      href: `${GITHUB_URL}/blob/master/PRIVACY.md`,
     },
     {
-      label: "Terms of Service",
-      href: "https://github.com/alexey-max-fedorov/claude-studio/blob/master/TERMS.md",
+      label: "Terms of service",
+      href: `${GITHUB_URL}/blob/master/TERMS.md`,
     },
   ],
   metrics: [
-    { value: "Open Source", label: "Free Forever" },
-    { value: "User-Triggered", label: "Browser Capture" },
-    { value: "Any Framework", label: "React · Vue · Svelte · HTML" },
-    { value: "Local", label: "Runs On Your Machine" },
+    { value: "Local daemon", label: "One project directory" },
+    { value: "Browser panel", label: "Chrome & Brave" },
+    { value: "Claude Code", label: "Your existing configuration" },
+    { value: "Context attachments", label: "Captured when you choose" },
   ],
   features: [
     {
-      icon: "MousePointerClick" as const,
-      title: "Smart Element Picker",
-      description:
-        "Select any element with a gold highlight overlay. Captures the selector, computed styles, and full HTML context for precise edits.",
-    },
-    {
       icon: "MessageSquareText" as const,
-      title: "Natural Language Edits",
+      title: "Project conversations",
       description:
-        'Describe what you want in plain English. "Make this button rounded with a subtle shadow" — done, in your source.',
+        "Chat with Claude Code from the browser side panel. The local daemon runs in the project directory you choose, with access to its files and tools.",
     },
     {
-      icon: "Layers" as const,
-      title: "Reliable Model Switching",
+      icon: "MousePointerClick" as const,
+      title: "Browser context",
       description:
-        "Switch between Sonnet, Opus, Haiku, and Fable on the fly. The agent applies your choice on every turn — no flaky slash commands.",
-    },
-    {
-      icon: "Puzzle" as const,
-      title: "Plugin & Skill Control",
-      description:
-        "Toggle Claude Code plugins and skills straight from the extension's Agent tab. Shape how the agent works without touching config files.",
-    },
-    {
-      icon: "RefreshCw" as const,
-      title: "Realtime Config Sync",
-      description:
-        "Tune the model, permissions, turns, and budget from the extension or the server's TUI — changes broadcast to every connected client instantly over WebSocket.",
+        "Attach a picked element, selected text, page information, page text, or a screenshot to your message. You decide what browser context to share.",
     },
     {
       icon: "Radio" as const,
-      title: "Live Streaming",
+      title: "Streaming & approvals",
       description:
-        "Watch Claude work in the side panel — file reads, edits, and tool calls as they happen, with token and cost tracking.",
+        "Follow replies and tool calls as they arrive. Review tool permission requests in the panel according to your selected permission mode.",
+    },
+    {
+      icon: "History" as const,
+      title: "Saved sessions",
+      description:
+        "Resume real Claude Code conversations, including sessions saved from the terminal. Closing the panel does not stop a running session.",
+    },
+    {
+      icon: "SlidersHorizontal" as const,
+      title: "Session settings",
+      description:
+        "Choose the model and permission mode in the panel. Model availability follows your Claude Code setup and provider access.",
+    },
+    {
+      icon: "FolderOpen" as const,
+      title: "Your Claude Code setup",
+      description:
+        "Use the selected project's instructions, memory, MCP servers, skills, plugins, and hooks. Configure them through your normal Claude Code setup.",
     },
   ],
   howItWorks: [
     {
       step: 1,
-      title: "Run the agent",
+      title: "Prepare your machine",
       description:
-        "In your project directory, run one command. An interactive terminal UI starts and shows your WebSocket URL.",
-      code: "pnpx claude-studio",
-    },
-    {
-      step: 2,
-      title: "Connect the extension",
-      description:
-        "Install the browser extension, open the side panel, and point it at the ws:// URL from the terminal.",
+        "Use Node.js 20 or newer and pnpm. Authenticate Claude Code on this machine with your existing installation, or configure a supported API provider. Claude usage requires your own account or API access.",
       code: null,
     },
     {
-      step: 3,
-      title: "Pick & describe",
+      step: 2,
+      title: "Start the local daemon",
       description:
-        "Toggle the element picker with Ctrl+Shift+E, select an element, and describe your change in the floating widget.",
+        "Run the v3 agent for your project. Keep this process running while using the panel. The npm package and CLI are still named claude-studio.",
+      code: "pnpm dlx claude-studio@3 --project /path/to/your/project",
+    },
+    {
+      step: 3,
+      title: "Load the browser extension",
+      description:
+        `Download and extract the v${version} extension ZIP. Open chrome://extensions or brave://extensions, enable Developer mode, choose Load unpacked, and select the extracted folder containing manifest.json.`,
       code: null,
     },
     {
       step: 4,
-      title: "Watch it ship",
+      title: "Open the side panel",
       description:
-        "Claude Code edits your source files. Save and the change is live — in React, Vue, Svelte, plain HTML, whatever you use.",
+        "Open the extension's side panel in Chrome or Brave. It connects to ws://127.0.0.1:7281 by default. Start a conversation and attach browser context when it is useful. Use the v3 extension and agent together.",
       code: null,
     },
   ],

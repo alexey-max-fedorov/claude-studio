@@ -1,12 +1,9 @@
-"use client"
-
-import { motion } from "framer-motion"
 import {
   MousePointerClick,
   MessageSquareText,
-  Layers,
-  Puzzle,
-  RefreshCw,
+  History,
+  FolderOpen,
+  SlidersHorizontal,
   Radio,
 } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/ScrollReveal"
@@ -15,67 +12,39 @@ import { siteConfig } from "@/data/site"
 const iconMap = {
   MousePointerClick,
   MessageSquareText,
-  Layers,
-  Puzzle,
-  RefreshCw,
+  History,
+  FolderOpen,
+  SlidersHorizontal,
   Radio,
 } as const
 
 export function Features() {
   return (
-    <section
-      id="features"
-      className="py-24 lg:py-32 px-4 sm:px-6 lg:px-8 bg-[#000]"
-      aria-labelledby="features-heading"
-    >
-      <div className="max-w-7xl mx-auto">
+    <section id="features" className="section" aria-labelledby="features-heading">
+      <div className="page-width">
         <ScrollReveal>
-          <div className="text-center mb-16">
-            <p className="text-[#c9a84c] text-xs font-semibold tracking-[0.25em] uppercase mb-3">
-              Features
-            </p>
-            <h2
-              id="features-heading"
-              className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white leading-tight"
-              style={{ fontFamily: "var(--font-playfair-display), Georgia, serif" }}
-            >
-              Everything you need
-            </h2>
-            <p className="mt-4 text-[#a0a0a0] text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
-              A complete visual editing toolkit powered by Claude Code. Select, describe, ship.
+          <div className="section-heading">
+            <p className="eyebrow">01 / Capabilities</p>
+            <h2 id="features-heading">Features</h2>
+            <p className="section-intro">
+              The side panel connects to Claude Code running in your project.
+              Browser context is attached to the conversation only when you choose to capture it.
             </p>
           </div>
         </ScrollReveal>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {siteConfig.features.map((feature, i) => {
-            const Icon = iconMap[feature.icon as keyof typeof iconMap]
+        <div className="features-grid">
+          {siteConfig.features.map((feature, index) => {
+            const Icon = iconMap[feature.icon]
             return (
-              <ScrollReveal key={feature.title} delay={i * 0.1}>
-                <motion.div
-                  className="group relative bg-[#111] border border-[#1a1a1a] rounded-xl p-8 flex flex-col h-full transition-all duration-300 cursor-default"
-                  whileHover={{
-                    borderColor: "rgba(201,168,76,0.35)",
-                    boxShadow: "0 0 40px rgba(201,168,76,0.08)",
-                    y: -4,
-                  }}
-                  transition={{ duration: 0.25 }}
-                >
-                  <div className="w-12 h-12 rounded-lg bg-[rgba(201,168,76,0.1)] flex items-center justify-center mb-6 group-hover:bg-[rgba(201,168,76,0.18)] transition-colors duration-300">
-                    <Icon size={22} className="text-[#c9a84c]" aria-hidden="true" />
+              <ScrollReveal key={feature.title} delay={(index % 3) * 0.06}>
+                <article className="feature-card">
+                  <div className="feature-topline">
+                    <Icon size={22} strokeWidth={1.4} aria-hidden="true" />
+                    <span aria-hidden="true">0{index + 1}</span>
                   </div>
-
-                  <h3
-                    className="text-xl font-semibold text-white mb-3"
-                    style={{ fontFamily: "var(--font-playfair-display), Georgia, serif" }}
-                  >
-                    {feature.title}
-                  </h3>
-
-                  <p className="text-[#a0a0a0] text-sm leading-relaxed flex-1">
-                    {feature.description}
-                  </p>
-                </motion.div>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.description}</p>
+                </article>
               </ScrollReveal>
             )
           })}

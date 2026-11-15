@@ -23,9 +23,9 @@ function setPanelBehavior() {
 function createMenus() {
   chrome.contextMenus.removeAll(() => {
     void chrome.runtime.lastError
-    chrome.contextMenus.create({ id: MENU_SELECTION, title: "Ask Claude about selection", contexts: ["selection"] }, noopLastError)
-    chrome.contextMenus.create({ id: MENU_PAGE, title: "Ask Claude about this page", contexts: ["page", "frame"] }, noopLastError)
-    chrome.contextMenus.create({ id: MENU_LINK, title: "Ask Claude about this link", contexts: ["link"] }, noopLastError)
+    chrome.contextMenus.create({ id: MENU_SELECTION, title: "Ask Metatron about selection", contexts: ["selection"] }, noopLastError)
+    chrome.contextMenus.create({ id: MENU_PAGE, title: "Ask Metatron about this page", contexts: ["page", "frame"] }, noopLastError)
+    chrome.contextMenus.create({ id: MENU_LINK, title: "Ask Metatron about this link", contexts: ["link"] }, noopLastError)
   })
 }
 
@@ -56,7 +56,7 @@ function queuePending(item: PendingAttachment): Promise<void> {
   return serialized(async () => {
     const r = await chrome.storage.session.get(PENDING_KEY)
     await chrome.storage.session.set({ [PENDING_KEY]: appendPending(r[PENDING_KEY], item) })
-  }).catch((e) => console.warn("[Claude Studio] could not queue attachment:", e))
+  }).catch((e) => console.warn("[Metatron] could not queue attachment:", e))
 }
 
 function takePending(windowId: number): Promise<Attachment[]> {

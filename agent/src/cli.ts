@@ -49,7 +49,7 @@ async function main(): Promise<void> {
     allowedOrigins: args.allowedOrigins,
     allowNoOrigin: args.allowNoOrigin,
   })
-  log.info("SRV", `Claude Studio agent ${version} listening on ${server.url}`)
+  log.info("SRV", `Metatron agent ${version} listening on ${server.url}`)
   log.info("SRV", `project: ${args.projectDir}`)
   log.info("SRV", `config: ${config.path}`)
   log.info("SRV", `allowed origins: ${args.allowedOrigins.join(", ")}${args.allowNoOrigin ? " (+ no Origin)" : ""}`)

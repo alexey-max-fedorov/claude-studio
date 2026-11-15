@@ -19,21 +19,17 @@ export function ScrollReveal({
 }: ScrollRevealProps) {
   const prefersReducedMotion = useReducedMotion();
 
-  if (prefersReducedMotion) {
-    return <div className={className}>{children}</div>;
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{
-        duration,
-        delay,
+        duration: prefersReducedMotion ? 0 : duration,
+        delay: prefersReducedMotion ? 0 : delay,
         ease: [0.25, 0.1, 0.25, 1],
       }}
-      className={className}
+      className={["scroll-reveal", className].filter(Boolean).join(" ")}
     >
       {children}
     </motion.div>

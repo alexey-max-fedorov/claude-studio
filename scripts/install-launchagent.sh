@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# macOS: build Claude Studio and run the agent as a LaunchAgent for one project.
+# macOS: build Metatron and run the agent as a LaunchAgent for one project.
 #
 #   PROJECT_DIR=~/code/my-app scripts/install-launchagent.sh
 #

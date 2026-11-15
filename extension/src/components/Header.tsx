@@ -2,6 +2,8 @@ import React from "react"
 import type { EffortLevel, ModelOption, PermissionMode, StudioConfig } from "@claude-studio/protocol"
 import type { ConnState } from "../lib/connection"
 import { Icon } from "./Icons"
+import brand from "../../../brand.json"
+import logo from "url:../../assets/icon-128.png"
 
 export const EFFORTS: EffortLevel[] = ["", "low", "medium", "high", "xhigh", "max"]
 
@@ -57,10 +59,14 @@ export function Header(p: Props) {
 
   return (
     <header className="hdr">
+      <div className="brand-row">
+        <img className="brand-logo" src={logo} alt="" width={30} height={30} />
+        <span className="brand-name">{brand.name}</span>
+      </div>
       <div className="hdr-top">
         <div className="proj" title={c?.projectDir || undefined}>
           <span className={`dot dot-${p.conn}`} title={CONN_LABEL[p.conn]} />
-          <span className="proj-name">{p.project || "claude studio"}</span>
+          <span className="proj-name">{p.project || "Your project"}</span>
           {p.conn !== "open" ? <span className="conn-label">{CONN_LABEL[p.conn]}</span> : p.running ? <span className="conn-label is-run">working</span> : null}
         </div>
         <div className="hdr-actions">

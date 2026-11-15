@@ -1,5 +1,5 @@
 /*
- * Typed WebSocket test client for the Claude Studio daemon (protocol v3).
+ * Typed WebSocket test client for the Metatron daemon (protocol v3).
  * Collects every ServerMessage, validates each one's shape on arrival, and
  * lets scenarios wait for a message matching a predicate.
  */

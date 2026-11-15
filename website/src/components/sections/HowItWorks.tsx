@@ -1,3 +1,4 @@
+import { ArrowUpRight, Download } from "lucide-react"
 import { ScrollReveal } from "@/components/ui/ScrollReveal"
 import { siteConfig } from "@/data/site"
 
@@ -5,68 +6,66 @@ export function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="py-24 lg:py-32 px-4 sm:px-6 lg:px-8 bg-[#0a0a0a]"
+      className="section installation-section"
       aria-labelledby="how-it-works-heading"
     >
-      <div className="max-w-7xl mx-auto">
-        <ScrollReveal>
-          <div className="text-center mb-16">
-            <p className="text-[#c9a84c] text-xs font-semibold tracking-[0.25em] uppercase mb-3">
-              How It Works
-            </p>
-            <h2
-              id="how-it-works-heading"
-              className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white leading-tight"
-              style={{ fontFamily: "var(--font-playfair-display), Georgia, serif" }}
-            >
-              Four steps to visual editing
-            </h2>
-            <p className="mt-4 text-[#a0a0a0] text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
-              From setup to shipping changes in under a minute.
-            </p>
-          </div>
-        </ScrollReveal>
-
-        <div className="max-w-3xl mx-auto">
-          {siteConfig.howItWorks.map((step, i) => (
-            <ScrollReveal key={step.step} delay={i * 0.12}>
-              <div className="flex gap-6 sm:gap-8 mb-12 last:mb-0">
-                {/* Step number + line */}
-                <div className="flex flex-col items-center">
-                  <span
-                    className="text-4xl font-bold text-[#c9a84c] opacity-40 leading-none"
-                    style={{ fontFamily: "var(--font-playfair-display), Georgia, serif" }}
-                  >
-                    {step.step}
-                  </span>
-                  {i < siteConfig.howItWorks.length - 1 && (
-                    <div className="flex-1 w-px bg-[#1a1a1a] mt-3" />
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="pb-2 flex-1">
-                  <h3
-                    className="text-xl font-semibold text-white mb-2"
-                    style={{ fontFamily: "var(--font-playfair-display), Georgia, serif" }}
-                  >
-                    {step.title}
-                  </h3>
-                  <p className="text-[#a0a0a0] text-sm leading-relaxed mb-3">
-                    {step.description}
-                  </p>
-                  {step.code && (
-                    <div className="bg-[#000] border border-[#1a1a1a] rounded-lg px-4 py-3 inline-block">
-                      <code className="text-[#c9a84c] text-sm font-mono">
-                        $ {step.code}
-                      </code>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </ScrollReveal>
-          ))}
+      <div className="page-width installation-grid">
+        <div className="installation-heading">
+          <p className="eyebrow">02 / Setup</p>
+          <h2 id="how-it-works-heading">Installation</h2>
+          <p className="section-intro">
+            Two parts: a local daemon for your project and an unpacked browser extension.
+            Install the matching v3 releases.
+          </p>
+          <a
+            href={siteConfig.extensionZip}
+            className="button button-primary"
+          >
+            <Download size={16} aria-hidden="true" /> Download extension ZIP
+          </a>
+          <a
+            href={siteConfig.release}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-link"
+          >
+            Release v3.0.0 <ArrowUpRight size={14} aria-hidden="true" />
+          </a>
+          <p className="installation-note">
+            Manual installation via Developer mode. Not a Chrome Web Store install.
+          </p>
         </div>
+        <ol className="installation-steps">
+          {siteConfig.howItWorks.map((step) => (
+            <li key={step.step}>
+              <ScrollReveal>
+                <div className="installation-step">
+                  <span className="step-number" aria-hidden="true">0{step.step}</span>
+                  <div className="step-copy">
+                    <h3>{step.title}</h3>
+                    <p>{step.description}</p>
+                    {step.code && <pre className="install-command"><code>{step.code}</code></pre>}
+                    {step.step === 1 && (
+                      <a
+                        href={siteConfig.docs}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-link"
+                      >
+                        Authentication & requirements <ArrowUpRight size={14} aria-hidden="true" />
+                      </a>
+                    )}
+                    {step.step === 3 && (
+                      <a href={siteConfig.extensionZip} className="text-link">
+                        Download the ZIP <Download size={14} aria-hidden="true" />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </ScrollReveal>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   )

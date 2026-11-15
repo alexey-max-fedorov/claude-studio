@@ -1,8 +1,10 @@
-<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/e7c954c6-1206-41b8-b1b5-12244eab05f9" />
+<img width="128" height="128" alt="Metatron logo" src="extension/assets/icon.png" />
 
-# Claude Studio
+# Metatron
 
-Claude Studio is a browser side panel that works as a full chat client for Claude Code running in one project dir, so you can talk to that project from the browser the same way you would in the terminal. Page info, selected text, page text, a screenshot or a picked element can be attached to any message. It consists of a **browser extension** (the side panel) and an **agent daemon** that runs Claude Code locally, connected over a localhost WebSocket protocol documented in [`protocol/README.md`](protocol/README.md) (protocol v3).
+Local Claude Code CLI in your browser.
+
+Metatron is a browser side panel that works as a full chat client for Claude Code running in one project dir, so you can talk to that project from the browser the same way you would in the terminal. Page info, selected text, page text, a screenshot or a picked element can be attached to any message. It consists of a **browser extension** (the side panel) and an **agent daemon** that runs Claude Code locally, connected over a localhost WebSocket protocol documented in [`protocol/README.md`](protocol/README.md) (protocol v3).
 
 ---
 
@@ -17,7 +19,9 @@ Claude Studio is a browser side panel that works as a full chat client for Claud
 
 ## Published agent
 
-The revised side panel uses protocol v3 and requires `claude-studio` 3.x. Once that release is published, run the agent from the project you want to work on:
+The product is Metatron. The npm package and CLI command remain `claude-studio`.
+
+The side panel uses protocol v3 and requires `claude-studio` 3.x. Run the agent from the project you want to work on:
 
 ```sh
 pnpm dlx claude-studio@3
@@ -36,7 +40,7 @@ pnpm -r build
 
 # 2. Run the agent daemon for your project (logs go to stdout/stderr)
 node agent/dist/cli.js --project /path/to/your/project
-#   Claude Studio agent 3.0.0 listening on ws://127.0.0.1:7281
+#   Metatron agent 3.0.0 listening on ws://127.0.0.1:7281
 
 # 3. Load the extension
 #    brave://extensions (or chrome://extensions), enable Developer mode,
@@ -50,7 +54,7 @@ For an always-on setup on macOS, `PROJECT_DIR=/path/to/your/project scripts/inst
 
 ### Security
 
-The daemon drives Claude Code with the full toolset, including Bash, so it only accepts WebSocket connections whose `Origin` is the Claude Studio extension (`chrome-extension://geiimncmpakilhfdnkmcbgabpchhllol` plus any `--allow-origin`) and whose `Host` is a loopback name. Other web pages cannot connect. Config lives in `~/.claude-studio/config.json`, outside the project.
+The daemon drives Claude Code with the full toolset, including Bash, so it only accepts WebSocket connections whose `Origin` is the Metatron extension (`chrome-extension://geiimncmpakilhfdnkmcbgabpchhllol` plus any `--allow-origin`) and whose `Host` is a loopback name. Other web pages cannot connect. Config lives in `~/.claude-studio/config.json`, outside the project.
 
 ---
 
@@ -105,6 +109,10 @@ claude-studio/
 ```
 
 ---
+
+## Brand
+
+See [brand guidelines](docs/brand.md) for naming, visual identity, and compatibility boundaries.
 
 ## License
 

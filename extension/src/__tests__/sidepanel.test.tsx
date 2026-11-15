@@ -113,6 +113,16 @@ function sendText(m: Awaited<ReturnType<typeof mount>>, text: string) {
 }
 
 describe("SidePanel", () => {
+  it("keeps the Metatron identity and approved headline alongside the connected project", async () => {
+    const m = await mount()
+    expect(m.container.querySelector(".brand-name")?.textContent).toBe("Metatron")
+    expect(m.container.querySelector("h1")?.textContent).toBe("Metatron")
+    expect(m.container.querySelector(".empty-headline")?.textContent).toBe("Local Claude Code CLI in your browser.")
+    expect(m.container.querySelector(".proj-name")?.textContent).toBe("webapp")
+    expect(m.container.querySelector(".brand-logo")?.getAttribute("alt")).toBe("")
+    m.unmount()
+  })
+
   beforeEach(() => {
     ;(globalThis as any).WebSocket = FakeWS
     capture.startPicker.mockReset().mockResolvedValue(true)

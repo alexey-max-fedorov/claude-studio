@@ -16,6 +16,8 @@ import type { PermissionReply } from "./components/PermissionCard"
 import { SessionsDrawer } from "./components/SessionsDrawer"
 import { SettingsDrawer } from "./components/SettingsDrawer"
 import { Transcript } from "./components/Transcript"
+import brand from "../../brand.json"
+import logo from "url:../assets/icon-128.png"
 import "./sidepanel.css"
 
 const START_CMD = "pnpm dlx claude-studio@3 --project /path/to/your/project"
@@ -667,12 +669,11 @@ export function SidePanel() {
       </div>
     ) : (
       <div className="empty">
-        <div className="empty-mark">
-          {project || "claude"}
-          <span className="caret caret-static" aria-hidden />
-        </div>
+        <img className="empty-logo" src={logo} alt="" width={80} height={80} />
+        <h1 className="empty-mark">{brand.name}</h1>
+        <p className="empty-headline">{brand.headline}</p>
         <div className="empty-sub">
-          Claude Code in <span className="mono">{projectDir ? relPath(projectDir) : "your project"}</span>
+          Project <span className="mono">{projectDir ? relPath(projectDir) : "waiting for agent"}</span>
         </div>
         <ul className="empty-tips">
           <li>
@@ -795,7 +796,7 @@ export function SidePanel() {
         picking={picking}
         notice={notice}
         onDismissNotice={() => setNotice(null)}
-        placeholder={running ? "Queue a follow-up" : `Message ${project || "Claude"}`}
+        placeholder={running ? "Queue a follow-up" : `Message ${project || brand.name}`}
       />
     </div>
   )

@@ -22,7 +22,7 @@ const GLOBAL_KEY = "__claudeStudioElementPicker__"
 const prev = (window as unknown as Record<string, Instance | undefined>)[GLOBAL_KEY]
 prev?.teardown() // re-injected (extension reloaded or programmatic inject): replace the old instance
 
-const ACCENT = "#d97757"
+const ACCENT = "#536A82"
 
 let host: HTMLElement | null = null
 let box: HTMLDivElement | null = null
@@ -41,11 +41,11 @@ function buildOverlay() {
   const style = document.createElement("style")
   style.textContent = `
     .box { position: fixed; pointer-events: none; box-sizing: border-box; border: 2px solid ${ACCENT};
-      background: rgba(217, 119, 87, 0.12); border-radius: 2px; display: none; }
+      background: rgba(145, 168, 189, 0.16); border-radius: 2px; display: none; }
     .label { position: fixed; pointer-events: none; max-width: 60vw; overflow: hidden; text-overflow: ellipsis;
-      white-space: nowrap; background: #1f1e1d; color: #f5f4ef; border: 1px solid ${ACCENT}; border-radius: 4px;
+      white-space: nowrap; background: #19354B; color: #F5F0E8; border: 1px solid ${ACCENT}; border-radius: 4px;
       padding: 3px 7px; font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; display: none; }
-    .label b { color: ${ACCENT}; font-weight: 600; }
+    .label b { color: #E7D2B8; font-weight: 600; }
   `
   box = document.createElement("div")
   box.className = "box"
@@ -207,7 +207,7 @@ function pick(el: Element) {
   }
   try {
     chrome.runtime.sendMessage({ action: "element-picked", attachment }).then(
-      () => flashThenStop("Added to Claude", 600),
+      () => flashThenStop("Added to Metatron", 600),
       () => flashThenStop("Extension was reloaded. Refresh this page.", 1800),
     )
   } catch {

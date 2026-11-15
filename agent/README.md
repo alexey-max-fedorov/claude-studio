@@ -1,6 +1,10 @@
-# claude-studio
+# Metatron daemon
 
-The local agent daemon for **Claude Studio**. It runs Claude Code in a chosen project directory and connects to the browser side panel over a localhost WebSocket. Project instructions, memory, MCP servers, skills, plugins, hooks, and saved sessions use your normal Claude Code setup.
+Local Claude Code CLI in your browser.
+
+The npm package and CLI command remain `claude-studio`.
+
+The local agent daemon for **Metatron**. It runs Claude Code in a chosen project directory and connects to the browser side panel over a localhost WebSocket. Project instructions, memory, MCP servers, skills, plugins, hooks, and saved sessions use your normal Claude Code setup.
 
 ## Install and run
 
@@ -27,7 +31,7 @@ The SDK supplies the platform-specific Claude Code runtime. Keep optional depend
 
 Authenticate using your existing Claude Code installation (`claude auth login`), or configure your supported API-provider environment before starting the daemon. Authentication stays on your machine. This package does not expose a separate login command.
 
-Then open the Claude Studio extension side panel. The daemon listens on `ws://127.0.0.1:7281` by default. Keep it running while using the panel; Ctrl+C stops it cleanly.
+Then open the Metatron extension side panel. The daemon listens on `ws://127.0.0.1:7281` by default. Keep it running while using the panel; Ctrl+C stops it cleanly.
 
 ## Compatibility and upgrades
 

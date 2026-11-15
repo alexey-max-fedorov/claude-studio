@@ -1,6 +1,8 @@
-# @claude-studio/protocol
+# Metatron protocol
 
-The WebSocket contract between the Claude Studio agent daemon and the browser side panel. Version **3** (`PROTOCOL_VERSION = 3`). The TypeScript source of truth is [`src/protocol.ts`](src/protocol.ts), [`src/config.ts`](src/config.ts) and [`src/validation.ts`](src/validation.ts); this file is the readable summary.
+Package: `@claude-studio/protocol` (unchanged).
+
+The WebSocket contract between the Metatron agent daemon and the browser side panel. Version **3** (`PROTOCOL_VERSION = 3`). The TypeScript source of truth is [`src/protocol.ts`](src/protocol.ts), [`src/config.ts`](src/config.ts) and [`src/validation.ts`](src/validation.ts); this file is the readable summary.
 
 ## Model
 

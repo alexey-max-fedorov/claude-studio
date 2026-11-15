@@ -1,7 +1,7 @@
 {
   "name": "claude-studio",
   "version": "3.0.0",
-  "description": "Claude Studio agent: localhost daemon that runs Claude Code in one project dir for the browser side panel",
+  "description": "Local Claude Code CLI in your browser.",
   "type": "module",
   "bin": {
     "claude-studio": "dist/cli.js"

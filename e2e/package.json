@@ -2,7 +2,7 @@
   "name": "e2e",
   "private": true,
   "type": "module",
-  "description": "End-to-end tests for the Claude Studio daemon (protocol v3)",
+  "description": "End-to-end tests for the Metatron daemon (protocol v3)",
   "scripts": {
     "start": "tsx run.ts",
     "selftest": "tsx test-fixtures/selftest.ts",

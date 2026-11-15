@@ -1,8 +1,8 @@
 {
   "name": "@claude-studio/extension",
-  "displayName": "Claude Studio",
+  "displayName": "Metatron",
   "version": "3.0.0",
-  "description": "Side panel chat for Claude Code in your project. Attach the page, a selection, a screenshot or an element.",
+  "description": "Local Claude Code CLI in your browser.",
   "scripts": {
     "dev": "node ../scripts/watch-extension.mjs",
     "build": "plasmo build",
@@ -39,7 +39,7 @@
       "<all_urls>"
     ],
     "action": {
-      "default_title": "Open Claude panel"
+      "default_title": "Open Metatron"
     },
     "side_panel": {
       "default_path": "sidepanel.html"
@@ -49,14 +49,14 @@
         "suggested_key": {
           "default": "Alt+Shift+C"
         },
-        "description": "Open Claude panel"
+        "description": "Open Metatron"
       },
       "toggle-picker": {
         "suggested_key": {
           "default": "Ctrl+Shift+E",
           "mac": "Command+Shift+E"
         },
-        "description": "Pick an element for Claude"
+        "description": "Pick an element for Metatron"
       }
     }
   }
